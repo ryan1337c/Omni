@@ -288,8 +288,8 @@ export default function Home() {
                   )}
                   <video
                     ref={videoRef}
-                    src="OmniDemoHero.mp4"
-                    poster="omniDemoPoster.png"
+                    src="OmniDemoHero.mp4#t=0.1"
+                    preload="metadata"
                     muted
                     playsInline
                     controls={isPlaying}
