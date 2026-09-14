@@ -96,7 +96,7 @@ const Register = () => {
                     type="text" 
                     required 
                     onChange={(e) => setFirstName(e.target.value)}
-                    className={`block w-full rounded-md border-0 py-2 px-3 shadow-sm ring-1 ring-inset focus:outline-none focus:ring-1 sm:text-sm bg-white text-black ring-slate-300 focus:ring-violet-300 dark:bg-slate-800 dark:text-white dark:ring-slate-600 dark:focus:ring-purple-400 appearance-none
+                    className={`block w-full rounded-md border-0 py-2 px-3 shadow-sm ring-1 ring-inset focus:outline-none focus:ring-1 sm:text-sm bg-white text-black ring-slate-300 focus:ring-violet-300 dark:bg-slate-800 dark:text-white dark:ring-slate-600 dark:focus:ring-btnDark appearance-none
                       ${isProcessing ? 'opacity-50 pointer-events-none' : ''}`}
                   />
                 </div>
@@ -114,7 +114,7 @@ const Register = () => {
                     type="text" 
                     required 
                     onChange={(e) => setLastName(e.target.value)}
-                    className={`block w-full rounded-md border-0 py-2 px-3 shadow-sm ring-1 ring-inset focus:outline-none focus:ring-1 sm:text-sm bg-white text-black ring-slate-300 focus:ring-violet-300 dark:bg-slate-800 dark:text-white dark:ring-slate-600 dark:focus:ring-purple-400 appearance-none
+                    className={`block w-full rounded-md border-0 py-2 px-3 shadow-sm ring-1 ring-inset focus:outline-none focus:ring-1 sm:text-sm bg-white text-black ring-slate-300 focus:ring-violet-300 dark:bg-slate-800 dark:text-white dark:ring-slate-600 dark:focus:ring-btnDark appearance-none
                       ${isProcessing ? 'opacity-50 pointer-events-none' : ''}`}
                   />
                 </div>
@@ -132,7 +132,7 @@ const Register = () => {
                     type="email" 
                     required 
                     onChange={(e) => setEmail(e.target.value)}
-                    className={`block w-full rounded-md border-0 py-2 px-3 shadow-sm ring-1 ring-inset focus:outline-none focus:ring-1 sm:text-sm bg-white text-black ring-slate-300 focus:ring-violet-300 dark:bg-slate-800 dark:text-white dark:ring-slate-600 dark:focus:ring-purple-400 appearance-none
+                    className={`block w-full rounded-md border-0 py-2 px-3 shadow-sm ring-1 ring-inset focus:outline-none focus:ring-1 sm:text-sm bg-white text-black ring-slate-300 focus:ring-violet-300 dark:bg-slate-800 dark:text-white dark:ring-slate-600 dark:focus:ring-btnDark appearance-none
                       ${isProcessing ? 'opacity-50 pointer-events-none' : ''}`}
                   />
                 </div>
@@ -148,7 +148,7 @@ const Register = () => {
                     type={showPassword ? 'text' : 'password'}
                     onChange={e => setPassword(e.target.value)}
                     required
-                    className={`block w-full rounded-md border-0 py-2 px-3 pr-10 shadow-sm ring-1 ring-inset focus:outline-none focus:ring-1 sm:text-sm bg-white text-black ring-slate-300 focus:ring-violet-300 dark:bg-slate-800 dark:text-white dark:ring-slate-600 dark:focus:ring-purple-400 appearance-none
+                    className={`block w-full rounded-md border-0 py-2 px-3 pr-10 shadow-sm ring-1 ring-inset focus:outline-none focus:ring-1 sm:text-sm bg-white text-black ring-slate-300 focus:ring-violet-300 dark:bg-slate-800 dark:text-white dark:ring-slate-600 dark:focus:ring-btnDark appearance-none
                       ${isProcessing ? 'opacity-50 pointer-events-none' : ''}`}
                   />
                   <button 

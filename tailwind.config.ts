@@ -28,6 +28,7 @@ const config: Config = {
 			chatDark: '#283548',
 			textDark: '#EDEDED',
 			btnDark: '#6366F1',
+			btnDarkHover: '#4F46E5',
 			userChatBg: '#32425A',
 			codeBgDark: '#1E2A3A',
   			hoverLandingPage: '#020617',

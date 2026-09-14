@@ -165,41 +165,41 @@ export default function Home() {
                     <>
                       <div className="flex space-x-0.5">
                         {"Fast.".split("").map((char, i) => (
-                          <span key={i} className="origin-center drop-shadow-sm dark:text-purple-500 text-violet-600">{char}</span>
+                          <span key={i} className="origin-center drop-shadow-sm dark:text-indigo-500 text-violet-600">{char}</span>
                         ))}
                       </div>
                       <div className="flex space-x-0.5">
                         {"Smart.".split("").map((char, i) => (
-                          <span key={i} className="origin-center drop-shadow-sm dark:text-purple-300 text-fuchsia-500">{char}</span>
+                          <span key={i} className="origin-center drop-shadow-sm dark:text-indigo-300 text-fuchsia-500">{char}</span>
                         ))}
                       </div>
                       <div className="flex space-x-0.5">
                         {"Limitless.".split("").map((char, i) => (
-                          <span key={i} className="origin-center drop-shadow-sm dark:text-purple-100 text-pink-500">{char}</span>
+                          <span key={i} className="origin-center drop-shadow-sm dark:text-indigo-100 text-pink-500">{char}</span>
                         ))}
                       </div>
                     </>
                   ) : flipTextInView ? (
                     <>
-                      <FlipText className="dark:text-purple-500 text-violet-600">Fast.</FlipText>
-                      <FlipText className="dark:text-purple-300 text-fuchsia-500">Smart.</FlipText>
-                      <FlipText className="dark:text-purple-100 text-pink-500">Limitless.</FlipText>
+                      <FlipText className="dark:text-indigo-500 text-violet-600">Fast.</FlipText>
+                      <FlipText className="dark:text-indigo-300 text-fuchsia-500">Smart.</FlipText>
+                      <FlipText className="dark:text-indigo-100 text-pink-500">Limitless.</FlipText>
                     </>
                   ) : (
                     <>
                       <div className="flex space-x-0.5">
                         {"Fast.".split("").map((char, i) => (
-                          <span key={i} className="origin-center drop-shadow-sm dark:text-purple-500 text-violet-600">{char}</span>
+                          <span key={i} className="origin-center drop-shadow-sm dark:text-indigo-500 text-violet-600">{char}</span>
                         ))}
                       </div>
                       <div className="flex space-x-0.5">
                         {"Smart.".split("").map((char, i) => (
-                          <span key={i} className="origin-center drop-shadow-sm dark:text-purple-300 text-fuchsia-500">{char}</span>
+                          <span key={i} className="origin-center drop-shadow-sm dark:text-indigo-300 text-fuchsia-500">{char}</span>
                         ))}
                       </div>
                       <div className="flex space-x-0.5">
                         {"Limitless.".split("").map((char, i) => (
-                          <span key={i} className="origin-center drop-shadow-sm dark:text-purple-100 text-pink-500">{char}</span>
+                          <span key={i} className="origin-center drop-shadow-sm dark:text-indigo-100 text-pink-500">{char}</span>
                         ))}
                       </div>
                     </>
@@ -249,7 +249,7 @@ export default function Home() {
 
             <div className={`lg:w-6/12 text-center lg:text-left`}>
               <h3 className={`text-6xl md:text-8xl font-bold transition-opacity duration-700 ease-in ${userCountInView ? 'opacity-100' : 'opacity-0'}`}>
-                <span className={`text-transparent bg-clip-text bg-gradient-to-r dark:from-purple-400 dark:to-purple-600 from-violet-600 to-pink-500`}>
+                <span className={`text-transparent bg-clip-text bg-gradient-to-r dark:from-indigo-400 dark:to-blue-600 from-violet-600 to-pink-500`}>
                   {userCountInView && <CountUp end={100} duration={2.5} suffix="+" />}
                 </span>
               </h3>
@@ -266,14 +266,14 @@ export default function Home() {
 
             {/* --- Hero Video Section --- */}
             <section ref={heroVideoRef} className="w-full flex flex-col items-center py-16 px-4">
-              <h2 className={`text-4xl font-bold text-center mb-4 text-transparent bg-clip-text bg-gradient-to-r dark:from-purple-400 dark:to-white from-violet-600 to-pink-500 ${heroVideoSectionSeen ? 'transition-none' : 'transition-opacity duration-1000 ease-in'} ${heroVideoInView ? 'opacity-100' : 'opacity-0'}`}>
+              <h2 className={`text-4xl font-bold text-center mb-4 text-transparent bg-clip-text bg-gradient-to-r dark:from-indigo-400 dark:to-white from-violet-600 to-pink-500 ${heroVideoSectionSeen ? 'transition-none' : 'transition-opacity duration-1000 ease-in'} ${heroVideoInView ? 'opacity-100' : 'opacity-0'}`}>
                 See Omni in Action
               </h2>
               <p className={`text-lg text-center max-w-2xl mb-8 dark:text-gray-400 text-gray-600 ${heroVideoSectionSeen ? 'transition-none' : 'transition-opacity duration-1000 ease-in delay-200'} ${heroVideoInView ? 'opacity-100' : 'opacity-0'}`}>
                 A glimpse into the future of productivity and creative workflows.
               </p>
               <div className={`w-full max-w-5xl rounded-2xl overflow-hidden ${heroVideoSectionSeen ? 'transition-none' : 'transition-all duration-1000 ease-in-out'} ${heroVideoInView ? 'opacity-100 transform-none' : 'opacity-0 translate-y-10'}
-                  dark:shadow-[0_0_35px_5px_rgba(168,85,247,0.2)] shadow-[0_0_35px_5px_rgba(139,92,246,0.2)]
+                  dark:shadow-[0_0_35px_5px_rgba(99,102,241,0.2)] shadow-[0_0_35px_5px_rgba(139,92,246,0.2)]
               `}>
                 <div className="relative w-full aspect-video">
                   {!isPlaying && (
@@ -302,7 +302,7 @@ export default function Home() {
           
             {/* --- Features Section --- */}
             <section ref={featuresRef} className="w-full flex flex-col items-center pt-20 pb-24 px-4">
-              <h2 className={`text-4xl font-bold text-center mb-4 text-transparent bg-clip-text bg-gradient-to-r dark:from-purple-400 dark:to-white from-violet-600 to-pink-500 transition-opacity duration-1000 ease-in ${featuresInView ? 'opacity-100' : 'opacity-0'}`}>
+              <h2 className={`text-4xl font-bold text-center mb-4 text-transparent bg-clip-text bg-gradient-to-r dark:from-indigo-400 dark:to-white from-violet-600 to-pink-500 transition-opacity duration-1000 ease-in ${featuresInView ? 'opacity-100' : 'opacity-0'}`}>
                 Discover What&apos;s Possible
               </h2>
                <p className={`text-lg text-center max-w-2xl mb-12 dark:text-gray-400 text-gray-600 transition-opacity duration-1000 ease-in delay-200 ${featuresInView ? 'opacity-100' : 'opacity-0'}`}>
@@ -323,12 +323,12 @@ export default function Home() {
 
           {/* --- Unified AI Core Section  --- */}
           <div ref={coreRef} className="w-full flex flex-col items-center pt-10 pb-16 px-4">
-            <h2 className={`text-4xl font-bold text-center mb-10 text-transparent bg-clip-text bg-gradient-to-r dark:from-purple-400 dark:to-white from-violet-600 to-pink-500   transition-opacity duration-1000 ease-in ${coreInView ? 'opacity-100' : 'opacity-0'}`}>
+            <h2 className={`text-4xl font-bold text-center mb-10 text-transparent bg-clip-text bg-gradient-to-r dark:from-indigo-400 dark:to-white from-violet-600 to-pink-500   transition-opacity duration-1000 ease-in ${coreInView ? 'opacity-100' : 'opacity-0'}`}>
               One Interface. Many Minds.
             </h2>
             <div className={`
               w-full max-w-6xl p-3 rounded-2xl
-              dark:bg-black/30 dark:border-purple-500/30 dark:shadow-[0_0_25px_3px_rgba(168,85,247,0.25)] bg-white/50 border border-violet-300 shadow-[0_0_25px_3px_rgba(139,92,246,0.25)]}
+              dark:bg-black/30 dark:border-indigo-500/30 dark:shadow-[0_0_25px_3px_rgba(99,102,241,0.25)] bg-white/50 border border-violet-300 shadow-[0_0_25px_3px_rgba(139,92,246,0.25)]}
               transition-all duration-1000 ease-in-out
               ${coreInView ? 'opacity-100 transform-none' : 'opacity-0 translate-y-10'}
             `}>
@@ -338,7 +338,7 @@ export default function Home() {
 
           {/* --- Testimonies Section  --- */}
           <div ref={testimoniesRef} className="w-full flex flex-col items-center mb-20 py-10 px-4">
-            <h2 className={`text-4xl font-bold text-center mb-4 text-transparent bg-clip-text bg-gradient-to-r dark:from-purple-400 dark:to-white from-violet-600 to-pink-500 transition-opacity duration-1000 ease-in ${testimoniesInView ? 'opacity-100' : 'opacity-0'}`}>
+            <h2 className={`text-4xl font-bold text-center mb-4 text-transparent bg-clip-text bg-gradient-to-r dark:from-indigo-400 dark:to-white from-violet-600 to-pink-500 transition-opacity duration-1000 ease-in ${testimoniesInView ? 'opacity-100' : 'opacity-0'}`}>
               Testimonials
             </h2>
             <div className={`flex items-center gap-1 mb-10 transition-all delay-200 duration-1000 ease-in-out ${testimoniesInView ? 'opacity-100 transform-none' : 'opacity-0 translate-y-10'}`}>
@@ -393,7 +393,7 @@ export default function Home() {
                   <FontAwesomeIcon icon={faXmark} className="size-6" />
                 </button>
 
-                <h2 className="text-3xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-pink-500 dark:from-purple-400 dark:to-white">
+                <h2 className="text-3xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-pink-500 dark:from-indigo-400 dark:to-white">
                   Privacy & Cookies Policy
                 </h2>
 

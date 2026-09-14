@@ -104,7 +104,7 @@ const Login = () => {
                     autoComplete='off' 
                     required 
                     onChange={(e) => setEmail(e.target.value)}
-                    className={`block w-full rounded-md border-0 py-2 px-3 shadow-sm ring-1 ring-inset sm:text-sm focus:ring-1 focus:ring-inset bg-white text-black ring-slate-300 focus:ring-violet-400 dark:bg-slate-800 dark:text-white dark:ring-slate-600 dark:focus:ring-white appearance-none 
+                    className={`block w-full rounded-md border-0 py-2 px-3 shadow-sm ring-1 ring-inset sm:text-sm focus:ring-1 focus:ring-inset bg-white text-black ring-slate-300 focus:ring-violet-300 dark:bg-slate-800 dark:text-white dark:ring-slate-600 dark:focus:ring-btnDark appearance-none 
                       ${isProcessing ? 'opacity-50 pointer-events-none' : '' }`}
                   />
                 </div>
@@ -132,7 +132,7 @@ const Login = () => {
                     onChange={e => setPassword(e.target.value)}
                     required
                     autoComplete='off'
-                    className={`block w-full rounded-md border-0 py-2 px-3 shadow-sm ring-1 ring-inset sm:text-sm pr-10 focus:ring-1 focus:ring-inset bg-white text-black ring-slate-300 focus:ring-violet-400 dark:bg-slate-800 dark:text-white dark:ring-slate-600 dark:focus:ring-white appearance-none
+                    className={`block w-full rounded-md border-0 py-2 px-3 shadow-sm ring-1 ring-inset sm:text-sm pr-10 focus:ring-1 focus:ring-inset bg-white text-black ring-slate-300 focus:ring-violet-300 dark:bg-slate-800 dark:text-white dark:ring-slate-600 dark:focus:ring-btnDark appearance-none
                       ${isProcessing ? 'opacity-70 pointer-events-none' : ''}`}
                   />
                   <button

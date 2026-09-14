@@ -56,7 +56,7 @@ export default function ContactPage() {
 
                             {/* --- Page Header (Theme-Aware) --- */}
                             <div className="text-center mb-12">
-                                <h1 className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r mb-4 from-violet-600 to-pink-500 dark:from-purple-400 dark:to-white">
+                                <h1 className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r mb-4 from-violet-600 to-pink-500 dark:from-indigo-400 dark:to-white">
                                     Get In Touch
                                 </h1>
                                 <p className="text-lg max-w-2xl mx-auto text-slate-600 dark:text-gray-400">
@@ -65,7 +65,7 @@ export default function ContactPage() {
                             </div>
 
                             {/* --- Main Content Box (Theme-Aware) --- */}
-                            <div className="backdrop-blur-sm border rounded-2xl shadow-lg p-8 md:p-12 bg-white/60 border-violet-200 dark:bg-slate-900/50 dark:border-purple-500/20">
+                            <div className="backdrop-blur-sm border rounded-2xl shadow-lg p-8 md:p-12 bg-white/60 border-violet-200 dark:bg-slate-900/50 dark:border-indigo-500/20">
                                 <div className="grid md:grid-cols-2 gap-12 items-start">
 
                                     {/* --- Left Column (Theme-Aware) --- */}
@@ -77,9 +77,9 @@ export default function ContactPage() {
                                             </p>
                                             
                                             <a href="mailto:ryanchen1337@gmail.com"
-                                            className="flex items-center gap-4 text-lg transition-colors duration-300 group text-slate-700 hover:text-violet-600 dark:text-gray-300 dark:hover:text-purple-400"
+                                            className="flex items-center gap-4 text-lg transition-colors duration-300 group text-slate-700 hover:text-violet-600 dark:text-gray-300 dark:hover:text-indigo-400"
                                             >
-                                            <FaEnvelope className="size-6 transition-colors duration-300 text-slate-800 group-hover:text-violet-600 dark:text-white dark:group-hover:text-purple-400" />
+                                            <FaEnvelope className="size-6 transition-colors duration-300 text-slate-800 group-hover:text-violet-600 dark:text-white dark:group-hover:text-indigo-400" />
                                             <span>ryanchen1337@gmail.com</span>
                                             </a>
                                         </div>
@@ -105,7 +105,7 @@ export default function ContactPage() {
                                         <div className="relative">
                                         <input
                                             type="text" id="name" name="name" required
-                                            className="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-1 transition-shadow duration-300 bg-slate-100/60 border-slate-300 text-black placeholder-slate-400 focus:ring-violet-500 dark:bg-slate-800/60 dark:border-slate-700 dark:text-white dark:placeholder-gray-500 dark:focus:ring-purple-500"
+                                            className="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-1 transition-shadow duration-300 bg-slate-100/60 border-slate-300 text-black placeholder-slate-400 focus:ring-violet-500 dark:bg-slate-800/60 dark:border-slate-700 dark:text-white dark:placeholder-gray-500 dark:focus:ring-indigo-500"
                                             placeholder="Your Name"
                                         />
                                         <FaUser className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-gray-500" />
@@ -115,7 +115,7 @@ export default function ContactPage() {
                                         <div className="relative">
                                         <input
                                             type="email" id="email" name="email" required
-                                            className="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-1 transition-shadow duration-300 bg-slate-100/60 border-slate-300 text-black placeholder-slate-400 focus:ring-violet-500 dark:bg-slate-800/60 dark:border-slate-700 dark:text-white dark:placeholder-gray-500 dark:focus:ring-purple-500"
+                                            className="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-1 transition-shadow duration-300 bg-slate-100/60 border-slate-300 text-black placeholder-slate-400 focus:ring-violet-500 dark:bg-slate-800/60 dark:border-slate-700 dark:text-white dark:placeholder-gray-500 dark:focus:ring-indigo-500"
                                             placeholder="Your Email"
                                         />
                                         <FaEnvelope className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-gray-500" />
@@ -125,7 +125,7 @@ export default function ContactPage() {
                                         <div>
                                             <textarea
                                                 id="message" name="message" rows={5} required
-                                                className="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-1 transition-shadow duration-300 bg-slate-100/60 border-slate-300 text-black placeholder-slate-400 focus:ring-violet-500 dark:bg-slate-800/60 dark:border-slate-700 dark:text-white dark:placeholder-gray-500 dark:focus:ring-purple-500"
+                                                className="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-1 transition-shadow duration-300 bg-slate-100/60 border-slate-300 text-black placeholder-slate-400 focus:ring-violet-500 dark:bg-slate-800/60 dark:border-slate-700 dark:text-white dark:placeholder-gray-500 dark:focus:ring-indigo-500"
                                                 placeholder="Your Message"
                                             ></textarea>
                                         </div>
@@ -133,7 +133,7 @@ export default function ContactPage() {
                                         {/* Submit Button */}
                                         <button
                                         type="submit" disabled={status.type === 'sending'}
-                                        className="w-full flex items-center justify-center gap-3 py-3 px-6 text-white font-semibold rounded-lg transition-all duration-300 disabled:cursor-not-allowed bg-violet-600 hover:bg-violet-700 disabled:bg-violet-400 dark:bg-purple-600 dark:hover:bg-purple-700 dark:disabled:bg-purple-800"
+                                        className="w-full flex items-center justify-center gap-3 py-3 px-6 text-white font-semibold rounded-lg transition-all duration-300 disabled:cursor-not-allowed bg-violet-600 hover:bg-violet-700 disabled:bg-violet-400 dark:bg-btnDark dark:hover:bg-btnDarkHover dark:disabled:bg-indigo-800"
                                         >
                                         {status.type === 'sending' ? (
                                             <><Loader2 className="animate-spin" size={20} /><span>{status.message}</span></>

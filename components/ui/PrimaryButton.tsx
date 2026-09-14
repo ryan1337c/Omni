@@ -16,7 +16,7 @@ export const PrimaryButton = ({
   
   const variants = {
     // Primary: Uses your theme color with a slight "lift" and glow on hover
-    primary: "bg-[var(--login-bg)] text-white shadow-sm hover:brightness-110 hover:shadow-lg hover:shadow-violet-500/20",
+    primary: "bg-[var(--login-bg)] dark:bg-btnDark text-white shadow-sm hover:brightness-110 hover:shadow-lg hover:shadow-violet-500/20",
     
     // Outline: Clean border that darkens slightly on hover
     outline: "border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-slate-800/50",

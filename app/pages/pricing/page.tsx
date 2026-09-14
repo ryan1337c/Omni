@@ -35,7 +35,7 @@ export default function PricingPage() {
             <div className="flex-grow flex flex-col items-center justify-center p-6 pt-28">
               {/* --- Page Header (Theme-Aware) --- */}
               <div className="text-center mb-16">
-                <h1 className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-pink-500 dark:from-purple-400 dark:to-white mb-4">
+                <h1 className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-pink-500 dark:from-indigo-400 dark:to-white mb-4">
                   Find the Perfect Plan
                 </h1>
                 <p className="text-lg max-w-2xl mx-auto text-slate-600 dark:text-gray-400">
@@ -47,9 +47,9 @@ export default function PricingPage() {
               <div className="w-full max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
 
                 {/* Tier 1: Free (Theme-Aware) */}
-                <div className="backdrop-blur-sm border rounded-xl shadow-lg p-8 flex flex-col transition-transform duration-300 hover:scale-105 bg-white/60 border-violet-200 dark:bg-slate-900/50 dark:border-purple-500/30">
+                <div className="backdrop-blur-sm border rounded-xl shadow-lg p-8 flex flex-col transition-transform duration-300 hover:scale-105 bg-white/60 border-violet-200 dark:bg-slate-900/50 dark:border-indigo-500/30">
                   <div className="flex-grow">
-                    <h2 className="text-3xl font-bold mb-2 text-violet-600 dark:text-purple-400">Free</h2>
+                    <h2 className="text-3xl font-bold mb-2 text-violet-600 dark:text-indigo-400">Free</h2>
                     <p className="mb-6 text-slate-500 dark:text-gray-400">For individuals getting started with AI.</p>
                     
                     <div className="text-4xl font-extrabold mb-6">
@@ -78,7 +78,7 @@ export default function PricingPage() {
                     className={`mt-8 w-full rounded-lg px-6 py-3 font-semibold transition-colors duration-300 ${
                       isFreePlan
                         ? "cursor-not-allowed bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-400"
-                        : "bg-violet-600 text-white hover:bg-violet-700 dark:bg-purple-600 dark:hover:bg-purple-700"
+                        : "bg-violet-600 text-white hover:bg-violet-700 dark:bg-btnDark dark:hover:bg-btnDarkHover"
                     }`}
                   >
                     {isFreePlan ? "Current plan" : "Get Started for Free"}
@@ -86,14 +86,14 @@ export default function PricingPage() {
                 </div>
 
                 {/* Tier 2: Pro (Most Popular, Theme-Aware) */}
-                <div className="backdrop-blur-sm border rounded-xl shadow-lg p-8 flex flex-col transform scale-105 bg-white/60 border-violet-400 dark:bg-slate-900/50 dark:border-purple-500">
+                <div className="backdrop-blur-sm border rounded-xl shadow-lg p-8 flex flex-col transform scale-105 bg-white/60 border-violet-400 dark:bg-slate-900/50 dark:border-indigo-500">
                   <div className="relative -top-12 -right-8 self-end">
-                    <div className="text-white text-sm font-bold px-4 py-1 rounded-full shadow-md bg-violet-600 dark:bg-purple-600">
+                    <div className="text-white text-sm font-bold px-4 py-1 rounded-full shadow-md bg-violet-600 dark:bg-btnDark">
                       Most Popular
                     </div>
                   </div>
                   <div className="flex-grow -mt-4">
-                    <h2 className="text-3xl font-bold mb-2 text-fuchsia-500 dark:text-purple-300">Pro</h2>
+                    <h2 className="text-3xl font-bold mb-2 text-fuchsia-500 dark:text-indigo-300">Pro</h2>
                     <p className="mb-6 text-slate-500 dark:text-gray-400">For professionals who need more power.</p>
                     
                     <div className="text-4xl font-extrabold mb-6">
@@ -126,7 +126,7 @@ export default function PricingPage() {
                     className={`mt-8 w-full rounded-lg px-6 py-3 font-semibold transition-colors duration-300 ${
                       isProPlan
                         ? "cursor-not-allowed bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-400"
-                        : "bg-violet-600 text-white hover:bg-violet-700 dark:bg-purple-600 dark:hover:bg-purple-700"
+                        : "bg-violet-600 text-white hover:bg-violet-700 dark:bg-btnDark dark:hover:bg-btnDarkHover"
                     }`}
                   >
                     {isProPlan ? "Current plan" : "Continue"}
@@ -134,9 +134,9 @@ export default function PricingPage() {
                 </div>
 
                 {/* Tier 3: Enterprise (Theme-Aware) */}
-                <div className="backdrop-blur-sm border rounded-xl shadow-lg p-8 flex flex-col transition-transform duration-300 hover:scale-105 bg-white/60 border-violet-200 dark:bg-slate-900/50 dark:border-purple-500/30">
+                <div className="backdrop-blur-sm border rounded-xl shadow-lg p-8 flex flex-col transition-transform duration-300 hover:scale-105 bg-white/60 border-violet-200 dark:bg-slate-900/50 dark:border-indigo-500/30">
                   <div className="flex-grow">
-                    <h2 className="text-3xl font-bold mb-2 text-pink-500 dark:text-purple-200">Enterprise</h2>
+                    <h2 className="text-3xl font-bold mb-2 text-pink-500 dark:text-indigo-200">Enterprise</h2>
                     <p className="mb-6 text-slate-500 dark:text-gray-400">For businesses requiring enterprise-grade features.</p>
 
                     <div className="text-4xl font-extrabold mb-6">

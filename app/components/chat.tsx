@@ -1027,8 +1027,9 @@ const downloadImage = async (imageUrl : string) => {
           </div>
           
           <div className="flex flex-wrap items-center justify-between gap-y-1 -ml-1">
-              <div className="flex items-center gap-1">
-              <div className="relative group">
+              {/* items-stretch makes all button wrappers equal height so their hover tooltips align; flex items-center on each wrapper keeps the buttons visually centered */}
+              <div className="flex items-stretch gap-1">
+              <div className="relative group flex items-center">
                 <button
                   className="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors duration-300 ease-in-out"
                   onClick={() => setIsOpenUpload(!isOpenUpload)}
@@ -1043,7 +1044,7 @@ const downloadImage = async (imageUrl : string) => {
                 {isOpenUpload && ( <div className="absolute bottom-full left-0 mb-2 w-64 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg z-50 py-1"><button onClick={handleUploadSelect} className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors duration-150 text-left"><GoPaperclip size={"25px"} className="flex-shrink-0 text-gray-600 dark:text-gray-300" /><div className="flex-1 text-sm font-medium text-gray-900 dark:text-gray-100">{upload.name}</div><Check className="w-4 h-4 text-blue-600 dark:text-blue-400" /></button></div> )}
               </div>
 
-              <div className="relative inline-block text-left group">
+              <div className="relative text-left group flex items-center">
                 <button
                   onClick={() => setIsOpenTools(!isOpenTools)}
                   disabled={isProcessing}
@@ -1057,7 +1058,7 @@ const downloadImage = async (imageUrl : string) => {
                 {isOpenTools && ( <div className="absolute bottom-full left-0 mt-2 w-64 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg z-50 py-1">{tools.map((tool, index) => ( <button key={index} onClick={() => handleToolSelect(tool.id)} className="w-full flex items-start space-x-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors duration-150 text-left"><div className="flex-1 min-w-0"><div className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">{tool.name}</div></div>{selectedTool === tool.id && (<Check className="w-4 h-4 text-blue-600 dark:text-blue-400" />)}</button>))}</div> )}
               </div>
               
-              <div className="relative group inline-block">
+              <div className="relative group flex items-center">
                   <button
                     className={`relative p-2.5 rounded-full text-sm font-medium transition-colors ${
                       isDictationEnabled
