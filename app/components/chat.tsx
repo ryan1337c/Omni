@@ -343,18 +343,41 @@ export default function Chat({ setRecents, currChatId, setCurrChatId, isProcessi
     return history.map(({ role, content }) => ({ role, content}));
   }
 
+  // Returns the reason a request can't be processed, or null if it's supported.
+  // Used to guard generation and to skip persisting chat history for gated requests.
+  const getUnsupportedRequestReason = (
+    tool: string,
+    filesToUpload: FileWithPreview[]
+  ): string | null => {
+    if (tool === 'image') {
+      // Image generation does not support uploads yet
+      if (filesToUpload.length > 0) {
+        return 'As of now, we do not support image generation with uploads';
+      }
+      // Some models don't support image generation
+      if (selectedModel !== 'gpt-4o') {
+        return `As of now, we do not support image generation with ${selectedModel}`;
+      }
+    }
+    return null;
+  };
+
+  const isRequestSupported = (tool: string, filesToUpload: FileWithPreview[]): boolean =>
+    getUnsupportedRequestReason(tool, filesToUpload) === null;
+
   const generateImage = async(filesToUpload: (File & { preview: string })[], chatId: string | null) => {
     setIsProcessing(true);
 
-    // Guards for image generation using file uploads as it is not supported yet 
-    if (filesToUpload.length > 0) {
+    // Guard for unsupported image generation requests (uploads or unsupported models)
+    const unsupportedImageReason = getUnsupportedRequestReason('image', filesToUpload);
+    if (unsupportedImageReason) {
       // Update chat ai chat history 
       setChatHistory(prevHistory => {
         const updatedHistory = [...prevHistory];
         const lastMessageIndex = updatedHistory.length - 1;
         updatedHistory[lastMessageIndex] = {
           ...updatedHistory[lastMessageIndex],
-          content: 'As of now, we do not support image generation with uploads',
+          content: unsupportedImageReason,
           loading: false,
         }
         return updatedHistory;
@@ -363,23 +386,6 @@ export default function Chat({ setRecents, currChatId, setCurrChatId, isProcessi
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
-      setIsProcessing(false);
-      return;
-    }
-
-    // Guard check cause some models don't support it
-    if (selectedModel !== "gpt-4o") {
-      // Update chat ai chat history 
-      setChatHistory(prevHistory => {
-        const updatedHistory = [...prevHistory];
-        const lastMessageIndex = updatedHistory.length - 1;
-        updatedHistory[lastMessageIndex] = {
-          ...updatedHistory[lastMessageIndex],
-          content: `As of now, we do not support image generation with ${selectedModel}`,
-          loading: false,
-        }
-        return updatedHistory;
-      })
       setIsProcessing(false);
       return;
     }
@@ -459,27 +465,6 @@ export default function Chat({ setRecents, currChatId, setCurrChatId, isProcessi
 
   const generateResponse = async(filesToUpload: (File & { preview: string })[], messages: ChatMessage[], chatId: string | null) => {
     setIsProcessing(true);
-
-    // Guard reponse for models that don't support image processing yet
-      if (selectedModelData?.name === "DeepSeek" && filesToUpload.length > 0) {
-        // Update chat ai chat history 
-        setChatHistory(prevHistory => {
-          const updatedHistory = [...prevHistory];
-          const lastMessageIndex = updatedHistory.length - 1;
-          updatedHistory[lastMessageIndex] = {
-            ...updatedHistory[lastMessageIndex],
-            content: `As of now, we do not support file processing for ${selectedModelData.id}`,
-            loading: false,
-          }
-          return updatedHistory;
-        })
-        setFiles([]); 
-        if (fileInputRef.current) {
-          fileInputRef.current.value = "";
-        }
-        setIsProcessing(false);
-        return;
-      }
 
     try{
       const formData = new FormData();
@@ -601,7 +586,8 @@ export default function Chat({ setRecents, currChatId, setCurrChatId, isProcessi
         }
 
         // CREATE CHAT FIRST if it's a new chat
-        if (chatMode === "new chat") {
+        // Skip persisting history for unsupported requests since no messages will be saved
+        if (chatMode === "new chat" && isRequestSupported(selectedTool, filesToProcess)) {
           const session = await authServices.getSession();
           const { id } = session.user;
           
@@ -810,40 +796,6 @@ const downloadImage = async (imageUrl : string) => {
     }
   }, [chatHistory]);
 
-  // useEffect(() => {
-  //   const shouldUpdate = chatHistory.length > 0 && chatHistory.at(-1)?.loading === false;
-
-  //   const createChatHistory = async() => {
-  //     try{
-  //       const session = await authServices.getSession();
-  //       const {id} = session.user;
-
-  //       const newHistory = {
-  //         chat_title: chatHistory.at(-2)?.content || null
-  //       }
-  //       const data = await publicServices.addHistory(id, newHistory);
-
-  //       console.log("Chat history created successfully!");
-
-  //       if (data) {
-  //         // Add new chat history to recents
-  //         setRecents(prev => [data, ...prev])
-  //         setChatMode("recents")
-  //       }
-  //     }
-  //     catch( error: any) {
-  //       const message = error.message || 'An unexpected error occurred';
-  //       console.error(message);
-  //     }
-  //   }
-
-  //   // Update new chat
-  //   if (shouldUpdate && chatMode == "new chat") {
-  //     createChatHistory();
-
-  //   } 
-  // }, [chatHistory]); 
-
   useEffect(() => {
     if (image) {
         // update to new image url 
@@ -852,7 +804,7 @@ const downloadImage = async (imageUrl : string) => {
           const lastMessageIndex = updatedHistory.length - 1;
           updatedHistory[lastMessageIndex] = {
             ...updatedHistory[lastMessageIndex],
-            ...(isValid ? {} : selectedModelData?.name === "DeepSeek" ? {content: 'We do no currently support image generation for this model.'} : { content: 'Message is not appropriate.' }),
+            ...(isValid ? {} : selectedModelData?.name === "DeepSeek v4 Flash" ? {content: 'We do no currently support image generation for this model.'} : { content: 'Message is not appropriate.' }),
             imageUrls: image !== 'fail' ? [{
               id: '',
               url: image,
