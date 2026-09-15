@@ -33,14 +33,20 @@ import {
 } from "@/lib/credits/usageClient";
 type MessageImage = {
   id: string;
-  url: string;
+  public_url: string;
+  storage_path: string;
   order_index: number;
 }
+
+// Content saved on assistant messages that contain a generated image (see generateImage)
+const GENERATED_IMAGE_CONTENT = 'Here is the generated image:';
+// Local-only placeholder shown when a generated image is missing from the DB (e.g. its row was deleted). Never persisted to Supabase.
+const MISSING_IMAGE_PLACEHOLDER_URL = '/image-placeholder.svg';
 
 export interface ChatMessage {
   role: string;
   content: string;
-  imageUrls: MessageImage[];
+  imagesData: MessageImage[];
   loading: boolean;
   isNew: boolean;
 }
@@ -423,12 +429,14 @@ export default function Chat({ setRecents, currChatId, setCurrChatId, isProcessi
       }
 
       const imageUrls = await publicServices.uploadImages([data.url]);
-      setImage(imageUrls[0]);
+      setImage(imageUrls[0].publicUrl);
       setIsValid(true)
 
       const generatedImages = {
         id: '',
-        url: data.url,
+        // Persist the durable Supabase public URL — not the temporary data: URL from the API
+        public_url: imageUrls[0].publicUrl,
+        storage_path: imageUrls[0].storagePath,
         order_index: 0
       }
 
@@ -437,14 +445,14 @@ export default function Chat({ setRecents, currChatId, setCurrChatId, isProcessi
         {
           role: "user",
           content: userInput,
-          imageUrls: [],
+          imagesData: [],
           loading: false,
           isNew: true
         },
         {
           role: "assistant",
-          content: "Here is the generated image:",
-          imageUrls: [generatedImages],
+          content: GENERATED_IMAGE_CONTENT,
+          imagesData: [generatedImages],
           loading: false,
           isNew: true
         }
@@ -512,18 +520,19 @@ export default function Chat({ setRecents, currChatId, setCurrChatId, isProcessi
       let uploadedImages: MessageImage[] = [];
       if (filesToUpload.length > 0) {
         const blobUrls = filesToUpload.map(f => f.preview);  // Get blob URLs from files
-        const publicUrls = await publicServices.uploadImages(blobUrls); // Uploads to public bucket 
+        const imageData = await publicServices.uploadImages(blobUrls); // Uploads to public bucket 
         
-        uploadedImages = publicUrls.map((url, index) => ({
+        uploadedImages = imageData.map((image, index) => ({
           id: '',
-          url: url,
+          public_url: image.publicUrl,
+          storage_path: image.storagePath,
           order_index: index
         }));
       }
 
       const updatedUserMessage = {
         ...userMessage,
-        imageUrls: uploadedImages
+        imagesData: uploadedImages
       };
 
       // Save to database
@@ -532,7 +541,7 @@ export default function Chat({ setRecents, currChatId, setCurrChatId, isProcessi
         {
           role: "assistant",
           content: aiMessage,
-          imageUrls: [],
+          imagesData: [],
           loading: false,
           isNew: true
         }
@@ -605,7 +614,8 @@ export default function Chat({ setRecents, currChatId, setCurrChatId, isProcessi
         // Map existing file previews to the imageUrls format immediately
         const temporaryImages: MessageImage[] = filesToProcess.map((file, index) => ({
           id: `temp-${index}-${Date.now()}`, // Temporary ID
-          url: file.preview,           // The blob URL from URL.createObjectURL
+          public_url: file.preview,           // The blob URL from URL.createObjectURL
+          storage_path: '',
           order_index: index
         }));
 
@@ -613,7 +623,7 @@ export default function Chat({ setRecents, currChatId, setCurrChatId, isProcessi
         const userMessage: ChatMessage = {
           role: "user",
           content: userInput,
-          imageUrls: temporaryImages,
+          imagesData: temporaryImages,
           loading: false,
           isNew: true,
         };
@@ -621,7 +631,7 @@ export default function Chat({ setRecents, currChatId, setCurrChatId, isProcessi
         const aiPlaceholderMessage: ChatMessage = {
           role: "assistant",
           content: selectedTool === "image" ? Messages.imgGeneration : '',
-          imageUrls: [], 
+          imagesData: [], 
           loading: true,
           isNew: true,
         };
@@ -766,14 +776,24 @@ const downloadImage = async (imageUrl : string) => {
           return;
         }
 
-        const formattedHistory = (messages as ChatMessage[]).map(msg => ({
-          role: msg.role,
-          content: msg.content,
-          loading: false,
-          isNew: false,
-          imageUrls: msg.imageUrls
-            .sort((a, b) => a.order_index - b.order_index),
-        }));
+        const formattedHistory = (messages as ChatMessage[]).map(msg => {
+          const sortedImages = [...(msg.imagesData ?? [])].sort(
+            (a, b) => a.order_index - b.order_index,
+          );
+
+          return {
+            role: msg.role,
+            content: msg.content,
+            loading: false,
+            isNew: false,
+            // Fall back to a local placeholder if a generated image is missing from the DB (e.g. its row was deleted)
+            imagesData: sortedImages.length > 0
+              ? sortedImages
+              : msg.role === 'assistant' && msg.content === GENERATED_IMAGE_CONTENT
+                ? [{ id: 'local-placeholder', public_url: MISSING_IMAGE_PLACEHOLDER_URL, storage_path: '', order_index: 0 }]
+                : sortedImages,
+          };
+        });
 
       console.log(formattedHistory);
 
@@ -805,9 +825,10 @@ const downloadImage = async (imageUrl : string) => {
           updatedHistory[lastMessageIndex] = {
             ...updatedHistory[lastMessageIndex],
             ...(isValid ? {} : selectedModelData?.name === "DeepSeek v4 Flash" ? {content: 'We do no currently support image generation for this model.'} : { content: 'Message is not appropriate.' }),
-            imageUrls: image !== 'fail' ? [{
+            imagesData: image !== 'fail' ? [{
               id: '',
-              url: image,
+              public_url: image ?? MISSING_IMAGE_PLACEHOLDER_URL,
+              storage_path: '',
               order_index: 0
             }] : [],
             loading: false,
@@ -1213,7 +1234,7 @@ const downloadImage = async (imageUrl : string) => {
 
                     // display user messages
                     if (chatMessage.role === 'user') {
-                      const hasImages = chatMessage.imageUrls && chatMessage.imageUrls.length > 0;
+                      const hasImages = chatMessage.imagesData && chatMessage.imagesData.length > 0;
 
                       return (
                         <div key={index} className="flex justify-end w-full mb-4">
@@ -1227,10 +1248,10 @@ const downloadImage = async (imageUrl : string) => {
                             {/* Display any images for file uploads */}
                             {hasImages && (
                               <div className="flex flex-wrap gap-2 mb-2">
-                                {chatMessage.imageUrls?.map((image, i) => (
+                                {chatMessage.imagesData?.map((image, i) => (
                                   <img 
                                     key={i} 
-                                    src={image.url} 
+                                    src={image.public_url} 
                                     alt="User upload"
                                     className="w-full h-auto max-h-80 rounded-md object-contain" 
                                   />
@@ -1289,24 +1310,26 @@ const downloadImage = async (imageUrl : string) => {
                                 )}
 
                               {/* Inside the Assistant rendering block */}
-                              {chatMessage.imageUrls && chatMessage.imageUrls.length > 0 && (
+                              {chatMessage.imagesData && chatMessage.imagesData.length > 0 && (
                                 <div className="mt-2 flex flex-wrap gap-2">
-                                  {chatMessage.imageUrls.map((image, i) => (
+                                  {chatMessage.imagesData.map((image, i) => (
                                     <div key={i} className="relative w-64 h-64 rounded-md overflow-hidden group">
                                       <Image
-                                        src={image.url}
-                                        alt="Generated Content"
+                                        src={image.public_url}
+                                        alt={image.public_url === MISSING_IMAGE_PLACEHOLDER_URL ? "Image unavailable" : "Generated Content"}
                                         width={256}
                                         height={256}
                                         priority
                                         className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
                                       />
-                                      <button
-                                        onClick={() => downloadImage(image.url)}
-                                        className="absolute inset-0 w-full h-full flex items-center justify-center bg-black/60 text-white font-semibold text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                                      >
-                                        Download Image
-                                      </button>
+                                      {image.public_url !== MISSING_IMAGE_PLACEHOLDER_URL && (
+                                        <button
+                                          onClick={() => downloadImage(image.public_url)}
+                                          className="absolute inset-0 w-full h-full flex items-center justify-center bg-black/60 text-white font-semibold text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                                        >
+                                          Download Image
+                                        </button>
+                                      )}
                                     </div>
                                   ))}
                                 </div>

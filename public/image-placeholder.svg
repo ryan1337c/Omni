@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#e2e8f0"/>
+  <g fill="none" stroke="#94a3b8" stroke-width="16" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="136" y="146" width="240" height="200" rx="16"/>
+    <circle cx="206" cy="216" r="20"/>
+    <path d="M136 326l70-70 50 50 60-60 60 60"/>
+    <line x1="150" y1="362" x2="362" y2="130"/>
+  </g>
+  <text x="256" y="428" font-family="system-ui, sans-serif" font-size="30" fill="#64748b" text-anchor="middle">Image unavailable</text>
+</svg>
