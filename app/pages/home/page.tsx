@@ -390,7 +390,7 @@ export default function Home() {
                       </div>
                       {openMenuId === chat.chat_id && (
                         <div className="absolute top-0 right-8 w-48 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg shadow-xl z-50 animate-fade-in-up-sm">
-                          <button onClick={() => setOpenMenuId(null)} className="w-full flex items-center gap-3 px-5 py-2 text-sm text-left text-slate-700 dark:text-textDark hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"><Star size={14} className="text-yellow-400" /><span>Starred</span></button>
+                          {/* <button onClick={() => setOpenMenuId(null)} className="w-full flex items-center gap-3 px-5 py-2 text-sm text-left text-slate-700 dark:text-textDark hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"><Star size={14} className="text-yellow-400" /><span>Starred</span></button> */}
                           <button onClick={() => { handleOpenRenameModal(chat); setOpenMenuId(null); }} className="w-full flex items-center gap-3 px-5 py-2 text-sm text-left text-slate-700 dark:text-textDark hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"><Pencil size={14} /><span>Rename</span></button>
                           <button onClick={() => { handleDelete(chat.chat_id); setOpenMenuId(null); }} className="w-full flex items-center gap-3 px-5 py-2 text-sm text-left text-red-500 dark:text-red-400 hover:bg-red-500/10 dark:hover:bg-red-500/20 transition-colors"><Trash2 size={14} /><span>Delete</span></button>
                         </div>
