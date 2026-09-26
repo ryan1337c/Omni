@@ -4,7 +4,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Plus, 
   Search, 
-  PlayCircle, 
   Pencil, 
   Trash2, 
   HelpCircle,
@@ -13,8 +12,7 @@ import {
   X,
   Timer,     
   Sparkles,   
-  User,
-  Award
+  User
 } from 'lucide-react';
 
 import QuizGenerationModal from '@/app/components/quiz-generation';
@@ -314,7 +312,7 @@ export default function QuizView({ isProcessing, setIsProcessing }: QuizViewProp
                       {formatMode(quiz.mode)}
                     </span>
 
-                    <span className="flex items-center gap-1 bg-slate-100 dark:bg-slate-700/50 px-2 py-1 rounded-md ml-auto lg:ml-0">
+                    <span className="flex items-center gap-1 bg-slate-100 dark:bg-slate-700/50 px-2 py-1 rounded-md">
                       <Clock size={12} /> {timeAgo(quiz.created_at)}
                     </span>
 
@@ -337,12 +335,12 @@ export default function QuizView({ isProcessing, setIsProcessing }: QuizViewProp
                     }`}>
                      {hasActiveSession ? (
                         isReviewMode ? (
-                           <> <Award size={16} /> Review </>
+                           <> Review </>
                         ) : (
-                           <> <PlayCircle size={16} /> Continue </>
+                           <> Continue </>
                         )
                     ) : (
-                        <> <PlayCircle size={16} /> Take Quiz </>
+                        <> Take Quiz </>
                     )}
                   </button>
 
