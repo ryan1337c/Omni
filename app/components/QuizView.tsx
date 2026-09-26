@@ -17,7 +17,7 @@ import {
   Award
 } from 'lucide-react';
 
-import QuizGenerationModal from './QuizGenerationModal';
+import QuizGenerationModal from '@/app/components/quiz-generation';
 import QuizActiveModal, { Question, Choice } from './QuizActiveModal'; 
 import { PublicServices } from '@/lib/publicServices';
 import { AuthServices } from '@/lib/authServices';

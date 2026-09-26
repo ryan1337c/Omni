@@ -2,7 +2,7 @@
 import { FiPlus } from 'react-icons/fi';
 import { Search, Trash2} from 'lucide-react';
 import { useState } from 'react';
-import { RecentChat } from '../pages/home/page'; 
+import type { RecentChat } from "@/app/components/home"; 
 import { formatDistanceToNow } from 'date-fns'; 
 
 // Define the props for the component

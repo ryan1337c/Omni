@@ -8,7 +8,7 @@ import { faArrowRightToBracket, faUserPlus } from '@fortawesome/free-solid-svg-i
 import { Menu, X } from 'lucide-react';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import ProfileMenu, { ProfileMenuItems } from './ProfileMenu';
-import SettingsModal from './SettingsModal';
+import SettingsModal from '@/app/components/settings';
 import icon from "@/public/omni-logo.png";
 
 const Header = () => {
