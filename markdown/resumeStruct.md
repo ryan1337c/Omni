@@ -1,8 +1,6 @@
 % Custom commands
-\newcommand{\resumeItem}[1]{
-\item\small{
-{#1 \vspace{-2pt}}
-}
+\newcommand{\resumeItem}[1]{%
+\item{\small #1\par}%
 }
 
 \newcommand{\resumeSubheading}[4]{
@@ -33,7 +31,9 @@
 
 \newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0.15in, label={}]}
 \newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
-\newcommand{\resumeItemListStart}{\begin{itemize}}
+\newcommand{\resumeItemListStart}{%
+\begin{itemize}[leftmargin=0.15in, itemsep=2pt, parsep=0pt, topsep=1pt, partopsep=0pt]%
+}
 \newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-5pt}}
 
 %-------------------------------------------
@@ -77,7 +77,6 @@
         \resumeItem{Developed a full-stack web application using Flask, React, PostgreSQL and Docker to analyze GitHub data}
         \resumeItem{Explored ways to visualize GitHub collaboration in a classroom setting}
       \resumeItemListEnd
-
 
 % -----------Multiple Positions Heading-----------
 % \resumeSubSubheading

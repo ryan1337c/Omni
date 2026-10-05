@@ -2,7 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { ResumeTemplates } from "./loadTemplates";
 import { InvalidResumeLatexError } from "./normalizeModelLatex";
 
-export const JAKE_RESUME_MODEL = "claude-sonnet-5";
+export const JAKE_RESUME_MODEL = "claude-sonnet-5-5";
 export const JAKE_RESUME_MAX_TOKENS = 8192;
 export const JAKE_RESUME_EFFORT = "medium" as const;
 
@@ -44,6 +44,7 @@ export function buildJakeResumeSystemPrompt(
     "",
     "Rules:",
     "- Tailor experience and project bullets to the important keywords in the job description.",
+    "- For ever \\resumeItem under \\section{Experience} and under \\section{Projects}, format the bullet points as: Action Verb + What You Built/Changed + Tech Stack/Tools + Quantifiable Impact.",
     "- Do not invent jobs, employers, or degrees.",
     "- Do not add new categories in the Skills section. Use only the categories provided in the source resume.",
     "- Only add skills in a category if it can be implied from the source resume.",
@@ -53,6 +54,7 @@ export function buildJakeResumeSystemPrompt(
     "- Preserve real dates and locations from the source.",
     "- Escape LaTeX special characters in user content: &, %, #, _, $, {, }, ~, ^.",
     "- Omit empty sections (no Projects section if the source has none).",
+    "- Prefer each \\resumeItem under \\section{Experience} and \\section{Projects} to be one line. Use a second line only if one line cannot cover the work adequately. However, if the resulting second line is only a single word or a short hanging phrase that covers less than 1/4 of the line length (a widow), shorten the bullet so it fits on one line.",
     "- Prefer a single page.",
   ].join("\n");
 }
