@@ -37,6 +37,7 @@ export default function SidebarTooltip({
       ref={childRef} 
       onMouseEnter={handleMouseEnter} 
       onMouseLeave={handleMouseLeave}
+      onClick={handleMouseLeave}
     >
       {children}
     </div>

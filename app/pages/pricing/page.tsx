@@ -97,7 +97,7 @@ export default function PricingPage() {
                     <p className="mb-6 text-slate-500 dark:text-gray-400">For professionals who need more power.</p>
                     
                     <div className="text-4xl font-extrabold mb-6">
-                      TBD
+                      $5 CAD / month
                     </div>
 
                     <ul className="space-y-4 text-slate-700 dark:text-gray-300">

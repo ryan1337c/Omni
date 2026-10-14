@@ -34,6 +34,7 @@ type HomeSidebarProps = {
   openMenuId: string | null;
   setOpenMenuId: (id: string | null) => void;
   tier: string | null | undefined;
+  fullName: string | null | undefined;
   router: AppRouterInstance;
   onNewChat: () => void;
   onSelectChat: (id: string) => void;
@@ -56,6 +57,7 @@ export default function HomeSidebar({
   openMenuId,
   setOpenMenuId,
   tier,
+  fullName,
   router,
   onNewChat,
   onSelectChat,
@@ -332,6 +334,7 @@ export default function HomeSidebar({
         </div>
 
         <div className="flex-shrink-0 pt-4 border-t border-black/10 dark:border-white/10">
+          <SidebarTooltip text="Profile" isSidebarExpanded={isSidebarExpanded}>
           <ProfileMenu
             placement="top-left"
             disabled={isProcessing}
@@ -348,13 +351,22 @@ export default function HomeSidebar({
               }`}
             >
               <span className="block truncate whitespace-nowrap text-sm font-semibold text-slate-800 dark:text-gray-200">
-                Profile
+                {fullName ?? "Profile"}
               </span>
-              <span className="block truncate whitespace-nowrap text-xs capitalize text-slate-500 dark:text-slate-400">
-                {tier ?? "Loading..."}
-              </span>
+              {tier ? (
+                <span className="block truncate whitespace-nowrap text-xs capitalize text-slate-500 dark:text-slate-400">
+                  {tier} Plan
+                </span>
+              ) : (
+                <div
+                  className="mt-0.5 h-3.5 w-[4.5rem] animate-pulse rounded bg-slate-200 dark:bg-slate-700"
+                  aria-hidden
+                />
+              )}
+
             </div>
           </ProfileMenu>
+          </SidebarTooltip>
         </div>
       </div>
     </div>

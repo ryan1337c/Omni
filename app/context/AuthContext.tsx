@@ -1,12 +1,27 @@
 'use client'
 import { useContext, createContext, useEffect, useState, ReactNode} from "react";
 import { AuthServices } from "@/lib/authServices";
-import type { AuthChangeEvent, RealtimeChannel, Session } from "@supabase/supabase-js";
+import type { AuthChangeEvent, RealtimeChannel, Session, User } from "@supabase/supabase-js";
 import { PublicServices } from "@/lib/publicServices";
+
+function getUserFullName(user: User | null | undefined): string | null {
+    if (!user) return null;
+
+    const metadata = user.user_metadata ?? {};
+    const fullName =
+        metadata.full_name ||
+        metadata.name ||
+        [metadata.firstName, metadata.lastName].filter(Boolean).join(" ");
+
+    return typeof fullName === "string" && fullName.trim()
+        ? fullName.trim()
+        : null;
+}
 
 // Shape of context
 interface AuthContextType {
     isLoggedIn: boolean;
+    fullName: string | null;
     tier: string | null;
     chatMode: string;
     setChatMode: (mode: string) => void;
@@ -24,6 +39,7 @@ interface AuthProviderProps {
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
     const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+    const [fullName, setFullName] = useState<string | null>(null);
     const [chatMode, setChatModeState] = useState("new chat"); // new chat, recents, chat, quiz, flashcards, resume
     const [tier, setTier] = useState<string | null>(null);
     const [isInitialized, setIsInitialized] = useState(false);
@@ -112,6 +128,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             requestVersion++; // Invalidates any pending tier request
             stopEntitlementUpdates();
             setIsLoggedIn(false);
+            setFullName(null);
             setTier(null);
         };
 
@@ -121,6 +138,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             if (event === 'INITIAL_SESSION') {
                 if (session?.user) {
                     setIsLoggedIn(true);
+                    setFullName(getUserFullName(session.user));
                     listenForEntitlementUpdates(session.user.id);
                     loadTier(session.user.id);
                 }
@@ -130,6 +148,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             } else if (event === 'SIGNED_IN') {
                 if (session?.user) {
                     setIsLoggedIn(true);
+                    setFullName(getUserFullName(session.user));
                     listenForEntitlementUpdates(session.user.id);
                     loadTier(session.user.id);
                 }
@@ -140,7 +159,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             } else if (event === 'TOKEN_REFRESHED') {
                 // handle token refreshed event
             } else if (event === 'USER_UPDATED') {
-                // handle user updated event
+                setFullName(getUserFullName(session?.user));
             }
             })
 
@@ -158,7 +177,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             return null;
 
     return (
-        <AuthContext.Provider value={{ isLoggedIn, tier, chatMode, setChatMode }}>
+        <AuthContext.Provider value={{ isLoggedIn, fullName, tier, chatMode, setChatMode }}>
             {children}
         </AuthContext.Provider>
     );

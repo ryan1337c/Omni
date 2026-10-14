@@ -35,6 +35,7 @@ export default function HomePage() {
             openMenuId={home.openMenuId}
             setOpenMenuId={home.setOpenMenuId}
             tier={home.tier}
+            fullName={home.fullName}
             router={home.router}
             onNewChat={home.handleNewChat}
             onSelectChat={home.handleSelectChat}

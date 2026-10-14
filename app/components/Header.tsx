@@ -12,7 +12,7 @@ import SettingsModal from '@/app/components/settings';
 import icon from "@/public/omni-logo.png";
 
 const Header = () => {
-  const { isLoggedIn, tier } = useAuth();
+  const { isLoggedIn, fullName, tier } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
@@ -74,11 +74,18 @@ const Header = () => {
                 <FaUserCircle size={35} className="flex-shrink-0 text-slate-600 dark:text-gray-300" />
                 <div className="min-w-0 text-left hidden sm:block">
                   <span className="block truncate text-sm font-semibold text-slate-800 dark:text-gray-200">
-                    Profile
+                    {fullName ?? "Profile"}
                   </span>
-                  <span className="min-w-[4.5rem] block truncate text-xs capitalize text-slate-500 dark:text-slate-400">
-                    {tier ?? "Loading..."}
-                  </span>
+                  {tier ? (
+                    <span className="min-w-[4.5rem] block truncate text-xs capitalize text-slate-500 dark:text-slate-400">
+                      {tier} Plan
+                    </span>
+                  ) : (
+                    <div
+                      className="mt-0.5 h-3.5 w-[4.5rem] animate-pulse rounded bg-slate-200 dark:bg-slate-700"
+                      aria-hidden
+                    />
+                  )}
                 </div>
               </ProfileMenu>
             ) : (

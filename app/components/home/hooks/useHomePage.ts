@@ -15,7 +15,7 @@ const authServices = new AuthServices();
 const publicServices = new PublicServices();
 
 export function useHomePage() {
-  const { chatMode, setChatMode, tier } = useAuth();
+  const { chatMode, setChatMode, tier, fullName } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isCheckoutLoading, checkoutError, startCheckout } = useCheckout();
@@ -170,6 +170,7 @@ export function useHomePage() {
     chatMode,
     setChatMode,
     tier,
+    fullName,
     router,
     isSidebarExpanded,
     setIsSidebarExpanded,
