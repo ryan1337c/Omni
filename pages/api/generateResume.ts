@@ -11,12 +11,9 @@ import {
     type CreditReservation,
 } from "@/lib/credits";
 import {
-    assembleResumeTex,
-    compileLatex,
-    generateJakeResumeBody,
-    InvalidResumeLatexError,
-    LatexCompileError,
-    loadResumeTemplates,
+    generateTailoredResume,
+    InvalidResumeJsonError,
+    type TailoredResumeResponse,
 } from "@/lib/resume";
 
 type ResponseData = {
@@ -33,7 +30,7 @@ export const config = {
     api: {
         bodyParser: false,
     },
-    // Sonnet + pdflatex need more than the default Vercel Hobby timeout.
+    // A full Sonnet tailoring call can exceed the default Vercel Hobby timeout.
     maxDuration: 60,
 };
 
@@ -52,7 +49,7 @@ const parseForm = (req: NextApiRequest): Promise<{ fields: formidable.Fields; fi
 
 export default async function handler(
     req: NextApiRequest,
-    res: NextApiResponse<ResponseData | Buffer>
+    res: NextApiResponse<ResponseData | TailoredResumeResponse>
 ) {
     if (req.method !== "POST") {
         return res.status(405).json({ error: "Method not allowed" });
@@ -90,19 +87,14 @@ export default async function handler(
             textParts: [resumeText, jobDescription, jobTitle ?? ""],
         });
 
-        const templates = await loadResumeTemplates();
-        const modelOutput = await generateJakeResumeBody(templates, {
+        // Return editable JSON; the PDF is compiled later by /api/renderResume on download.
+        const tailored = await generateTailoredResume({
             resumeText,
             jobDescription,
             jobTitle,
         });
-        const texSource = assembleResumeTex(templates, modelOutput);
-        const pdfBytes = await compileLatex(texSource);
 
-        res.setHeader("Content-Type", "application/pdf");
-        res.setHeader("Content-Disposition", 'attachment; filename="Tailored_Resume.pdf"');
-
-        return res.status(200).send(Buffer.from(pdfBytes));
+        return res.status(200).json(tailored);
     } catch (error: any) {
         if (error instanceof InsufficientCreditsError || error instanceof ContextTooLongError) {
             return res.status(error.status).json(error.toResponseBody());
@@ -113,11 +105,9 @@ export default async function handler(
         console.error("API Error:", error);
 
         const message =
-            error instanceof InvalidResumeLatexError
+            error instanceof InvalidResumeJsonError
                 ? "Failed to generate a valid resume. Please try again."
-                : error instanceof LatexCompileError
-                    ? error.message
-                    : error.message || "An internal server error occurred.";
+                : error.message || "An internal server error occurred.";
 
         res.status(500).json({ error: message });
     }

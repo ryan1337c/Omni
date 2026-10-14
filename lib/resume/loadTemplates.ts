@@ -11,8 +11,6 @@ export type ResumeTemplates = {
   preamble: string;
   /** Jake macros (\resumeItem, \resumeSubheading, …) — everything before \begin{document} */
   macros: string;
-  /** Example body from \begin{document} through \end{document}; few-shot for the model only */
-  exampleBody: string;
 };
 
 function stripBom(text: string): string {
@@ -41,8 +39,9 @@ export async function loadResumeTemplates(
     );
   }
 
+  // The sample resume after \begin{document} is reference material only; the body is generated
+  // from JSON by resumeToLatexBody.
   const macros = resumeStruct.slice(0, beginIdx).trim();
-  const exampleBody = resumeStruct.slice(beginIdx).trim();
 
   if (!preamble) {
     throw new Error(`${PREAMBLE_RELATIVE_PATH} is empty`);
@@ -52,11 +51,6 @@ export async function loadResumeTemplates(
       `${RESUME_STRUCT_RELATIVE_PATH} has no Jake macros before \\begin{document}`,
     );
   }
-  if (!exampleBody.includes("\\end{document}")) {
-    throw new Error(
-      `${RESUME_STRUCT_RELATIVE_PATH} is missing \\end{document}`,
-    );
-  }
 
-  return { preamble, macros, exampleBody };
+  return { preamble, macros };
 }

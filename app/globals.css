@@ -522,3 +522,78 @@ input {
 .rotate-y-180 {
   transform: rotateY(180deg);
 }
+
+/* --- Resume editor: Jake template typography --- */
+@font-face {
+  font-family: "ComputerModern";
+  src: url("/fonts/ComputerModern-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "ComputerModern";
+  src: url("/fonts/ComputerModern-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "ComputerModern";
+  src: url("/fonts/ComputerModern-Italic.ttf") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* Dotted "desk" the resume page sits on. */
+.resume-canvas {
+  background-color: #f8fafc; /* slate-50 */
+  background-image: radial-gradient(#cbd5e1 1px, transparent 1px); /* slate-300 */
+  background-size: 16px 16px;
+}
+
+.dark .resume-canvas {
+  background-color: #0f172a; /* slate-900 */
+  background-image: radial-gradient(#334155 1px, transparent 1px); /* slate-700 */
+}
+
+/* Always light: the page previews a printed PDF regardless of the app theme. */
+.jake-paper {
+  font-family: "ComputerModern", "Latin Modern Roman", "Times New Roman", serif;
+  font-size: 11pt;
+  line-height: 1.2;
+  color: #000;
+  background-color: #fff;
+}
+
+.jake-paper [contenteditable] {
+  outline: none;
+  border-radius: 2px;
+  white-space: pre-wrap; /* keeps typed spaces as spaces instead of &nbsp; */
+  cursor: text;
+  transition: background-color 120ms ease-out, box-shadow 120ms ease-out;
+}
+
+.jake-paper [contenteditable]:hover {
+  background-color: rgb(139 92 246 / 0.08); /* violet-500 */
+}
+
+.jake-paper [contenteditable]:focus {
+  background-color: rgb(139 92 246 / 0.1);
+  box-shadow: 0 0 0 1px rgb(139 92 246 / 0.45);
+}
+
+.jake-paper [data-placeholder]:empty::before {
+  content: attr(data-placeholder);
+  color: #9ca3af; /* gray-400 */
+}
+
+/* Matched keywords use the same sky fill and text as the analysis tags.
+   The page stays white in dark mode, so the light tag colors stay readable. */
+::highlight(resume-keyword) {
+  background-color: #f0f9ff; /* sky-50 */
+  color: #0369a1; /* sky-700 */
+}

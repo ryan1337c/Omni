@@ -6,7 +6,7 @@ import Chat from "@/app/components/chat";
 import ChatsView from "@/app/components/ChatsView";
 import FlashcardsView from "@/app/components/flashcards-view";
 import QuizView from "@/app/components/QuizView";
-import ResumeBuild from "@/app/components/ResumeBuild";
+import ResumeBuild from "@/app/components/resume-build";
 
 import type { RecentChat } from "../types";
 
