@@ -5,8 +5,15 @@ export type CategoryScore = {
   total: number;
 };
 
+/**
+ * One keyword after rubric scoring.
+ * `weight` is the 0–1 credit for that level (importance is applied later).
+ * `matched` is true at level 2+ (listed or better), including implicit Jev hits.
+ */
 export type KeywordMatchResult = {
   keyword: JdKeyword;
+  level: number;
+  weight: number;
   matched: boolean;
 };
 
@@ -279,32 +286,99 @@ export function getMatchLabel(score: number): MatchLabel {
   return "Fair match";
 }
 
-export function scoreResume(keywords: JdKeyword[], content: ResumeContent): ResumeScore {
+/**
+ * Scoring is split so each piece can change independently (SRP):
+ * - `isMatched` / `findKeywordSpans` — literal text for the highlighter.
+ * - `estimateKeywordLevels` — string-match fallback (listed → 2, absent → 1).
+ * - `scoreKeywordLevels` — pure aggregation over levels from any source (DIP).
+ */
+
+const RUBRIC_MIN_LEVEL = 1;
+const RUBRIC_MAX_LEVEL = 4;
+/** Four rubric steps → three intervals, so levels map to 0 / ~33 / ~66 / 100%. */
+const LEVEL_WEIGHT_SPAN = RUBRIC_MAX_LEVEL - RUBRIC_MIN_LEVEL;
+const MATCHED_LEVEL_THRESHOLD = 2;
+const FALLBACK_ABSENT_LEVEL = 1;
+const FALLBACK_LISTED_LEVEL = 2;
+
+function emptyCategoryScores(): Record<KeywordCategory, CategoryScore> {
+  return {
+    hard: { matched: 0, total: 0 },
+    soft: { matched: 0, total: 0 },
+    other: { matched: 0, total: 0 },
+  };
+}
+
+function resolveCategory(category: JdKeyword["category"]): KeywordCategory {
+  return KEYWORD_CATEGORIES.includes(category) ? category : "other";
+}
+
+function clampLevel(level: number): number {
+  if (!Number.isFinite(level)) return RUBRIC_MIN_LEVEL;
+  return Math.min(RUBRIC_MAX_LEVEL, Math.max(RUBRIC_MIN_LEVEL, level));
+}
+
+/** Maps a 1–4 rubric level onto credit: 0, 1/3, 2/3, or 1. Fractions are kept. */
+export function levelToWeight(level: number): number {
+  return (clampLevel(level) - RUBRIC_MIN_LEVEL) / LEVEL_WEIGHT_SPAN;
+}
+
+/** Level 2+ (listed / applied / core) counts as present, including implicit Jev hits. */
+export function isLevelMatched(level: number): boolean {
+  return Math.round(clampLevel(level)) >= MATCHED_LEVEL_THRESHOLD;
+}
+
+function toKeywordMatchResult(keyword: JdKeyword, level: number): KeywordMatchResult {
+  const clamped = clampLevel(level);
+  return {
+    keyword,
+    level: clamped,
+    weight: levelToWeight(clamped),
+    matched: isLevelMatched(clamped),
+  };
+}
+
+/**
+ * String-match fallback when Jev is unavailable.
+ * A literal hit is treated as listed (level 2), never applied/core — those need context.
+ */
+export function estimateKeywordLevels(
+  keywords: JdKeyword[],
+  content: ResumeContent,
+): number[] {
   const searchText = resumeToSearchText(content);
+  return keywords.map((keyword) =>
+    isMatched(keyword, searchText) ? FALLBACK_LISTED_LEVEL : FALLBACK_ABSENT_LEVEL,
+  );
+}
 
-  const categories: Record<KeywordCategory, CategoryScore> = {
-    hard: { matched: 0, total: 0 },
-    soft: { matched: 0, total: 0 },
-    other: { matched: 0, total: 0 },
-  };
-  const weighted: Record<KeywordCategory, CategoryScore> = {
-    hard: { matched: 0, total: 0 },
-    soft: { matched: 0, total: 0 },
-    other: { matched: 0, total: 0 },
-  };
+/**
+ * Weighted resume score from rubric levels aligned with `keywords` by index.
+ * Open for new scorers (Jev, fallback, tests): pass levels in, do not change this function.
+ */
+export function scoreKeywordLevels(keywords: JdKeyword[], levels: number[]): ResumeScore {
+  if (keywords.length !== levels.length) {
+    throw new Error(
+      `scoreKeywordLevels: expected ${keywords.length} levels, received ${levels.length}`,
+    );
+  }
 
-  const results = keywords.map((keyword): KeywordMatchResult => {
-    const matched = isMatched(keyword, searchText);
-    const weight = IMPORTANCE_WEIGHTS[keyword.importance] ?? IMPORTANCE_WEIGHTS.preferred;
-    const bucket = categories[keyword.category] ? keyword.category : "other";
+  const categories = emptyCategoryScores();
+  const weighted = emptyCategoryScores();
+
+  const results = keywords.map((keyword, index) => {
+    const result = toKeywordMatchResult(keyword, levels[index]);
+    const importance = IMPORTANCE_WEIGHTS[keyword.importance] ?? IMPORTANCE_WEIGHTS.preferred;
+    const bucket = resolveCategory(keyword.category);
 
     categories[bucket].total += 1;
-    weighted[bucket].total += weight;
-    if (matched) {
+    weighted[bucket].total += importance;
+    // Partial credit: listed (33%) no longer scores the same as production use (100%).
+    weighted[bucket].matched += importance * result.weight;
+    if (result.matched) {
       categories[bucket].matched += 1;
-      weighted[bucket].matched += weight;
     }
-    return { keyword, matched };
+    return result;
   });
 
   let weightSum = 0;
@@ -327,4 +401,9 @@ export function scoreResume(keywords: JdKeyword[], content: ResumeContent): Resu
     categories,
     results,
   };
+}
+
+/** String-match convenience: compose fallback levels with the shared aggregator. */
+export function scoreResume(keywords: JdKeyword[], content: ResumeContent): ResumeScore {
+  return scoreKeywordLevels(keywords, estimateKeywordLevels(keywords, content));
 }

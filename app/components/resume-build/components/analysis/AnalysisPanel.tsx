@@ -1,12 +1,14 @@
 "use client";
 
 import { useMemo } from 'react';
+import { FiLoader, FiRefreshCw } from 'react-icons/fi';
 import type { KeywordMatchResult, ResumeScore } from '@/lib/resume/keywordMatch';
-import type { KeywordCategory } from '@/lib/resume/schema';
+import type { KeywordCategory, KeywordScoring } from '@/lib/resume/schema';
 
 import { KEYWORD_GROUPS, SCORE_RING_COLORS } from '../../constants';
 import KeywordGroup from './KeywordGroup';
 import KeywordTag from './KeywordTag';
+import { countKeywordCoverage, type RubricBand } from './rubricBands';
 import ScoreRing from './ScoreRing';
 
 type AnalysisPanelProps = {
@@ -14,15 +16,36 @@ type AnalysisPanelProps = {
   jobTitle: string;
   highlightKeywords: boolean;
   onHighlightKeywordsChange: (enabled: boolean) => void;
+  /** True once the editor's resume is not the one these levels describe. */
+  isStale: boolean;
+  isScoring: boolean;
+  scoredBy: KeywordScoring['scoredBy'];
+  onReanalyze: () => void;
 };
+
+const LEGEND: readonly { band: RubricBand; label: string }[] = [
+  { band: 1, label: 'Absent' },
+  { band: 2, label: 'Listed' },
+  { band: 3, label: 'Applied' },
+  { band: 4, label: 'Core' },
+];
 
 function groupByCategory(results: KeywordMatchResult[]): Record<KeywordCategory, KeywordMatchResult[]> {
   const groups: Record<KeywordCategory, KeywordMatchResult[]> = { hard: [], soft: [], other: [] };
   for (const result of results) {
-    // Mirrors scoreResume, which counts unknown categories as "other".
+    // Mirrors scoreKeywordLevels, which counts unknown categories as "other".
     (groups[result.keyword.category] ?? groups.other).push(result);
   }
   return groups;
+}
+
+/** "3 of 12 keywords show hands-on use, 4 are only listed." */
+function coverageSentence(results: KeywordMatchResult[]): string {
+  const { handsOn, listed, total } = countKeywordCoverage(results.map((result) => result.level));
+  const keyword = total === 1 ? 'keyword' : 'keywords';
+  const show = handsOn === 1 ? 'shows' : 'show';
+  const listedVerb = listed === 1 ? 'is' : 'are';
+  return `${handsOn} of ${total} ${keyword} ${show} hands-on use, ${listed} ${listedVerb} only listed.`;
 }
 
 export default function AnalysisPanel({
@@ -30,25 +53,57 @@ export default function AnalysisPanel({
   jobTitle,
   highlightKeywords,
   onHighlightKeywordsChange,
+  isStale,
+  isScoring,
+  scoredBy,
+  onReanalyze,
 }: AnalysisPanelProps) {
-  const { score, label, matched, total, results } = analysis;
+  const { score, label, results } = analysis;
   const groups = useMemo(() => groupByCategory(results), [results]);
-  const missing = total - matched;
+  const summary = useMemo(() => coverageSentence(results), [results]);
+  const canReanalyze = isStale && !isScoring;
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
+      <div className="flex items-start gap-4">
         <ScoreRing score={score} colorClassName={SCORE_RING_COLORS[label]} />
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <h2 className="text-lg font-semibold leading-snug text-slate-900 dark:text-white">
             {label} for <em className="break-words">{jobTitle.trim() || 'this role'}</em>
           </h2>
-          <p className="mt-1 text-sm text-slate-500 dark:text-gray-400">
-            Your resume covers {matched} of {total} keywords from the job description.
-            {missing > 0
-              ? ' Add the dashed ones below to push your score higher.'
-              : ' Nice work, every keyword is covered.'}
-          </p>
+          <p className="mt-1 text-sm text-slate-500 dark:text-gray-400">{summary}</p>
+          {scoredBy === 'keyword' && (
+            <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">
+              Contextual scoring unavailable, showing keyword presence only.
+            </p>
+          )}
+          <div className="mt-3 flex justify-end">
+            <button
+              type="button"
+              onClick={() => {
+                void onReanalyze();
+              }}
+              disabled={!canReanalyze}
+              aria-busy={isScoring}
+              title={
+                isScoring
+                  ? 'Scoring your resume'
+                  : isStale
+                    ? 'Score the resume again'
+                    : 'No edits since the last score'
+              }
+              className={`inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-gray-200 dark:hover:bg-slate-700 ${
+                isScoring ? 'disabled:cursor-wait' : 'disabled:cursor-not-allowed'
+              }`}
+            >
+              {isScoring ? (
+                <FiLoader className="h-3.5 w-3.5 animate-spin" aria-hidden />
+              ) : (
+                <FiRefreshCw className="h-3.5 w-3.5" aria-hidden />
+              )}
+              {isScoring ? 'Re-analyzing...' : 'Re-analyze'}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -84,12 +139,11 @@ export default function AnalysisPanel({
       </div>
 
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-slate-200 pt-4 text-xs text-slate-500 dark:border-slate-700 dark:text-gray-400">
-        <span className="flex items-center gap-2">
-          <KeywordTag label="Skill" matched /> In your resume
-        </span>
-        <span className="flex items-center gap-2">
-          <KeywordTag label="Skill" matched={false} /> Missing
-        </span>
+        {LEGEND.map(({ band, label: bandLabel }) => (
+          <span key={band} className="flex items-center gap-2">
+            <KeywordTag label="Skill" level={band} /> {bandLabel}
+          </span>
+        ))}
       </div>
     </div>
   );

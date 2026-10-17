@@ -1,6 +1,7 @@
 import type { KeywordMatchResult } from '@/lib/resume/keywordMatch';
 
 import KeywordTag from './KeywordTag';
+import { keywordLevelHint } from './rubricBands';
 
 type KeywordGroupProps = {
   title: string;
@@ -9,7 +10,8 @@ type KeywordGroupProps = {
 };
 
 export default function KeywordGroup({ title, subtitle, results }: KeywordGroupProps) {
-  const matchedCount = results.filter((result) => result.matched).length;
+  // `matched` is level 2+ (listed or better), including implicit Jev hits.
+  const presentCount = results.filter((result) => result.matched).length;
 
   return (
     <section>
@@ -19,17 +21,17 @@ export default function KeywordGroup({ title, subtitle, results }: KeywordGroupP
           <p className="text-xs text-slate-500 dark:text-gray-400">{subtitle}</p>
         </div>
         <span className="flex-shrink-0 text-xs font-medium tabular-nums text-slate-500 dark:text-gray-400">
-          {matchedCount}/{results.length}
+          {presentCount}/{results.length}
         </span>
       </div>
 
       <div className="flex flex-wrap gap-1.5">
-        {results.map(({ keyword, matched }, index) => (
+        {results.map(({ keyword, level }, index) => (
           <KeywordTag
             key={`${keyword.term}-${index}`}
             label={keyword.term}
-            matched={matched}
-            hint={keyword.importance === 'required' ? 'Required' : 'Preferred'}
+            level={level}
+            hint={keywordLevelHint(keyword.importance, level)}
           />
         ))}
       </div>

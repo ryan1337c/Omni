@@ -220,20 +220,31 @@ export function parseResumeContent(input: unknown): ResumeContent {
 }
 
 /**
- * Normalize `{ resume, keywords }` from Claude or `/api/renderResume`.
- * Missing `keywords` becomes []. Empty-term keywords are dropped.
+ * Normalize an untrusted keyword list on its own.
+ * Split from the tailored-resume envelope so `/api/scoreResume` can validate
+ * keywords without re-parsing a resume (single responsibility).
+ * Missing or non-array input becomes []. Empty-term items are dropped.
+ * A bad category or importance throws `InvalidResumeJsonError`.
  */
-export function parseTailoredResponse(input: unknown): TailoredResumeResponse {
-  const obj = asObject(input, "tailored resume response");
+export function parseKeywords(value: unknown): JdKeyword[] {
   const keywords: JdKeyword[] = [];
-  for (const item of asArray(obj.keywords).slice(0, MAX_KEYWORDS)) {
+  for (const item of asArray(value).slice(0, MAX_KEYWORDS)) {
     const keyword = parseKeyword(item);
     if (keyword) {
       keywords.push(keyword);
     }
   }
+  return keywords;
+}
+
+/**
+ * Normalize `{ resume, keywords }` from Claude or `/api/renderResume`.
+ * Keyword rules live in `parseKeywords`.
+ */
+export function parseTailoredResponse(input: unknown): TailoredResumeResponse {
+  const obj = asObject(input, "tailored resume response");
   return {
     resume: parseResumeContent(obj.resume),
-    keywords,
+    keywords: parseKeywords(obj.keywords),
   };
 }

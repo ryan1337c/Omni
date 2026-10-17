@@ -54,4 +54,23 @@ export type ResumeHeader = {
   export type TailoredResumeResponse = {
     resume: ResumeContent;
     keywords: JdKeyword[];
-  }
+  };
+
+  /**
+   * One scoring pass over a keyword list.
+   * `levels[i]` is the 1–4 rubric level for `keywords[i]` (fractions kept).
+   * `scoredBy` records the source so callers can tell a Jev pass from the
+   * string-match fallback without inspecting the numbers.
+   */
+  export type KeywordScoring = {
+    levels: number[];
+    scoredBy: "jev" | "keyword";
+  };
+
+  /**
+   * `/api/generateResume` response. Scoring is attached after the model returns,
+   * so `TailoredResumeResponse` (the parsed model payload) stays unchanged.
+   */
+  export type TailoredResumeResult = TailoredResumeResponse & {
+    scoring: KeywordScoring;
+  };

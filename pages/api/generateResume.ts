@@ -13,7 +13,8 @@ import {
 import {
     generateTailoredResume,
     InvalidResumeJsonError,
-    type TailoredResumeResponse,
+    scoreKeywords,
+    type TailoredResumeResult,
 } from "@/lib/resume";
 
 type ResponseData = {
@@ -49,7 +50,7 @@ const parseForm = (req: NextApiRequest): Promise<{ fields: formidable.Fields; fi
 
 export default async function handler(
     req: NextApiRequest,
-    res: NextApiResponse<ResponseData | TailoredResumeResponse>
+    res: NextApiResponse<ResponseData | TailoredResumeResult>
 ) {
     if (req.method !== "POST") {
         return res.status(405).json({ error: "Method not allowed" });
@@ -94,7 +95,12 @@ export default async function handler(
             jobTitle,
         });
 
-        return res.status(200).json(tailored);
+        // Scoring is its own step (SRP): this handler only attaches the result.
+        // Credits are already spent, and `scoreKeywords` returns string-match
+        // levels when Jev is unavailable, so the paid resume is always delivered.
+        const scoring = await scoreKeywords(tailored.keywords, tailored.resume);
+
+        return res.status(200).json({ ...tailored, scoring });
     } catch (error: any) {
         if (error instanceof InsufficientCreditsError || error instanceof ContextTooLongError) {
             return res.status(error.status).json(error.toResponseBody());

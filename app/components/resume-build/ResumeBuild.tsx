@@ -10,7 +10,7 @@ import {
   getInsufficientCreditsInfo,
   shouldOfferCreditUpgrade,
 } from '@/lib/credits/usageClient';
-import type { TailoredResumeResponse } from '@/lib/resume/schema';
+import type { TailoredResumeResult } from '@/lib/resume/schema';
 
 import { generateResumeRequest } from './api';
 import ResumeResults from './components/ResumeResults';
@@ -45,7 +45,7 @@ const ResumeBuild = ({ isProcessing, setIsProcessing }: ResumeBuildProps) => {
     setIsTailoring(true);
     setIsProcessing(true);
 
-    let tailored: TailoredResumeResponse | null = null;
+    let tailored: TailoredResumeResult | null = null;
 
     try {
       const { result, data } = await generateResumeRequest(input);
@@ -61,7 +61,7 @@ const ResumeBuild = ({ isProcessing, setIsProcessing }: ResumeBuildProps) => {
         throw new Error(data.error || 'Something went wrong');
       }
 
-      tailored = data as TailoredResumeResponse;
+      tailored = data as TailoredResumeResult;
     } catch (error: any) {
       console.error('Fetch failed: ', error.message || error);
       setErrorMessage(`An error occurred: ${error.message}`);

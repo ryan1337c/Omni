@@ -7,6 +7,7 @@ export {
 export { assembleTex, type AssembleTexParts } from "./assembleTex";
 export {
   InvalidResumeJsonError,
+  parseKeywords,
   parseResumeContent,
   parseTailoredResponse,
 } from "./parseResumeJson";
@@ -15,11 +16,13 @@ export type {
   ExperienceEntry,
   JdKeyword,
   KeywordCategory,
+  KeywordScoring,
   ProjectEntry,
   ResumeContent,
   ResumeHeader,
   SkillEntry,
   TailoredResumeResponse,
+  TailoredResumeResult,
 } from "./schema";
 export {
   generateTailoredResume,
@@ -38,7 +41,11 @@ export {
   resumeToSearchText,
   isMatched,
   findKeywordSpans,
+  estimateKeywordLevels,
+  scoreKeywordLevels,
   scoreResume,
+  levelToWeight,
+  isLevelMatched,
   getMatchLabel,
   KEYWORD_CATEGORIES,
   CATEGORY_WEIGHTS,
@@ -58,3 +65,12 @@ export {
   LATEX_COMPILE_TIMEOUT_MS,
   type CompileLatexOptions,
 } from "./compileLatex";
+export {
+  scoreKeywords,
+  scoreToLevel,
+  RUBRIC_LEVELS,
+  JEV_ENDPOINT,
+  JEV_MODEL,
+  JEV_TIMEOUT_MS,
+  type ScoreKeywordsOptions,
+} from "./jevScore";

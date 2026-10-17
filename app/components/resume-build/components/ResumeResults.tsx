@@ -2,9 +2,9 @@
 
 import { useMemo, useState } from 'react';
 import { FiArrowLeft, FiDownload, FiLoader } from 'react-icons/fi';
-import type { JdKeyword, TailoredResumeResponse } from '@/lib/resume/schema';
+import type { JdKeyword, TailoredResumeResult } from '@/lib/resume/schema';
 
-import { useKeywordAnalysis } from '../hooks/useKeywordAnalysis';
+import { useKeywordScoring } from '../hooks/useKeywordScoring';
 import { useResumeDownload } from '../hooks/useResumeDownload';
 import { useResumeEditor } from '../hooks/useResumeEditor';
 import AnalysisPanel from './analysis/AnalysisPanel';
@@ -12,10 +12,10 @@ import JakeResumePaper from './editor/JakeResumePaper';
 import ResultsTabs from './ResultsTabs';
 
 type ResumeResultsProps = {
-  tailored: TailoredResumeResponse;
+  tailored: TailoredResumeResult;
   jobTitle: string;
   onStartOver: () => void;
-  /** Routes failures (e.g. PDF compile errors) to ResumeBuild's error toast. */
+  /** Routes failures (PDF compile errors, re-analyze) to ResumeBuild's error toast. */
   onError: (message: string) => void;
 };
 
@@ -27,7 +27,11 @@ const NO_HIGHLIGHTS: JdKeyword[] = [];
  */
 export default function ResumeResults({ tailored, jobTitle, onStartOver, onError }: ResumeResultsProps) {
   const { resume, actions } = useResumeEditor(tailored.resume);
-  const analysis = useKeywordAnalysis(tailored.keywords, resume);
+  const { analysis, isStale, isScoring, scoredBy, reanalyze } = useKeywordScoring(
+    tailored,
+    resume,
+    onError,
+  );
   const { download, isDownloading } = useResumeDownload(onError);
   const [highlightKeywords, setHighlightKeywords] = useState(false);
   const matchedKeywords = useMemo(
@@ -75,6 +79,10 @@ export default function ResumeResults({ tailored, jobTitle, onStartOver, onError
                     jobTitle={jobTitle}
                     highlightKeywords={highlightKeywords}
                     onHighlightKeywordsChange={setHighlightKeywords}
+                    isStale={isStale}
+                    isScoring={isScoring}
+                    scoredBy={scoredBy}
+                    onReanalyze={reanalyze}
                   />
                 ),
               }}

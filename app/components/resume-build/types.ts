@@ -1,4 +1,4 @@
-import type { TailoredResumeResponse } from "@/lib/resume/schema";
+import type { TailoredResumeResult } from "@/lib/resume/schema";
 
 export type ResumeBuildProps = {
   isProcessing: boolean;
@@ -15,4 +15,4 @@ export type ResultsTabId = "analysis" | "design" | "coverLetter";
 
 export type ResumeBuildState =
   | { step: "upload" }
-  | { step: "results"; tailored: TailoredResumeResponse; jobTitle: string };
+  | { step: "results"; tailored: TailoredResumeResult; jobTitle: string };

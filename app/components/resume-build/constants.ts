@@ -8,9 +8,6 @@ export const ERROR_TOAST_DURATION_MS = 5000;
 // Lets the processing toast finish sliding out before the results view mounts.
 export const RESULTS_TRANSITION_DELAY_MS = 300;
 
-// Re-score only after typing pauses, so the score ring isn't re-animating on every keystroke.
-export const KEYWORD_ANALYSIS_DEBOUNCE_MS = 250;
-
 export const RESUME_DOWNLOAD_FILENAME = "Tailored_Resume.pdf";
 
 // US Letter at CSS's fixed 96px per inch.
