@@ -31,8 +31,8 @@ export type ResumeScore = {
 export const KEYWORD_CATEGORIES: readonly KeywordCategory[] = ["hard", "soft", "other"];
 
 export const CATEGORY_WEIGHTS: Record<KeywordCategory, number> = {
-  hard: 0.6,
-  soft: 0.2,
+  hard: 0.7,
+  soft: 0.1,
   other: 0.2,
 };
 
