@@ -7,19 +7,23 @@ export {
 export { assembleTex, type AssembleTexParts } from "./assembleTex";
 export {
   InvalidResumeJsonError,
+  normalizeSectionOrder,
   parseKeywords,
   parseResumeContent,
   parseTailoredResponse,
 } from "./parseResumeJson";
+export { DEFAULT_SECTION_ORDER, SECTION_TITLES } from "./schema";
 export type {
   EducationEntry,
   ExperienceEntry,
+  HonorEntry,
   JdKeyword,
   KeywordCategory,
   KeywordScoring,
   ProjectEntry,
   ResumeContent,
   ResumeHeader,
+  SectionId,
   SkillEntry,
   TailoredResumeResponse,
   TailoredResumeResult,

@@ -13,7 +13,7 @@ type SkillsSectionProps = {
 export default function SkillsSection({ entries, actions }: SkillsSectionProps) {
   return (
     <ResumeSection
-      title="Technical Skills"
+      id="skills"
       entryCount={entries.length}
       addLabel="Add skill category"
       onAdd={() => actions.addEntry('skills')}

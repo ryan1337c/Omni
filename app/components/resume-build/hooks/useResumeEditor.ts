@@ -6,9 +6,11 @@ import { MAX_BULLETS_PER_ENTRY, MAX_SECTION_ENTRIES } from "@/lib/resume/parseRe
 import type {
   EducationEntry,
   ExperienceEntry,
+  HonorEntry,
   ProjectEntry,
   ResumeContent,
   ResumeHeader,
+  SectionId,
   SkillEntry,
 } from "@/lib/resume/schema";
 
@@ -17,6 +19,7 @@ type SectionEntries = {
   experience: ExperienceEntry;
   projects: ProjectEntry;
   skills: SkillEntry;
+  honors: HonorEntry;
 };
 
 export type EntrySection = keyof SectionEntries;
@@ -27,6 +30,7 @@ type TextField<T> = { [K in keyof T]-?: T[K] extends string ? K : never }[keyof 
 
 export type FieldPath =
   | { section: "header"; field: keyof ResumeHeader }
+  | { section: "summary" }
   | { [S in EntrySection]: { section: S; index: number; field: TextField<SectionEntries[S]> } }[EntrySection]
   | { section: BulletSection; index: number; bulletIndex: number };
 
@@ -35,13 +39,15 @@ type ResumeEditorAction =
   | { type: "addBullet"; section: BulletSection; index: number; afterBullet?: number }
   | { type: "removeBullet"; section: BulletSection; index: number; bulletIndex: number }
   | { type: "addEntry"; section: EntrySection }
-  | { type: "removeEntry"; section: EntrySection; index: number };
+  | { type: "removeEntry"; section: EntrySection; index: number }
+  | { type: "moveSection"; section: SectionId; target: SectionId };
 
 const EMPTY_ENTRY: { [S in EntrySection]: () => SectionEntries[S] } = {
   education: () => ({ institution: "", location: "", degree: "", dates: "", bullets: [] }),
   experience: () => ({ title: "", company: "", location: "", dates: "", bullets: [""] }),
   projects: () => ({ name: "", technologies: "", dates: "", bullets: [""] }),
   skills: () => ({ category: "", items: "" }),
+  honors: () => ({ title: "", issuer: "", date: "", description: "" }),
 };
 
 function updateEntry<S extends EntrySection>(
@@ -60,6 +66,9 @@ function resumeEditorReducer(state: ResumeContent, action: ResumeEditorAction): 
       const { path, value } = action;
       if (path.section === "header") {
         return { ...state, header: { ...state.header, [path.field]: value } };
+      }
+      if (path.section === "summary") {
+        return { ...state, summary: value };
       }
       if ("bulletIndex" in path) {
         return updateEntry(state, path.section, path.index, (entry) => ({
@@ -96,6 +105,16 @@ function resumeEditorReducer(state: ResumeContent, action: ResumeEditorAction): 
         ...state,
         [action.section]: state[action.section].filter((_, i) => i !== action.index),
       };
+
+    case "moveSection": {
+      const from = state.sectionOrder.indexOf(action.section);
+      const to = state.sectionOrder.indexOf(action.target);
+      if (from === -1 || to === -1 || from === to) return state;
+      const sectionOrder = [...state.sectionOrder];
+      sectionOrder.splice(from, 1);
+      sectionOrder.splice(to, 0, action.section);
+      return { ...state, sectionOrder };
+    }
   }
 }
 
@@ -109,6 +128,8 @@ function createActions(dispatch: Dispatch<ResumeEditorAction>) {
       dispatch({ type: "removeBullet", section, index, bulletIndex }),
     addEntry: (section: EntrySection) => dispatch({ type: "addEntry", section }),
     removeEntry: (section: EntrySection, index: number) => dispatch({ type: "removeEntry", section, index }),
+    /** Moves `section` into `target`'s slot: before it when moving up, after it when moving down. */
+    moveSection: (section: SectionId, target: SectionId) => dispatch({ type: "moveSection", section, target }),
   };
 }
 

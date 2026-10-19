@@ -1,17 +1,21 @@
 "use client";
 
 import { useEffect, useRef, type ReactNode } from 'react';
-import { FiPlus, FiTrash2 } from 'react-icons/fi';
+import { FiArrowDown, FiArrowUp, FiPlus, FiTrash2 } from 'react-icons/fi';
 import { MAX_SECTION_ENTRIES } from '@/lib/resume/parseResumeJson';
+import { SECTION_TITLES, type SectionId } from '@/lib/resume/schema';
 
 import ControlButton from './ControlButton';
 import { focusAtEnd } from './EditableText';
+import { useSectionReorder } from './SectionReorder';
 
 type ResumeSectionProps = {
-  title: string;
+  id: SectionId;
   entryCount: number;
   addLabel: string;
   onAdd: () => void;
+  /** Hides the add control once reached. Defaults to the parser's section cap. */
+  maxEntries?: number;
   /** Lines sit flush (Technical Skills) instead of being spaced like subheadings. */
   dense?: boolean;
   children: ReactNode;
@@ -20,11 +24,22 @@ type ResumeSectionProps = {
 /**
  * A Jake `\section`: small-caps title over a full-width rule, then the entry list indented 0.15in.
  * Empty sections are skipped in the PDF, so here they collapse to an "add" button shown on paper hover.
+ * The title is the drag handle for reordering; arrows beside it move the section one step.
  */
-export function ResumeSection({ title, entryCount, addLabel, onAdd, dense = false, children }: ResumeSectionProps) {
+export function ResumeSection({
+  id,
+  entryCount,
+  addLabel,
+  onAdd,
+  maxEntries = MAX_SECTION_ENTRIES,
+  dense = false,
+  children,
+}: ResumeSectionProps) {
   const listRef = useRef<HTMLDivElement>(null);
   const previousCount = useRef(entryCount);
-  const canAdd = entryCount < MAX_SECTION_ENTRIES;
+  const reorder = useSectionReorder(id);
+  const canAdd = entryCount < maxEntries;
+  const title = SECTION_TITLES[id];
 
   // Focus the first field of a newly added entry so the user can start typing right away.
   useEffect(() => {
@@ -48,15 +63,38 @@ export function ResumeSection({ title, entryCount, addLabel, onAdd, dense = fals
     ) : null;
   }
 
+  const hasControls = canAdd || reorder?.moveUp || reorder?.moveDown;
+
   return (
-    <section className="group/section mt-[8pt]">
+    <section
+      {...reorder?.dropProps}
+      className={`group/section relative mt-[8pt] ${reorder?.isDragging ? 'opacity-40' : ''}`}
+    >
+      {reorder?.dropEdge && (
+        <div
+          aria-hidden
+          className={`pointer-events-none absolute inset-x-0 h-0.5 rounded bg-violet-500 ${
+            reorder.dropEdge === 'before' ? '-top-[4pt]' : '-bottom-[4pt]'
+          }`}
+        />
+      )}
       <div className="relative">
-        <h2 className="border-b border-black pb-[1pt] text-[12pt] leading-tight [font-variant-caps:small-caps]">
+        <h2
+          {...reorder?.handleProps}
+          title={reorder ? 'Drag to reorder' : undefined}
+          className={`border-b border-black pb-[1pt] text-[12pt] leading-tight [font-variant-caps:small-caps] ${
+            reorder ? 'cursor-grab active:cursor-grabbing' : ''
+          }`}
+        >
           {title}
         </h2>
-        {canAdd && (
-          <div className="absolute left-full top-0 ml-2 opacity-0 transition-opacity group-hover/section:opacity-100 group-focus-within/section:opacity-100">
-            <ControlButton label={addLabel} icon={FiPlus} onClick={onAdd} />
+        {hasControls && (
+          <div className="absolute left-full top-0 ml-2 flex flex-col gap-0.5 opacity-0 transition-opacity group-hover/section:opacity-100 group-focus-within/section:opacity-100">
+            {reorder?.moveUp && <ControlButton label={`Move ${title} up`} icon={FiArrowUp} onClick={reorder.moveUp} />}
+            {reorder?.moveDown && (
+              <ControlButton label={`Move ${title} down`} icon={FiArrowDown} onClick={reorder.moveDown} />
+            )}
+            {canAdd && <ControlButton label={addLabel} icon={FiPlus} onClick={onAdd} />}
           </div>
         )}
       </div>

@@ -1,19 +1,23 @@
-import type {
-  EducationEntry,
-  ExperienceEntry,
-  JdKeyword,
-  KeywordCategory,
-  ProjectEntry,
-  ResumeContent,
-  ResumeHeader,
-  SkillEntry,
-  TailoredResumeResponse,
+import {
+  DEFAULT_SECTION_ORDER,
+  type EducationEntry,
+  type ExperienceEntry,
+  type HonorEntry,
+  type JdKeyword,
+  type KeywordCategory,
+  type ProjectEntry,
+  type ResumeContent,
+  type ResumeHeader,
+  type SectionId,
+  type SkillEntry,
+  type TailoredResumeResponse,
 } from "./schema";
 
 // Caps so a huge or malformed model payload cannot explode later LaTeX/PDF work.
 const MAX_HEADER_NAME = 120;
 const MAX_HEADER_FIELD = 200;
 const MAX_LINE_FIELD = 200;
+const MAX_SUMMARY = 1200;
 const MAX_SKILL_CATEGORY = 80;
 const MAX_SKILL_ITEMS = 500;
 const MAX_BULLET_OR_ALIAS = 400;
@@ -144,6 +148,37 @@ function parseSkill(value: unknown): SkillEntry | null {
   };
 }
 
+function parseHonor(value: unknown): HonorEntry | null {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+  const entry = value as Record<string, unknown>;
+  return {
+    title: asString(entry.title, MAX_LINE_FIELD),
+    issuer: asString(entry.issuer, MAX_LINE_FIELD),
+    date: asString(entry.date, MAX_LINE_FIELD),
+    description: asString(entry.description, MAX_BULLET_OR_ALIAS),
+  };
+}
+
+const SECTION_IDS = new Set<string>(DEFAULT_SECTION_ORDER);
+
+/** Keep known ids in the given order, drop repeats, and append any missing ones in default order. */
+export function normalizeSectionOrder(value: unknown): SectionId[] {
+  const order: SectionId[] = [];
+  for (const item of asArray(value)) {
+    if (typeof item === "string" && SECTION_IDS.has(item) && !order.includes(item as SectionId)) {
+      order.push(item as SectionId);
+    }
+  }
+  for (const id of DEFAULT_SECTION_ORDER) {
+    if (!order.includes(id)) {
+      order.push(id);
+    }
+  }
+  return order;
+}
+
 function parseKeyword(value: unknown): JdKeyword | null {
   if (value === null || typeof value !== "object" || Array.isArray(value)) {
     return null;
@@ -207,15 +242,19 @@ function mapEntries<T>(
  * Normalize untrusted resume JSON into `ResumeContent`.
  * Callers `JSON.parse` first; this only validates the already-parsed value.
  * Header must be an object. Section arrays may be missing (treated as []).
+ * A missing `sectionOrder` (the model never sends one) becomes the default order.
  */
 export function parseResumeContent(input: unknown): ResumeContent {
   const obj = asObject(input, "resume");
   return {
     header: parseHeader(obj.header),
+    summary: asString(obj.summary, MAX_SUMMARY),
     education: mapEntries(obj.education, parseEducation),
     experience: mapEntries(obj.experience, parseExperience),
     projects: mapEntries(obj.projects, parseProject),
     skills: mapEntries(obj.skills, parseSkill),
+    honors: mapEntries(obj.honors, parseHonor),
+    sectionOrder: normalizeSectionOrder(obj.sectionOrder),
   };
 }
 

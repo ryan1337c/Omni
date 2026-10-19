@@ -37,10 +37,12 @@ function buildQuestion(keyword: JdKeyword) {
 
 function resumeState(resume: ResumeContent) {
     return {
+        summary: resume.summary,
         education: resume.education,
         experience: resume.experience,
         projects: resume.projects,
         skills: resume.skills,
+        honors: resume.honors,
     };
 }
 

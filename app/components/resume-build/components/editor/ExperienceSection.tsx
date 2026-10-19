@@ -15,7 +15,7 @@ type ExperienceSectionProps = {
 export default function ExperienceSection({ entries, actions }: ExperienceSectionProps) {
   return (
     <ResumeSection
-      title="Experience"
+      id="experience"
       entryCount={entries.length}
       addLabel="Add experience"
       onAdd={() => actions.addEntry('experience')}

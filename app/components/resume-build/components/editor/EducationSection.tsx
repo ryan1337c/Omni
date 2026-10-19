@@ -15,7 +15,7 @@ type EducationSectionProps = {
 export default function EducationSection({ entries, actions }: EducationSectionProps) {
   return (
     <ResumeSection
-      title="Education"
+      id="education"
       entryCount={entries.length}
       addLabel="Add education"
       onAdd={() => actions.addEntry('education')}

@@ -1,11 +1,14 @@
 import { InvalidResumeJsonError } from "./parseResumeJson";
-import type {
-  EducationEntry,
-  ExperienceEntry,
-  ProjectEntry,
-  ResumeContent,
-  ResumeHeader,
-  SkillEntry,
+import {
+  SECTION_TITLES,
+  type EducationEntry,
+  type ExperienceEntry,
+  type HonorEntry,
+  type ProjectEntry,
+  type ResumeContent,
+  type ResumeHeader,
+  type SectionId,
+  type SkillEntry,
 } from "./schema";
 
 const LATEX_SPECIALS: Record<string, string> = {
@@ -228,7 +231,7 @@ function renderSkills(skills: SkillEntry[]): string[] {
     return [];
   }
   return [
-    "\\section{Technical Skills}",
+    `\\section{${SECTION_TITLES.skills}}`,
     "\\begin{itemize}[leftmargin=0.15in, label={}]",
     "\\small{\\item{",
     lines.join(" \\\\\n"),
@@ -237,9 +240,51 @@ function renderSkills(skills: SkillEntry[]): string[] {
   ];
 }
 
+function renderSummary(summary: string): string[] {
+  const text = escapeLatex(summary);
+  if (!text) {
+    return [];
+  }
+  return [
+    `\\section{${SECTION_TITLES.summary}}`,
+    "\\begin{itemize}[leftmargin=0.15in, label={}]",
+    `\\small{\\item{${text}}}`,
+    "\\end{itemize}",
+  ];
+}
+
+function renderHonor(entry: HonorEntry): string {
+  const title = escapeLatex(entry.title);
+  const core = [
+    title ? `\\textbf{${title}}` : "",
+    escapeLatex(entry.issuer),
+    escapeLatex(entry.date),
+  ].filter((part) => part.length > 0);
+  const description = escapeLatex(entry.description);
+  const line = core.join(", ");
+  if (!description) {
+    return line;
+  }
+  return line ? `${line} --- ${description}` : description;
+}
+
+function renderHonors(honors: HonorEntry[]): string[] {
+  const items = honors.map(renderHonor).filter((line) => line.length > 0);
+  if (items.length === 0) {
+    return [];
+  }
+  return [
+    `\\section{${SECTION_TITLES.honors}}`,
+    "\\resumeItemListStart",
+    ...items.map((item) => `  \\resumeItem{${item}}`),
+    "\\resumeItemListEnd",
+  ];
+}
+
 /**
  * Build the Jake `\begin{document}...\end{document}` body from resume JSON.
- * Pair with `assembleTex` and the template preamble/macros. Empty sections are skipped.
+ * Pair with `assembleTex` and the template preamble/macros. Sections follow
+ * `content.sectionOrder`, and empty sections are skipped.
  */
 export function resumeToLatexBody(content: ResumeContent): string {
   const education = content.education
@@ -266,12 +311,18 @@ export function resumeToLatexBody(content: ResumeContent): string {
     )
     .map(renderProject);
 
+  const sections: Record<SectionId, string[]> = {
+    summary: renderSummary(content.summary),
+    education: renderSection(SECTION_TITLES.education, education),
+    experience: renderSection(SECTION_TITLES.experience, experience),
+    projects: renderSection(SECTION_TITLES.projects, projects),
+    skills: renderSkills(content.skills),
+    honors: renderHonors(content.honors),
+  };
+
   const blocks = [
     renderHeader(content.header),
-    renderSection("Education", education),
-    renderSection("Experience", experience),
-    renderSection("Projects", projects),
-    renderSkills(content.skills),
+    ...content.sectionOrder.map((id) => sections[id]),
   ].filter((block) => block.length > 0);
 
   // pdflatex produces no PDF for an empty document.

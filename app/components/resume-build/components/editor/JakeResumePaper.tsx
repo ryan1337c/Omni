@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from 'react';
-import type { JdKeyword, ResumeContent } from '@/lib/resume/schema';
+import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import type { JdKeyword, ResumeContent, SectionId } from '@/lib/resume/schema';
 
 import { PAPER_HEIGHT_PX, PAPER_WIDTH_PX } from '../../constants';
 import type { ResumeEditorActions } from '../../hooks/useResumeEditor';
@@ -9,8 +9,11 @@ import { useResumeKeywordHighlights } from '../../hooks/useResumeKeywordHighligh
 import EducationSection from './EducationSection';
 import ExperienceSection from './ExperienceSection';
 import HeaderSection from './HeaderSection';
+import HonorsSection from './HonorsSection';
 import ProjectsSection from './ProjectsSection';
+import { SectionReorderProvider } from './SectionReorder';
 import SkillsSection from './SkillsSection';
+import SummarySection from './SummarySection';
 
 type JakeResumePaperProps = {
   resume: ResumeContent;
@@ -28,8 +31,32 @@ export default function JakeResumePaper({ resume, actions, highlightKeywords }: 
   const paperRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   const [paperHeight, setPaperHeight] = useState(PAPER_HEIGHT_PX);
+  const [summaryOpen, setSummaryOpen] = useState(resume.summary !== '');
 
   useResumeKeywordHighlights(paperRef, highlightKeywords, resume);
+
+  const visibleOrder = useMemo(() => {
+    const visible: Record<SectionId, boolean> = {
+      summary: summaryOpen,
+      education: resume.education.length > 0,
+      experience: resume.experience.length > 0,
+      projects: resume.projects.length > 0,
+      skills: resume.skills.length > 0,
+      honors: resume.honors.length > 0,
+    };
+    return resume.sectionOrder.filter((id) => visible[id]);
+  }, [resume, summaryOpen]);
+
+  const sections: Record<SectionId, ReactNode> = {
+    summary: (
+      <SummarySection summary={resume.summary} open={summaryOpen} onOpenChange={setSummaryOpen} actions={actions} />
+    ),
+    education: <EducationSection entries={resume.education} actions={actions} />,
+    experience: <ExperienceSection entries={resume.experience} actions={actions} />,
+    projects: <ProjectsSection entries={resume.projects} actions={actions} />,
+    skills: <SkillsSection entries={resume.skills} actions={actions} />,
+    honors: <HonorsSection entries={resume.honors} actions={actions} />,
+  };
 
   useEffect(() => {
     const frame = frameRef.current;
@@ -57,10 +84,11 @@ export default function JakeResumePaper({ resume, actions, highlightKeywords }: 
         style={{ width: PAPER_WIDTH_PX, minHeight: PAPER_HEIGHT_PX, transform: `scale(${scale})` }}
       >
         <HeaderSection header={resume.header} actions={actions} />
-        <EducationSection entries={resume.education} actions={actions} />
-        <ExperienceSection entries={resume.experience} actions={actions} />
-        <ProjectsSection entries={resume.projects} actions={actions} />
-        <SkillsSection entries={resume.skills} actions={actions} />
+        <SectionReorderProvider visibleOrder={visibleOrder} onMove={actions.moveSection}>
+          {resume.sectionOrder.map((id) => (
+            <Fragment key={id}>{sections[id]}</Fragment>
+          ))}
+        </SectionReorderProvider>
 
         {/* Jake's format targets one page, so flag where the PDF would break onto page 2. */}
         {overflowsPage && (

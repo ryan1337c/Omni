@@ -15,7 +15,7 @@ type ProjectsSectionProps = {
 export default function ProjectsSection({ entries, actions }: ProjectsSectionProps) {
   return (
     <ResumeSection
-      title="Projects"
+      id="projects"
       entryCount={entries.length}
       addLabel="Add project"
       onAdd={() => actions.addEntry('projects')}

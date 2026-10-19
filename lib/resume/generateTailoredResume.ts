@@ -35,7 +35,10 @@ function strictObject(properties: Record<string, unknown>) {
   };
 }
 
-/** JSON schema mirroring `TailoredResumeResponse` in `schema.ts`. */
+/**
+ * JSON schema mirroring `TailoredResumeResponse` in `schema.ts`. `sectionOrder` is left out:
+ * the model doesn't choose it, and `parseResumeContent` fills in the default.
+ */
 export const TAILORED_RESUME_JSON_SCHEMA = strictObject({
   resume: strictObject({
     header: strictObject({
@@ -45,6 +48,7 @@ export const TAILORED_RESUME_JSON_SCHEMA = strictObject({
       linkedin: stringField,
       github: stringField,
     }),
+    summary: stringField,
     education: {
       type: "array",
       items: strictObject({
@@ -81,6 +85,15 @@ export const TAILORED_RESUME_JSON_SCHEMA = strictObject({
         items: stringField,
       }),
     },
+    honors: {
+      type: "array",
+      items: strictObject({
+        title: stringField,
+        issuer: stringField,
+        date: stringField,
+        description: stringField,
+      }),
+    },
   }),
   keywords: {
     type: "array",
@@ -107,16 +120,20 @@ export function buildTailoredResumeSystemPrompt(): string {
     "## Output format",
     "- Plain text only in every field. No LaTeX, Markdown, or HTML, and do not escape special characters; the server handles escaping.",
     "- header: name, phone, email, linkedin, and github exactly as they appear in the source. Use an empty string for anything missing.",
+    "- summary: fill this only if the source has a summary-like paragraph near the top, whether it is labeled Summary, Profile, Objective, About, or not labeled at all. A list of skills or a lone headline such as \"Software Engineer\" does not count. Otherwise use an empty string.",
     "- education: one entry per school, with the degree line (including minors) in `degree`. Details listed under the school (GPA, relevant coursework, honours, awards) go in `bullets`, one bullet per line in the source, not in `degree`. Use an empty array if the source has none.",
     "- experience: one entry per role. `title` is the job title and `company` is the employer.",
     "- projects: `technologies` is a comma-separated list of the tools used.",
     "- skills: one entry per category, with `items` as a comma-separated list.",
+    "- honors: one entry per license, certification, or award in the source. `title` is the official title, `issuer` is the granting organization or institution, and `date` is the date or year received. Honors listed under a school stay in that school's education bullets and are not repeated here.",
     "- Write date ranges like \"Aug. 2018 -- May 2021\" or \"June 2020 -- Present\".",
     "- Use empty arrays for sections the source resume does not have.",
     "",
     "## Resume rules",
     "- Tailor experience and project bullets to the important keywords in the job description.",
     "- Format every experience and project bullet as: Action Verb + What You Built/Changed + Tech Stack/Tools + Quantifiable Impact.",
+    "- Write the summary as one paragraph of 2 to 4 sentences following Who, What, Value: who the candidate is (role, experience, specialty), what they have done that matters for this job, and the value they would bring to this employer. You may expand a one-line source summary using facts found elsewhere in the source, but never invent any.",
+    "- For each honor, set `description` to one short clause explaining why it was won or the scale of the competition, only when the source gives that context. Otherwise use an empty string. Never invent honors, issuers, or dates.",
     "- Do not invent jobs, employers, or degrees.",
     "- Do not add new categories in the skills section. Use only the categories provided in the source resume.",
     "- Only add skills in a category if it can be implied from the source resume.",

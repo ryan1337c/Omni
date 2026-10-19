@@ -34,12 +34,45 @@ export type ResumeHeader = {
     items: string;
   };
   
+  /** One line in Licenses, Certifications, and Awards. `description` is "" when the source gives no context. */
+  export type HonorEntry = {
+    title: string;
+    issuer: string;
+    date: string;
+    description: string;
+  };
+
+  export const DEFAULT_SECTION_ORDER = [
+    "summary",
+    "education",
+    "experience",
+    "projects",
+    "skills",
+    "honors",
+  ] as const;
+
+  export type SectionId = (typeof DEFAULT_SECTION_ORDER)[number];
+
+  export const SECTION_TITLES: Record<SectionId, string> = {
+    summary: "Professional Summary",
+    education: "Education",
+    experience: "Experience",
+    projects: "Projects",
+    skills: "Technical Skills",
+    honors: "Licenses, Certifications, and Awards",
+  };
+
   export type ResumeContent = {
     header: ResumeHeader;
+    /** "" when the source resume has no summary to tailor. */
+    summary: string;
     education: EducationEntry[];
     experience: ExperienceEntry[];
     projects: ProjectEntry[];
     skills: SkillEntry[];
+    honors: HonorEntry[];
+    /** Every `SectionId` exactly once. Empty sections keep their slot but are not shown. */
+    sectionOrder: SectionId[];
   };
   
   export type KeywordCategory = "hard" | "soft" | "other";

@@ -61,13 +61,14 @@ export function normalize(text: string): string {
 }
 
 export function resumeToSearchText(content: ResumeContent): string {
-  const { header, education, experience, projects, skills } = content;
+  const { header, summary, education, experience, projects, skills, honors } = content;
   const parts: string[] = [
     header.name,
     header.phone,
     header.email,
     header.linkedin,
     header.github,
+    summary,
   ];
 
   for (const entry of education) {
@@ -81,6 +82,9 @@ export function resumeToSearchText(content: ResumeContent): string {
   }
   for (const entry of skills) {
     parts.push(entry.category, entry.items);
+  }
+  for (const entry of honors) {
+    parts.push(entry.title, entry.issuer, entry.date, entry.description);
   }
 
   return normalize(parts.filter(Boolean).join(" \n "));
