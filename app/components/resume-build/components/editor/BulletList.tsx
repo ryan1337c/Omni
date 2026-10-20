@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from 'react';
-import { FiTrash2 } from 'react-icons/fi';
+import { FiX } from 'react-icons/fi';
 import { MAX_BULLETS_PER_ENTRY } from '@/lib/resume/parseResumeJson';
 
 import type { BulletSection, ResumeEditorActions } from '../../hooks/useResumeEditor';
@@ -58,7 +58,7 @@ export default function BulletList({ section, entryIndex, bullets, actions }: Bu
           <div className="absolute left-full top-0 ml-2 opacity-0 transition-opacity group-hover/bullet:opacity-100 group-focus-within/bullet:opacity-100">
             <ControlButton
               label="Remove bullet"
-              icon={FiTrash2}
+              icon={FiX}
               tone="danger"
               onClick={() => actions.removeBullet(section, entryIndex, bulletIndex)}
             />

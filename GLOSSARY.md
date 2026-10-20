@@ -17,6 +17,13 @@ One titled block of a Tailored Resume. The sections are Professional Summary, Ed
 **Section Order**:
 The sequence in which Sections appear. It starts from a fixed default, and the user can change it.
 
+**Entry**:
+One item within a Section, such as a single job, school, project, skill category, or Honor.
+
+**Bullet**:
+One line of accomplishment or detail listed under an Entry.
+_Avoid_: Point, item
+
 **Professional Summary**:
 A 2–4 sentence paragraph at the top of the resume that follows the Who, What, Value formula. It appears only when the Source Resume has a summary-like paragraph to tailor.
 _Avoid_: Objective, profile, about me

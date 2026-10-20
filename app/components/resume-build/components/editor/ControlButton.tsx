@@ -1,8 +1,9 @@
-import type { IconType } from 'react-icons';
+import type { ComponentType, SVGProps } from 'react';
 
 type ControlButtonProps = {
   label: string;
-  icon: IconType;
+  /** A react-icons or lucide-react icon. */
+  icon: ComponentType<SVGProps<SVGSVGElement>>;
   onClick: () => void;
   tone?: 'default' | 'danger';
 };

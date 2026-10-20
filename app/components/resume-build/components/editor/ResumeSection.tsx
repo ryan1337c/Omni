@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, type ReactNode } from 'react';
+import { GripVertical, ListPlus } from 'lucide-react';
 import { FiArrowDown, FiArrowUp, FiPlus, FiTrash2 } from 'react-icons/fi';
 import { MAX_SECTION_ENTRIES } from '@/lib/resume/parseResumeJson';
 import { SECTION_TITLES, type SectionId } from '@/lib/resume/schema';
@@ -24,7 +25,7 @@ type ResumeSectionProps = {
 /**
  * A Jake `\section`: small-caps title over a full-width rule, then the entry list indented 0.15in.
  * Empty sections are skipped in the PDF, so here they collapse to an "add" button shown on paper hover.
- * The title is the drag handle for reordering; arrows beside it move the section one step.
+ * The title and the grip at the end of its row are drag handles; the arrows beside the grip move the section one step.
  */
 export function ResumeSection({
   id,
@@ -63,8 +64,6 @@ export function ResumeSection({
     ) : null;
   }
 
-  const hasControls = canAdd || reorder?.moveUp || reorder?.moveDown;
-
   return (
     <section
       {...reorder?.dropProps}
@@ -88,19 +87,38 @@ export function ResumeSection({
         >
           {title}
         </h2>
-        {hasControls && (
-          <div className="absolute left-full top-0 ml-2 flex flex-col gap-0.5 opacity-0 transition-opacity group-hover/section:opacity-100 group-focus-within/section:opacity-100">
-            {reorder?.moveUp && <ControlButton label={`Move ${title} up`} icon={FiArrowUp} onClick={reorder.moveUp} />}
-            {reorder?.moveDown && (
+        {/* Inside the page, at the empty right end of the title row: the margins belong to entry and bullet controls. */}
+        {reorder && (reorder.moveUp || reorder.moveDown) && (
+          <div className="absolute bottom-[2pt] right-0 flex gap-0.5 opacity-0 transition-opacity group-hover/section:opacity-100 group-focus-within/section:opacity-100">
+            <span
+              {...reorder.handleProps}
+              aria-hidden
+              title="Drag to reorder"
+              className="flex h-5 w-5 cursor-grab items-center justify-center rounded bg-white text-slate-400 shadow-sm ring-1 ring-slate-200 hover:text-violet-600 active:cursor-grabbing"
+            >
+              <GripVertical className="h-3 w-3" />
+            </span>
+            {reorder.moveUp && <ControlButton label={`Move ${title} up`} icon={FiArrowUp} onClick={reorder.moveUp} />}
+            {reorder.moveDown && (
               <ControlButton label={`Move ${title} down`} icon={FiArrowDown} onClick={reorder.moveDown} />
             )}
-            {canAdd && <ControlButton label={addLabel} icon={FiPlus} onClick={onAdd} />}
           </div>
         )}
       </div>
       <div ref={listRef} className={`ml-[0.15in] mt-[3pt] ${dense ? '' : 'space-y-[4pt]'}`}>
         {children}
       </div>
+      {/* Absolutely placed so the hidden button adds no height the PDF wouldn't have. It hangs over the
+          next section's title row, so it must not take clicks while hidden. */}
+      {canAdd && (
+        <button
+          type="button"
+          onClick={onAdd}
+          className="pointer-events-none absolute right-0 top-full z-10 flex items-center gap-1 rounded border border-dashed border-slate-300 bg-white px-1.5 py-px font-sans text-[10px] text-slate-400 opacity-0 transition hover:border-violet-400 hover:text-violet-600 focus-visible:pointer-events-auto focus-visible:opacity-100 group-hover/section:pointer-events-auto group-hover/section:opacity-100 group-focus-within/section:pointer-events-auto group-focus-within/section:opacity-100"
+        >
+          <FiPlus className="h-2.5 w-2.5" aria-hidden /> {addLabel}
+        </button>
+      )}
     </section>
   );
 }
@@ -120,7 +138,7 @@ export function ResumeEntry({ removeLabel, onRemove, onAddBullet, children }: Re
       {children}
       <div className="absolute right-full top-0 mr-[calc(0.15in+0.25rem)] flex flex-col gap-0.5 opacity-0 transition-opacity group-hover/entry:opacity-100 group-focus-within/entry:opacity-100">
         <ControlButton label={removeLabel} icon={FiTrash2} tone="danger" onClick={onRemove} />
-        {onAddBullet && <ControlButton label="Add bullet" icon={FiPlus} onClick={onAddBullet} />}
+        {onAddBullet && <ControlButton label="Add bullet" icon={ListPlus} onClick={onAddBullet} />}
       </div>
     </div>
   );
