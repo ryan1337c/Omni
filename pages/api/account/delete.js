@@ -1,5 +1,5 @@
 import { stripe } from "@/lib/stripe";
-import { supabaseServerClient } from "@/pages/api/supaBaseServer";
+import { supabaseServerClient } from "@/lib/supaBaseServer";
 
 const CANCELLABLE_STATUSES = ["active", "trialing", "past_due"];
 

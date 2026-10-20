@@ -1,6 +1,6 @@
 import type { NextApiRequest } from "next";
 import type { User } from "@supabase/supabase-js";
-import { supabaseServerClient } from "@/pages/api/supaBaseServer";
+import { supabaseServerClient } from "@/lib/supaBaseServer";
 
 const TIER_RANK = {
   free: 0,

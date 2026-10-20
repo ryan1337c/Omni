@@ -1,4 +1,4 @@
-import { supabaseServerClient } from "@/pages/api/supaBaseServer";
+import { supabaseServerClient } from "@/lib/supaBaseServer";
 
 export interface ICreditLedger {
   consume(

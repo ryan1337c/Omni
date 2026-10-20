@@ -10,7 +10,7 @@ type AppearanceMenuProps = {
   isOpen: boolean;
   setIsOpen: Dispatch<SetStateAction<boolean>>;
   isMounted: boolean;
-  menuRef: RefObject<HTMLDivElement>;
+  menuRef: RefObject<HTMLDivElement | null>;
 };
 
 export default function AppearanceMenu({

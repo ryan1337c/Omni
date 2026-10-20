@@ -7,7 +7,7 @@ import type { AccountDialog } from "../types";
 type UseSettingsDismissOptions = {
   isOpen: boolean;
   onClose: () => void;
-  themeMenuRef: RefObject<HTMLDivElement>;
+  themeMenuRef: RefObject<HTMLDivElement | null>;
   isThemeMenuOpen: boolean;
   setIsThemeMenuOpen: (open: boolean) => void;
   isUpgradeOpen: boolean;

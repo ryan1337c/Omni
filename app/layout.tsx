@@ -20,7 +20,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.className} bg-landingPageLight text-black dark:text-white dark:bg-landingPage font-custom-font transition-colors duration-300`}>
+      <body className={`${inter.className} bg-landingPageLight text-black dark:text-white dark:bg-landingPage transition-colors duration-300`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

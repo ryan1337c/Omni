@@ -131,8 +131,8 @@ export function ChatComposer({
             disabled={isProcessing}
             className="flex-1 mt-1 min-h-[20px] max-h-[150px] resize-none bg-transparent border-none outline-none overflow-y-auto pt-1 text-base break-words whitespace-normal text-black dark:text-textDark placeholder:text-gray-500 dark:placeholder:text-gray-400"
             value={userInput}
-            onInput={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
-              setUserInput(e.target.value);
+            onInput={(e: React.FormEvent<HTMLTextAreaElement>) => {
+              setUserInput(e.currentTarget.value);
               handleInput();
             }}
             onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) =>
