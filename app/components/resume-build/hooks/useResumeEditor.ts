@@ -60,7 +60,7 @@ function updateEntry<S extends EntrySection>(
   return { ...state, [section]: entries.map((entry, i) => (i === index ? update(entry) : entry)) };
 }
 
-function resumeEditorReducer(state: ResumeContent, action: ResumeEditorAction): ResumeContent {
+export function resumeEditorReducer(state: ResumeContent, action: ResumeEditorAction): ResumeContent {
   switch (action.type) {
     case "updateField": {
       const { path, value } = action;
