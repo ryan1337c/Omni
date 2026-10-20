@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import type { JdKeyword, ResumeContent, SectionId } from '@/lib/resume/schema';
+import { DEFAULT_SECTION_ORDER, type JdKeyword, type ResumeContent, type SectionId } from '@/lib/resume/schema';
 
 import { PAPER_HEIGHT_PX, PAPER_WIDTH_PX } from '../../constants';
 import type { ResumeEditorActions } from '../../hooks/useResumeEditor';
@@ -47,6 +47,12 @@ export default function JakeResumePaper({ resume, actions, highlightKeywords }: 
     return resume.sectionOrder.filter((id) => visible[id]);
   }, [resume, summaryOpen]);
 
+  // Empty sections show only their "add" button, so they gather at the bottom in the default order.
+  const renderOrder = useMemo(
+    () => [...visibleOrder, ...DEFAULT_SECTION_ORDER.filter((id) => !visibleOrder.includes(id))],
+    [visibleOrder],
+  );
+
   const sections: Record<SectionId, ReactNode> = {
     summary: (
       <SummarySection summary={resume.summary} open={summaryOpen} onOpenChange={setSummaryOpen} actions={actions} />
@@ -85,7 +91,7 @@ export default function JakeResumePaper({ resume, actions, highlightKeywords }: 
       >
         <HeaderSection header={resume.header} actions={actions} />
         <SectionReorderProvider visibleOrder={visibleOrder} onMove={actions.moveSection}>
-          {resume.sectionOrder.map((id) => (
+          {renderOrder.map((id) => (
             <Fragment key={id}>{sections[id]}</Fragment>
           ))}
         </SectionReorderProvider>

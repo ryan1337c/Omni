@@ -86,6 +86,16 @@ export function ResumeSection({
           }`}
         >
           {title}
+          {/* Smaller than the title's line box, so the hidden button adds no height the PDF wouldn't have. */}
+          {canAdd && (
+            <button
+              type="button"
+              onClick={onAdd}
+              className="pointer-events-none ml-2 inline-flex items-center gap-1 rounded border border-dashed border-slate-300 bg-white px-1.5 py-px align-middle font-sans text-[10px] leading-none text-slate-400 opacity-0 transition [font-variant-caps:normal] hover:border-violet-400 hover:text-violet-600 focus-visible:pointer-events-auto focus-visible:opacity-100 group-hover/section:pointer-events-auto group-hover/section:opacity-100 group-focus-within/section:pointer-events-auto group-focus-within/section:opacity-100"
+            >
+              <FiPlus className="h-2.5 w-2.5" aria-hidden /> {addLabel}
+            </button>
+          )}
         </h2>
         {/* Inside the page, at the empty right end of the title row: the margins belong to entry and bullet controls. */}
         {reorder && (reorder.moveUp || reorder.moveDown) && (
@@ -108,17 +118,6 @@ export function ResumeSection({
       <div ref={listRef} className={`ml-[0.15in] mt-[3pt] ${dense ? '' : 'space-y-[4pt]'}`}>
         {children}
       </div>
-      {/* Absolutely placed so the hidden button adds no height the PDF wouldn't have. It hangs over the
-          next section's title row, so it must not take clicks while hidden. */}
-      {canAdd && (
-        <button
-          type="button"
-          onClick={onAdd}
-          className="pointer-events-none absolute right-0 top-full z-10 flex items-center gap-1 rounded border border-dashed border-slate-300 bg-white px-1.5 py-px font-sans text-[10px] text-slate-400 opacity-0 transition hover:border-violet-400 hover:text-violet-600 focus-visible:pointer-events-auto focus-visible:opacity-100 group-hover/section:pointer-events-auto group-hover/section:opacity-100 group-focus-within/section:pointer-events-auto group-focus-within/section:opacity-100"
-        >
-          <FiPlus className="h-2.5 w-2.5" aria-hidden /> {addLabel}
-        </button>
-      )}
     </section>
   );
 }
