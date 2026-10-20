@@ -1,5 +1,5 @@
 import { stripe } from "@/lib/stripe";
-import { supabaseServerClient } from "@/pages/api/supaBaseServer";
+import { supabaseServerClient } from "@/lib/supaBaseServer";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {

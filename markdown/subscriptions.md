@@ -289,7 +289,7 @@ REVOKE ALL ON FUNCTION public.refund_credits(uuid, text, integer) FROM anon, aut
 GRANT EXECUTE ON FUNCTION public.refund_credits(uuid, text, integer) TO service_role;
 ```
 
-**Call from the server** (service-role client in `pages/api/supaBaseServer.ts`):
+**Call from the server** (service-role client in `lib/supaBaseServer.ts`):
 
 ```ts
 const { data: creditsUsed, error } = await supabaseServerClient.rpc(

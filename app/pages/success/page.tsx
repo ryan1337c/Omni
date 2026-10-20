@@ -5,15 +5,15 @@ import { redirect } from "next/navigation";
 import { stripe } from "@/lib/stripe";
 
 type SuccessPageProps = {
-  searchParams: {
+  searchParams: Promise<{
     session_id?: string;
-  };
+  }>;
 };
 
 export default async function SuccessPage({
   searchParams,
 }: SuccessPageProps) {
-  const sessionId = searchParams.session_id;
+  const { session_id: sessionId } = await searchParams;
 
   if (!sessionId) {
     redirect("/pages/pricing");
