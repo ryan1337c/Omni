@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "jev:probe": "vitest run --config vitest.probe.config.mts",
     "check": "npm run lint && npm run typecheck && npm run test"
   },
   "dependencies": {

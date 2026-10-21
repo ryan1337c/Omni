@@ -1,0 +1,58 @@
+{
+  "keywords": [
+    { "term": "Python", "aliases": [], "category": "hard", "importance": "required" },
+    { "term": "AWS", "aliases": ["Amazon Web Services"], "category": "hard", "importance": "required" },
+    { "term": "Kubernetes", "aliases": ["k8s"], "category": "hard", "importance": "preferred" },
+    { "term": "PostgreSQL", "aliases": ["Postgres"], "category": "hard", "importance": "required" },
+    { "term": "React", "aliases": [], "category": "hard", "importance": "preferred" },
+    { "term": "Terraform", "aliases": [], "category": "hard", "importance": "preferred" },
+    { "term": "Mentoring", "aliases": ["mentored"], "category": "soft", "importance": "preferred" }
+  ],
+  "resume": {
+    "header": { "name": "Sample Candidate", "phone": "", "email": "", "linkedin": "", "github": "" },
+    "summary": "Backend engineer focused on Python services and cloud infrastructure.",
+    "education": [
+      {
+        "institution": "State University",
+        "location": "",
+        "degree": "BS Computer Science",
+        "dates": "Sept 2014 – May 2018",
+        "bullets": ["Built a React to-do app in a web development course"]
+      }
+    ],
+    "experience": [
+      {
+        "title": "Senior Software Engineer",
+        "company": "Example Corp",
+        "location": "Remote",
+        "dates": "Jan 2022 – Present",
+        "bullets": [
+          "Designed and shipped 14 Python microservices on AWS ECS serving 8M daily requests at p99 under 120ms",
+          "Cut Postgres query latency 60% by redesigning indexes and partitioning hot tables",
+          "Mentored three junior engineers through code review and pairing"
+        ]
+      },
+      {
+        "title": "Software Engineer",
+        "company": "Old Startup",
+        "location": "Boston, MA",
+        "dates": "Jun 2018 -- Dec 2021",
+        "bullets": ["Maintained internal tooling and deployment scripts"]
+      }
+    ],
+    "projects": [
+      {
+        "name": "Homelab",
+        "technologies": "Kubernetes, Terraform",
+        "dates": "2023 - Ongoing",
+        "bullets": ["Followed a tutorial to run a three-node k8s cluster"]
+      }
+    ],
+    "skills": [
+      { "category": "Languages", "items": "Python, SQL, TypeScript" },
+      { "category": "Cloud", "items": "AWS (ECS, Lambda, RDS), Terraform" }
+    ],
+    "honors": [],
+    "sectionOrder": ["summary", "education", "experience", "projects", "skills", "honors"]
+  }
+}

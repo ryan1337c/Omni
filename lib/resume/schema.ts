@@ -94,6 +94,11 @@ export type ResumeHeader = {
    * `levels[i]` is 0 (Absent) or the 1–4 Depth Level for `keywords[i]` (fractions kept).
    * `scoredBy` records the source so callers can tell a Jev pass from the
    * fallback (every Explicit Skill Mentioned) without inspecting the numbers.
+   *
+   * Produced by `jevScore.ts`; aggregated by `keywordMatch.ts` on the server and again in
+   * the browser by `useKeywordScoring.ts`; validated by `parseKeywordScoring` in
+   * `resume-build/api.ts`; shown by `rubricBands.ts`, `KeywordTag.tsx`, and `AnalysisPanel.tsx`.
+   * A change to the level scale touches all of them.
    */
   export type KeywordScoring = {
     levels: number[];
