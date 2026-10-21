@@ -6,9 +6,10 @@ export type CategoryScore = {
 };
 
 /**
- * One keyword after rubric scoring.
- * `weight` is the 0–1 credit for that level (importance is applied later).
- * `matched` is true at level 2+ (listed or better), including implicit Jev hits.
+ * One keyword after scoring.
+ * `level` is 0 (Absent) or the 1–4 Depth Level.
+ * `weight` is the 0–1 credit after Placement (importance is applied later).
+ * `matched` is true only for Explicit Skills.
  */
 export type KeywordMatchResult = {
   keyword: JdKeyword;
@@ -293,17 +294,134 @@ export function getMatchLabel(score: number): MatchLabel {
 /**
  * Scoring is split so each piece can change independently (SRP):
  * - `isMatched` / `findKeywordSpans` — literal text for the highlighter.
- * - `estimateKeywordLevels` — string-match fallback (listed → 2, absent → 1).
- * - `scoreKeywordLevels` — pure aggregation over levels from any source (DIP).
+ * - `estimateKeywordLevels` — fallback Depth Levels (Explicit → Mentioned, else Absent).
+ * - `scoreKeywordLevels` — Placement, Recency, Duration, and Dual Placement over
+ *   Depth Levels from any source (DIP).
  */
 
-const RUBRIC_MIN_LEVEL = 1;
-const RUBRIC_MAX_LEVEL = 4;
-/** Four rubric steps → three intervals, so levels map to 0 / ~33 / ~66 / 100%. */
-const LEVEL_WEIGHT_SPAN = RUBRIC_MAX_LEVEL - RUBRIC_MIN_LEVEL;
-const MATCHED_LEVEL_THRESHOLD = 2;
-const FALLBACK_ABSENT_LEVEL = 1;
-const FALLBACK_LISTED_LEVEL = 2;
+/** Level reported for a Keyword that is not an Explicit Skill. */
+export const ABSENT_LEVEL = 0;
+/** Depth Level `n` is `DEPTH_LEVEL_NAMES[n - 1]`. */
+export const DEPTH_LEVEL_NAMES = [
+  "Mentioned",
+  "Familiarity",
+  "Applied / Production",
+  "Advanced / Specialized",
+] as const;
+const MENTIONED_LEVEL = 1;
+const MIN_DEPTH_LEVEL = MENTIONED_LEVEL;
+export const MAX_DEPTH_LEVEL = DEPTH_LEVEL_NAMES.length;
+const SKILLS_LISTING_WEIGHT = 0.4;
+const DUAL_PLACEMENT_BONUS = 0.1;
+
+const CURRENT_ROLE_WEIGHT = 1;
+const MIN_WORK_HISTORY_WEIGHT = 0.5;
+const PROJECT_MAX_WEIGHT = 0.8;
+const CURRENT_END = /^(present|current|now|ongoing|today)$/i;
+
+/** One Experience or Projects Entry the Keyword appears in. */
+type WorkHistoryPlacement = { dates: string; maxWeight: number };
+
+type Placements = {
+  workHistory: WorkHistoryPlacement[];
+  skillsListing: boolean;
+};
+
+function anyMatch(keyword: JdKeyword, texts: string[]): boolean {
+  return isMatched(keyword, normalize(texts.filter(Boolean).join(" \n ")));
+}
+
+function findPlacements(keyword: JdKeyword, resume: ResumeContent): Placements {
+  const { summary, education, experience, projects, skills, honors } = resume;
+  return {
+    workHistory: [
+      ...experience
+        .filter((entry) => anyMatch(keyword, [entry.title, ...entry.bullets]))
+        .map((entry) => ({ dates: entry.dates, maxWeight: CURRENT_ROLE_WEIGHT })),
+      ...projects
+        .filter((entry) => anyMatch(keyword, [entry.name, entry.technologies, ...entry.bullets]))
+        .map((entry) => ({ dates: entry.dates, maxWeight: PROJECT_MAX_WEIGHT })),
+    ],
+    skillsListing: anyMatch(keyword, [
+      summary,
+      ...skills.flatMap((entry) => [entry.category, entry.items]),
+      ...education.flatMap((entry) => [entry.degree, ...entry.bullets]),
+      ...honors.flatMap((entry) => [entry.title, entry.issuer, entry.description]),
+    ]),
+  };
+}
+
+function hasAnyPlacement(placements: Placements): boolean {
+  return placements.workHistory.length > 0 || placements.skillsListing;
+}
+
+const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+const FULL_RECENCY = 1;
+const RECENCY_DECAY_PER_YEAR = 0.1;
+
+/** Months since year 0, so differences are plain subtraction. */
+function toMonthIndex(date: Date): number {
+  return date.getUTCFullYear() * 12 + date.getUTCMonth();
+}
+
+/** "Oct 2023", "October 2023", "10/2023", or "2023" (read as `bareYearMonth`). */
+function parseMonthIndex(text: string, bareYearMonth: number): number | null {
+  const named = /^([a-z]+)\.?\s+(\d{4})$/i.exec(text);
+  if (named) {
+    const month = MONTHS.indexOf(named[1].slice(0, 3).toLowerCase());
+    return month === -1 ? null : Number(named[2]) * 12 + month;
+  }
+  const numeric = /^(\d{1,2})\/(\d{4})$/.exec(text);
+  if (numeric) {
+    const month = Number(numeric[1]) - 1;
+    return month < 0 || month > 11 ? null : Number(numeric[2]) * 12 + month;
+  }
+  const year = /^(\d{4})$/.exec(text);
+  return year ? Number(year[1]) * 12 + bareYearMonth : null;
+}
+
+const SHORT_DURATION_FACTOR = 0.8;
+const FULL_DURATION_START_YEARS = 1;
+const FULL_DURATION_YEARS = 3;
+/** "start - end", "start -- end", "start – end", "2019-2021", or "start to end". The end may be blank. */
+const DATE_RANGE = /^(.*?)(?:\s*[–—−]\s*|\s+--?\s*|(?<=\d{4})-|\s+to\s+)(.*)$/i;
+
+type DateRange = { startMonth: number; endMonth: number; isCurrent: boolean };
+
+function parseDateRange(dates: string, now: Date): DateRange | null {
+  const range = DATE_RANGE.exec(dates.trim());
+  if (!range) return null;
+  const startMonth = parseMonthIndex(range[1].trim(), 0);
+  if (startMonth === null) return null;
+  const endText = range[2].trim();
+  if (endText === "" || CURRENT_END.test(endText)) {
+    return { startMonth, endMonth: toMonthIndex(now), isCurrent: true };
+  }
+  const endMonth = parseMonthIndex(endText, 11);
+  return endMonth === null ? null : { startMonth, endMonth, isCurrent: false };
+}
+
+function durationFactor(years: number): number {
+  const progress =
+    (years - FULL_DURATION_START_YEARS) / (FULL_DURATION_YEARS - FULL_DURATION_START_YEARS);
+  return SHORT_DURATION_FACTOR + (1 - SHORT_DURATION_FACTOR) * Math.min(1, Math.max(0, progress));
+}
+
+function workHistoryWeight({ dates, maxWeight }: WorkHistoryPlacement, now: Date): number {
+  return Math.min(maxWeight, datedWeight(dates, now));
+}
+
+/** Unreadable dates get the minimum, so a Bullet always outweighs a Skills Listing. */
+function datedWeight(dates: string, now: Date): number {
+  const range = parseDateRange(dates, now);
+  if (!range) return MIN_WORK_HISTORY_WEIGHT;
+  const yearsSinceEnd = range.isCurrent
+    ? 0
+    : Math.max(0, toMonthIndex(now) - range.endMonth) / 12;
+  const recency = FULL_RECENCY - RECENCY_DECAY_PER_YEAR * yearsSinceEnd;
+  const years = Math.max(0, range.endMonth - range.startMonth) / 12;
+  return Math.max(MIN_WORK_HISTORY_WEIGHT, recency * durationFactor(years));
+}
 
 function emptyCategoryScores(): Record<KeywordCategory, CategoryScore> {
   return {
@@ -317,50 +435,81 @@ function resolveCategory(category: JdKeyword["category"]): KeywordCategory {
   return KEYWORD_CATEGORIES.includes(category) ? category : "other";
 }
 
-function clampLevel(level: number): number {
-  if (!Number.isFinite(level)) return RUBRIC_MIN_LEVEL;
-  return Math.min(RUBRIC_MAX_LEVEL, Math.max(RUBRIC_MIN_LEVEL, level));
+/** An Explicit Skill is never below Mentioned, whatever level the pass reported. */
+function clampDepthLevel(level: number): number {
+  if (!Number.isFinite(level)) return MIN_DEPTH_LEVEL;
+  return Math.min(MAX_DEPTH_LEVEL, Math.max(MIN_DEPTH_LEVEL, level));
 }
 
-/** Maps a 1–4 rubric level onto credit: 0, 1/3, 2/3, or 1. Fractions are kept. */
-export function levelToWeight(level: number): number {
-  return (clampLevel(level) - RUBRIC_MIN_LEVEL) / LEVEL_WEIGHT_SPAN;
+/** Depth Level 1–4 → 0.25 / 0.5 / 0.75 / 1. Fractions are kept. */
+export function depthLevelToWeight(level: number): number {
+  return clampDepthLevel(level) / MAX_DEPTH_LEVEL;
 }
 
-/** Level 2+ (listed / applied / core) counts as present, including implicit Jev hits. */
-export function isLevelMatched(level: number): boolean {
-  return Math.round(clampLevel(level)) >= MATCHED_LEVEL_THRESHOLD;
+function placementWeight(placements: Placements, now: Date): number {
+  return Math.max(
+    placements.skillsListing ? SKILLS_LISTING_WEIGHT : 0,
+    ...placements.workHistory.map((placement) => workHistoryWeight(placement, now)),
+  );
 }
 
-function toKeywordMatchResult(keyword: JdKeyword, level: number): KeywordMatchResult {
-  const clamped = clampLevel(level);
+function toKeywordMatchResult(
+  keyword: JdKeyword,
+  level: number,
+  resume: ResumeContent,
+  now: Date,
+): KeywordMatchResult {
+  const placements = findPlacements(keyword, resume);
+  if (!hasAnyPlacement(placements)) {
+    return { keyword, level: ABSENT_LEVEL, weight: 0, matched: false };
+  }
+  const depth = clampDepthLevel(level);
+  const isDualPlacement = placements.workHistory.length > 0 && placements.skillsListing;
+  const credit =
+    depthLevelToWeight(depth) * placementWeight(placements, now) +
+    (isDualPlacement ? DUAL_PLACEMENT_BONUS : 0);
   return {
     keyword,
-    level: clamped,
-    weight: levelToWeight(clamped),
-    matched: isLevelMatched(clamped),
+    level: depth,
+    weight: Math.min(1, credit),
+    matched: true,
   };
 }
 
+export function isExplicitSkill(keyword: JdKeyword, resume: ResumeContent): boolean {
+  return hasAnyPlacement(findPlacements(keyword, resume));
+}
+
 /**
- * String-match fallback when Jev is unavailable.
- * A literal hit is treated as listed (level 2), never applied/core — those need context.
+ * Fallback when Jev is unavailable: every Explicit Skill is Mentioned, everything else Absent.
+ * Placement, Recency, and Duration still apply in `scoreKeywordLevels`.
  */
 export function estimateKeywordLevels(
   keywords: JdKeyword[],
   content: ResumeContent,
 ): number[] {
-  const searchText = resumeToSearchText(content);
   return keywords.map((keyword) =>
-    isMatched(keyword, searchText) ? FALLBACK_LISTED_LEVEL : FALLBACK_ABSENT_LEVEL,
+    isExplicitSkill(keyword, content) ? MENTIONED_LEVEL : ABSENT_LEVEL,
   );
 }
 
+export type ScoreKeywordLevelsOptions = {
+  /** Reference date for Recency and for "Present" end dates. */
+  now?: Date;
+};
+
 /**
- * Weighted resume score from rubric levels aligned with `keywords` by index.
+ * Weighted resume score from Depth Levels aligned with `keywords` by index.
+ * Per Keyword: depth weight × best Placement weight, + Dual Placement bonus, capped at 1.
  * Open for new scorers (Jev, fallback, tests): pass levels in, do not change this function.
  */
-export function scoreKeywordLevels(keywords: JdKeyword[], levels: number[]): ResumeScore {
+export function scoreKeywordLevels(
+  keywords: JdKeyword[],
+  levels: number[],
+  resume: ResumeContent,
+  options: ScoreKeywordLevelsOptions = {},
+): ResumeScore {
+  const now = options.now ?? new Date();
   if (keywords.length !== levels.length) {
     throw new Error(
       `scoreKeywordLevels: expected ${keywords.length} levels, received ${levels.length}`,
@@ -371,13 +520,12 @@ export function scoreKeywordLevels(keywords: JdKeyword[], levels: number[]): Res
   const weighted = emptyCategoryScores();
 
   const results = keywords.map((keyword, index) => {
-    const result = toKeywordMatchResult(keyword, levels[index]);
+    const result = toKeywordMatchResult(keyword, levels[index], resume, now);
     const importance = IMPORTANCE_WEIGHTS[keyword.importance] ?? IMPORTANCE_WEIGHTS.preferred;
     const bucket = resolveCategory(keyword.category);
 
     categories[bucket].total += 1;
     weighted[bucket].total += importance;
-    // Partial credit: listed (33%) no longer scores the same as production use (100%).
     weighted[bucket].matched += importance * result.weight;
     if (result.matched) {
       categories[bucket].matched += 1;
@@ -407,7 +555,7 @@ export function scoreKeywordLevels(keywords: JdKeyword[], levels: number[]): Res
   };
 }
 
-/** String-match convenience: compose fallback levels with the shared aggregator. */
+/** Jev-free convenience: fallback Depth Levels through the shared aggregator. */
 export function scoreResume(keywords: JdKeyword[], content: ResumeContent): ResumeScore {
-  return scoreKeywordLevels(keywords, estimateKeywordLevels(keywords, content));
+  return scoreKeywordLevels(keywords, estimateKeywordLevels(keywords, content), content);
 }

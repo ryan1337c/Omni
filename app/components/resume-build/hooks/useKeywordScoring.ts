@@ -22,7 +22,7 @@ export type KeywordScoringView = {
 
 /**
  * Seed from the generate pass. A missing or mis-sized payload falls back to
- * string matching so the panel can still render.
+ * Mentioned / Absent so the panel can still render.
  */
 function initialScoring(tailored: TailoredResumeResult): KeywordScoring {
   const { scoring, keywords, resume } = tailored;
@@ -42,8 +42,8 @@ function initialScoring(tailored: TailoredResumeResult): KeywordScoring {
 }
 
 /**
- * Levels that `scoreKeywordLevels` can aggregate. A bad pass uses string matching
- * against the resume on screen rather than throwing into the results view.
+ * Levels that `scoreKeywordLevels` can aggregate. A bad pass falls back to
+ * Mentioned / Absent rather than throwing into the results view.
  */
 function levelsForKeywords(keywords: JdKeyword[], levels: number[], resume: ResumeContent): number[] {
   if (levels.length === keywords.length) return levels;
@@ -51,7 +51,7 @@ function levelsForKeywords(keywords: JdKeyword[], levels: number[], resume: Resu
 }
 
 /**
- * Last rubric pass for the resume on screen, refreshed only when the user asks.
+ * Last Depth Level pass for the resume on screen, refreshed only when the user asks.
  *
  * Each piece changes on its own (SRP):
  * - this hook stores one pass and whether it still describes `resume`
@@ -96,16 +96,15 @@ export function useKeywordScoring(
     }
   }, [onError, requestScore, resume, tailored.keywords]);
 
-  // When the pass lines up, this returns the same `levels` array, so the score
-  // below does not rebuild on each keystroke. The resume is only read for a bad pass.
   const levels = useMemo(
-    () => levelsForKeywords(tailored.keywords, scoring.levels, resume),
-    [resume, scoring.levels, tailored.keywords],
+    () => levelsForKeywords(tailored.keywords, scoring.levels, scoredResume),
+    [scoredResume, scoring.levels, tailored.keywords],
   );
 
+  // Placement is read from the scored resume, so edits change nothing until Re-analyze.
   const analysis = useMemo(
-    () => scoreKeywordLevels(tailored.keywords, levels),
-    [levels, tailored.keywords],
+    () => scoreKeywordLevels(tailored.keywords, levels, scoredResume),
+    [levels, scoredResume, tailored.keywords],
   );
 
   return {

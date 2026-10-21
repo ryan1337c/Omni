@@ -1,16 +1,29 @@
 import type { JdKeyword, KeywordScoring, ResumeContent } from "./schema";
-import { estimateKeywordLevels } from "./keywordMatch";
+import {
+    ABSENT_LEVEL,
+    DEPTH_LEVEL_NAMES,
+    estimateKeywordLevels,
+    isExplicitSkill,
+} from "./keywordMatch";
 
 export const JEV_ENDPOINT = "https://api.typesafe.ai/v1/systemone";
 export const JEV_MODEL = "jev-latest";
 export const JEV_TIMEOUT_MS = 15_000;
 
-export const RUBRIC_LEVELS = [
-    "Absent: No mention or implicit evidence.",
-    "Passive/Listed: Listed in a skills section or mentioned without project details.",
-    "Applied: Used in a project or work duty with contextual details.",
-    "Core/Production: Central tool utilized to build, optimize, or deploy production-level features or systems.",
-  ] as const;
+/** Aligned with `DEPTH_LEVEL_NAMES`. Jev only sees Explicit Skills, so there is no Absent level. */
+const DEPTH_LEVEL_DESCRIPTIONS = [
+    "The skill is named, but the resume gives little or no evidence of practical application (e.g. listed in a skills section, or named without describing its use). Do not assume proficiency from a keyword alone.",
+    "Introductory exposure through coursework, tutorials, basic exercises, or limited participation, without substantial independent application (e.g. a basic lab or a small tutorial project).",
+    "Practical use in a project, implementation, or professional environment, with stated responsibilities, ownership, or outcomes (e.g. deploying an application, building REST APIs, implementing authentication).",
+    "Substantial technical depth, such as designing complex systems, optimizing performance, resolving difficult technical problems, establishing architecture, or maintaining critical production infrastructure.",
+] as const;
+
+export const DEPTH_LEVEL_CRITERIA = DEPTH_LEVEL_NAMES.map(
+    (name, i) => `${name}: ${DEPTH_LEVEL_DESCRIPTIONS[i]}`,
+);
+
+const DEPTH_GUIDANCE =
+    "Judge only what the work shows. Do not infer depth from a senior job title, a long employment duration, or a list of technologies.";
 
 export type ScoreKeywordsOptions = {
     apiKey?: string;
@@ -28,10 +41,11 @@ function buildQuestion(keyword: JdKeyword) {
     return {
         type: "score" as const,
         instructions: [
-        `On a scale of 1 to 4, rate the candidate's level of practical application of ${label} based on the resume text:`,
-        ...RUBRIC_LEVELS.map((level, i) => `${i + 1} = ${level}`),
+        `On a scale of 1 to 4, rate the depth of the candidate's practical use of ${label} based on the resume text:`,
+        ...DEPTH_LEVEL_CRITERIA.map((criterion, i) => `${i + 1} = ${criterion}`),
+        DEPTH_GUIDANCE,
         ].join("\n"),
-        criteria: [...RUBRIC_LEVELS],
+        criteria: [...DEPTH_LEVEL_CRITERIA],
     };
 }
 
@@ -115,8 +129,9 @@ options: ScoreKeywordsOptions = {},
 }
 
 /**
- * Scores every keyword in one Jev request.
- * Never throws: missing key / timeout / API failure → string-match fallback.
+ * Rates the Depth Level of every Explicit Skill in one Jev request.
+ * Implied Skills are never sent and come back Absent.
+ * Never throws: missing key / timeout / API failure → every Explicit Skill is Mentioned.
  */
 export async function scoreKeywords(
     keywords: JdKeyword[],
@@ -127,7 +142,13 @@ export async function scoreKeywords(
         return { levels: [], scoredBy: "keyword" };
     }
     try {
-        const levels = await scoreKeywordsWithJev(keywords, resume, options);
+        const explicit = keywords.filter((keyword) => isExplicitSkill(keyword, resume));
+        const explicitLevels =
+            explicit.length === 0 ? [] : await scoreKeywordsWithJev(explicit, resume, options);
+        let next = 0;
+        const levels = keywords.map((keyword) =>
+            explicit.includes(keyword) ? explicitLevels[next++] : ABSENT_LEVEL,
+        );
         return { levels, scoredBy: "jev" };
     } catch (error) {
         console.error("Jev keyword scoring failed, using string-match fallback:", error);

@@ -12,6 +12,6 @@ Call the Skill tool with "tdd" where possible, at pre-agreed seams.
 
 Run typechecking regularly, single test files regularly, and the full test suite once at the end.
 
-Once done, call the Skill tool with "code-review" to review the work.
+Once done, call the Skill tool with "code-review" to review the uncommitted work. Fix what it raises.
 
-Commit your work to the current branch.
+Commit your work to the current branch, leaving out unrelated changes that were already in the working tree.

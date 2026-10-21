@@ -21,7 +21,7 @@ export const config = {
         },
     },
     // Jev times out at 15s. Stay above that so a slow call can still return
-    // its string-match fallback before the platform cuts the function off.
+    // its Mentioned fallback before the platform cuts the function off.
     maxDuration: 30,
 };
 
@@ -51,7 +51,7 @@ function parseScoreResumeRequest(body: unknown): ScoreResumeRequest {
  * Re-score a resume the caller already has.
  *
  * The handler authenticates, parses, and maps status codes (SRP).
- * Which scorer runs — Jev or the string-match fallback — stays inside
+ * Which scorer runs — Jev or the Mentioned fallback — stays inside
  * `scoreKeywords`, so a new scoring strategy does not change this route (OCP).
  * No credits: generation already paid, and one Jev call costs a fraction of a cent.
  * Response is `KeywordScoring` only, the slice re-analyze needs (ISP).

@@ -1,7 +1,7 @@
 import type { KeywordMatchResult } from '@/lib/resume/keywordMatch';
 
 import KeywordTag from './KeywordTag';
-import { keywordLevelHint } from './rubricBands';
+import { keywordLevelHint } from './depthBands';
 
 type KeywordGroupProps = {
   title: string;
@@ -10,7 +10,7 @@ type KeywordGroupProps = {
 };
 
 export default function KeywordGroup({ title, subtitle, results }: KeywordGroupProps) {
-  // `matched` is level 2+ (listed or better), including implicit Jev hits.
+  // `matched` is true only for Explicit Skills.
   const presentCount = results.filter((result) => result.matched).length;
 
   return (

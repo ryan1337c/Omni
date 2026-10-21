@@ -48,8 +48,11 @@ export {
   estimateKeywordLevels,
   scoreKeywordLevels,
   scoreResume,
-  levelToWeight,
-  isLevelMatched,
+  depthLevelToWeight,
+  isExplicitSkill,
+  ABSENT_LEVEL,
+  DEPTH_LEVEL_NAMES,
+  MAX_DEPTH_LEVEL,
   getMatchLabel,
   KEYWORD_CATEGORIES,
   CATEGORY_WEIGHTS,
@@ -60,6 +63,7 @@ export {
   type KeywordMatchResult,
   type MatchLabel,
   type ResumeScore,
+  type ScoreKeywordLevelsOptions,
   type TextSpan,
 } from "./keywordMatch";
 export {
@@ -72,7 +76,7 @@ export {
 export {
   scoreKeywords,
   scoreToLevel,
-  RUBRIC_LEVELS,
+  DEPTH_LEVEL_CRITERIA,
   JEV_ENDPOINT,
   JEV_MODEL,
   JEV_TIMEOUT_MS,

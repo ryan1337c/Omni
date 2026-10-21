@@ -8,7 +8,7 @@ import type { KeywordCategory, KeywordScoring } from '@/lib/resume/schema';
 import { KEYWORD_GROUPS, SCORE_RING_COLORS } from '../../constants';
 import KeywordGroup from './KeywordGroup';
 import KeywordTag from './KeywordTag';
-import { countKeywordCoverage, type RubricBand } from './rubricBands';
+import { countKeywordCoverage, DEPTH_BANDS, depthBandName } from './depthBands';
 import ScoreRing from './ScoreRing';
 
 type AnalysisPanelProps = {
@@ -23,12 +23,7 @@ type AnalysisPanelProps = {
   onReanalyze: () => void;
 };
 
-const LEGEND: readonly { band: RubricBand; label: string }[] = [
-  { band: 1, label: 'Absent' },
-  { band: 2, label: 'Listed' },
-  { band: 3, label: 'Applied' },
-  { band: 4, label: 'Core' },
-];
+const LEGEND = DEPTH_BANDS.map((band) => ({ band, label: depthBandName(band) }));
 
 function groupByCategory(results: KeywordMatchResult[]): Record<KeywordCategory, KeywordMatchResult[]> {
   const groups: Record<KeywordCategory, KeywordMatchResult[]> = { hard: [], soft: [], other: [] };
@@ -39,13 +34,16 @@ function groupByCategory(results: KeywordMatchResult[]): Record<KeywordCategory,
   return groups;
 }
 
-/** "3 of 12 keywords show hands-on use, 4 are only listed." */
+/** "3 of 12 keywords show hands-on use, 1 shows familiarity, 4 are only mentioned." */
 function coverageSentence(results: KeywordMatchResult[]): string {
-  const { handsOn, listed, total } = countKeywordCoverage(results.map((result) => result.level));
+  const { handsOn, familiar, mentioned, total } = countKeywordCoverage(
+    results.map((result) => result.level),
+  );
   const keyword = total === 1 ? 'keyword' : 'keywords';
   const show = handsOn === 1 ? 'shows' : 'show';
-  const listedVerb = listed === 1 ? 'is' : 'are';
-  return `${handsOn} of ${total} ${keyword} ${show} hands-on use, ${listed} ${listedVerb} only listed.`;
+  const familiarVerb = familiar === 1 ? 'shows' : 'show';
+  const mentionedVerb = mentioned === 1 ? 'is' : 'are';
+  return `${handsOn} of ${total} ${keyword} ${show} hands-on use, ${familiar} ${familiarVerb} familiarity, ${mentioned} ${mentionedVerb} only mentioned.`;
 }
 
 export default function AnalysisPanel({
@@ -74,7 +72,7 @@ export default function AnalysisPanel({
           <p className="mt-1 text-sm text-slate-500 dark:text-gray-400">{summary}</p>
           {scoredBy === 'keyword' && (
             <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">
-              Contextual scoring unavailable, showing keyword presence only.
+              Depth scoring unavailable, so every keyword found counts as Mentioned.
             </p>
           )}
           <div className="mt-3 flex justify-end">
