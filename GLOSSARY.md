@@ -34,3 +34,43 @@ _Avoid_: Award (when meaning any entry), achievement, certificate
 
 **Placeholder**:
 A hint shown in an empty field in the scoring UI. It is never part of the resume content.
+
+**Keyword**:
+A skill or term extracted from a job description, with its aliases, that a Tailored Resume is scored against.
+
+**Explicit Skill**:
+A Keyword whose term or one of its aliases literally appears in the Tailored Resume. Only Explicit Skills earn credit.
+_Avoid_: Matched skill, hit
+
+**Implied Skill**:
+A Keyword the resume suggests but never names by its term or an alias. It earns no credit.
+_Avoid_: Inferred skill, implicit match
+
+**Placement**:
+Where an Explicit Skill appears in the resume. There are two kinds: Work History and Skills Listing. One Keyword can have several Placements.
+
+**Work History**:
+A Placement in an Experience Entry's title or Bullets, or in a Projects Entry. It carries dates, so it has Recency and Duration.
+
+**Project**:
+A Work History Placement in a Projects Entry. It always counts for less than a Current Role.
+
+**Skills Listing**:
+A Placement with no dates attached: the Technical Skills section, the Professional Summary, Education, or an Honor.
+_Avoid_: Keyword stuffing (when meaning any Skills Listing)
+
+**Current Role**:
+An Experience Entry whose end date is "Present", "Current", "Now", or missing while a start date exists. A resume can have more than one.
+
+**Recency**:
+How long ago a Work History Placement ended. A Current Role has full Recency.
+
+**Duration**:
+How long the Entry behind a Work History Placement lasted.
+
+**Dual Placement**:
+An Explicit Skill that appears both in Work History and in a Skills Listing.
+
+**Depth Level**:
+How much practical use of an Explicit Skill the resume shows. In order: Mentioned, Familiarity, Applied / Production, Advanced / Specialized. It is judged from what the work shows, never from job title, Duration, or a list of technologies alone.
+_Avoid_: Proficiency, rubric level, seniority

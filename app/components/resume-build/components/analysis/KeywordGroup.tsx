@@ -10,7 +10,7 @@ type KeywordGroupProps = {
 };
 
 export default function KeywordGroup({ title, subtitle, results }: KeywordGroupProps) {
-  // `matched` is level 2+ (listed or better), including implicit Jev hits.
+  // `matched` is true only for Explicit Skills.
   const presentCount = results.filter((result) => result.matched).length;
 
   return (

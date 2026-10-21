@@ -48,8 +48,9 @@ export {
   estimateKeywordLevels,
   scoreKeywordLevels,
   scoreResume,
-  levelToWeight,
-  isLevelMatched,
+  depthLevelToWeight,
+  isExplicitSkill,
+  ABSENT_LEVEL,
   getMatchLabel,
   KEYWORD_CATEGORIES,
   CATEGORY_WEIGHTS,
@@ -60,6 +61,7 @@ export {
   type KeywordMatchResult,
   type MatchLabel,
   type ResumeScore,
+  type ScoreKeywordLevelsOptions,
   type TextSpan,
 } from "./keywordMatch";
 export {
