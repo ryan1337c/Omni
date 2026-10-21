@@ -1,7 +1,7 @@
 import type { KeywordMatchResult } from '@/lib/resume/keywordMatch';
 
 import KeywordTag from './KeywordTag';
-import { keywordLevelHint } from './rubricBands';
+import { keywordLevelHint } from './depthBands';
 
 type KeywordGroupProps = {
   title: string;

@@ -97,7 +97,7 @@ export type ResumeHeader = {
    *
    * Produced by `jevScore.ts`; aggregated by `keywordMatch.ts` on the server and again in
    * the browser by `useKeywordScoring.ts`; validated by `parseKeywordScoring` in
-   * `resume-build/api.ts`; shown by `rubricBands.ts`, `KeywordTag.tsx`, and `AnalysisPanel.tsx`.
+   * `resume-build/api.ts`; shown by `depthBands.ts`, `KeywordTag.tsx`, and `AnalysisPanel.tsx`.
    * A change to the level scale touches all of them.
    */
   export type KeywordScoring = {

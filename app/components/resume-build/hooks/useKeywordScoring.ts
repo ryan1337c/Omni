@@ -51,7 +51,7 @@ function levelsForKeywords(keywords: JdKeyword[], levels: number[], resume: Resu
 }
 
 /**
- * Last rubric pass for the resume on screen, refreshed only when the user asks.
+ * Last Depth Level pass for the resume on screen, refreshed only when the user asks.
  *
  * Each piece changes on its own (SRP):
  * - this hook stores one pass and whether it still describes `resume`

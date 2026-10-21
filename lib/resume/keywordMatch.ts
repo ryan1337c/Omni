@@ -301,9 +301,16 @@ export function getMatchLabel(score: number): MatchLabel {
 
 /** Level reported for a Keyword that is not an Explicit Skill. */
 export const ABSENT_LEVEL = 0;
+/** Depth Level `n` is `DEPTH_LEVEL_NAMES[n - 1]`. */
+export const DEPTH_LEVEL_NAMES = [
+  "Mentioned",
+  "Familiarity",
+  "Applied / Production",
+  "Advanced / Specialized",
+] as const;
 const MENTIONED_LEVEL = 1;
 const MIN_DEPTH_LEVEL = MENTIONED_LEVEL;
-const MAX_DEPTH_LEVEL = 4;
+export const MAX_DEPTH_LEVEL = DEPTH_LEVEL_NAMES.length;
 const SKILLS_LISTING_WEIGHT = 0.4;
 const DUAL_PLACEMENT_BONUS = 0.1;
 

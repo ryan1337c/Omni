@@ -51,6 +51,8 @@ export {
   depthLevelToWeight,
   isExplicitSkill,
   ABSENT_LEVEL,
+  DEPTH_LEVEL_NAMES,
+  MAX_DEPTH_LEVEL,
   getMatchLabel,
   KEYWORD_CATEGORIES,
   CATEGORY_WEIGHTS,
@@ -74,7 +76,7 @@ export {
 export {
   scoreKeywords,
   scoreToLevel,
-  RUBRIC_LEVELS,
+  DEPTH_LEVEL_CRITERIA,
   JEV_ENDPOINT,
   JEV_MODEL,
   JEV_TIMEOUT_MS,

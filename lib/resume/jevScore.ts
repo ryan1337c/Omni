@@ -1,19 +1,28 @@
 import type { JdKeyword, KeywordScoring, ResumeContent } from "./schema";
-import { ABSENT_LEVEL, estimateKeywordLevels, isExplicitSkill } from "./keywordMatch";
+import {
+    ABSENT_LEVEL,
+    DEPTH_LEVEL_NAMES,
+    estimateKeywordLevels,
+    isExplicitSkill,
+} from "./keywordMatch";
 
 export const JEV_ENDPOINT = "https://api.typesafe.ai/v1/systemone";
 export const JEV_MODEL = "jev-latest";
 export const JEV_TIMEOUT_MS = 15_000;
 
-/** Depth Levels 1–4. Jev only sees Explicit Skills, so there is no Absent level. */
-export const RUBRIC_LEVELS = [
-    "Mentioned: The skill is named, but the resume gives little or no evidence of practical application (e.g. listed in a skills section, or named without describing its use). Do not assume proficiency from a keyword alone.",
-    "Familiarity: Introductory exposure through coursework, tutorials, basic exercises, or limited participation, without substantial independent application (e.g. a basic lab or a small tutorial project).",
-    "Applied / Production: Practical use in a project, implementation, or professional environment, with stated responsibilities, ownership, or outcomes (e.g. deploying an application, building REST APIs, implementing authentication).",
-    "Advanced / Specialized: Substantial technical depth, such as designing complex systems, optimizing performance, resolving difficult technical problems, establishing architecture, or maintaining critical production infrastructure.",
-  ] as const;
+/** Aligned with `DEPTH_LEVEL_NAMES`. Jev only sees Explicit Skills, so there is no Absent level. */
+const DEPTH_LEVEL_DESCRIPTIONS = [
+    "The skill is named, but the resume gives little or no evidence of practical application (e.g. listed in a skills section, or named without describing its use). Do not assume proficiency from a keyword alone.",
+    "Introductory exposure through coursework, tutorials, basic exercises, or limited participation, without substantial independent application (e.g. a basic lab or a small tutorial project).",
+    "Practical use in a project, implementation, or professional environment, with stated responsibilities, ownership, or outcomes (e.g. deploying an application, building REST APIs, implementing authentication).",
+    "Substantial technical depth, such as designing complex systems, optimizing performance, resolving difficult technical problems, establishing architecture, or maintaining critical production infrastructure.",
+] as const;
 
-const RUBRIC_GUIDANCE =
+export const DEPTH_LEVEL_CRITERIA = DEPTH_LEVEL_NAMES.map(
+    (name, i) => `${name}: ${DEPTH_LEVEL_DESCRIPTIONS[i]}`,
+);
+
+const DEPTH_GUIDANCE =
     "Judge only what the work shows. Do not infer depth from a senior job title, a long employment duration, or a list of technologies.";
 
 export type ScoreKeywordsOptions = {
@@ -33,10 +42,10 @@ function buildQuestion(keyword: JdKeyword) {
         type: "score" as const,
         instructions: [
         `On a scale of 1 to 4, rate the depth of the candidate's practical use of ${label} based on the resume text:`,
-        ...RUBRIC_LEVELS.map((level, i) => `${i + 1} = ${level}`),
-        RUBRIC_GUIDANCE,
+        ...DEPTH_LEVEL_CRITERIA.map((criterion, i) => `${i + 1} = ${criterion}`),
+        DEPTH_GUIDANCE,
         ].join("\n"),
-        criteria: [...RUBRIC_LEVELS],
+        criteria: [...DEPTH_LEVEL_CRITERIA],
     };
 }
 

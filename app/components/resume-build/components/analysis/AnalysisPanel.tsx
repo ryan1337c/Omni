@@ -8,7 +8,7 @@ import type { KeywordCategory, KeywordScoring } from '@/lib/resume/schema';
 import { KEYWORD_GROUPS, SCORE_RING_COLORS } from '../../constants';
 import KeywordGroup from './KeywordGroup';
 import KeywordTag from './KeywordTag';
-import { countKeywordCoverage, type RubricBand } from './rubricBands';
+import { countKeywordCoverage, DEPTH_BANDS, depthBandName } from './depthBands';
 import ScoreRing from './ScoreRing';
 
 type AnalysisPanelProps = {
@@ -23,13 +23,7 @@ type AnalysisPanelProps = {
   onReanalyze: () => void;
 };
 
-const LEGEND: readonly { band: RubricBand; label: string }[] = [
-  { band: 0, label: 'Absent' },
-  { band: 1, label: 'Mentioned' },
-  { band: 2, label: 'Familiarity' },
-  { band: 3, label: 'Applied' },
-  { band: 4, label: 'Advanced' },
-];
+const LEGEND = DEPTH_BANDS.map((band) => ({ band, label: depthBandName(band) }));
 
 function groupByCategory(results: KeywordMatchResult[]): Record<KeywordCategory, KeywordMatchResult[]> {
   const groups: Record<KeywordCategory, KeywordMatchResult[]> = { hard: [], soft: [], other: [] };

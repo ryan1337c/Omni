@@ -1,27 +1,27 @@
 import { describe, expect, it } from "vitest";
 
-import { countKeywordCoverage, keywordLevelHint, rubricBand, rubricBandName } from "./rubricBands";
+import { countKeywordCoverage, depthBand, depthBandName, keywordLevelHint } from "./depthBands";
 
-describe("rubricBand", () => {
+describe("depthBand", () => {
   it.each([
     [0, "Absent"],
     [1, "Mentioned"],
     [2, "Familiarity"],
-    [3, "Applied"],
-    [4, "Advanced"],
+    [3, "Applied / Production"],
+    [4, "Advanced / Specialized"],
   ])("names level %d as %s", (level, name) => {
-    expect(rubricBandName(level)).toBe(name);
+    expect(depthBandName(level)).toBe(name);
   });
 
   it("rounds a fractional Jev level to the nearest band", () => {
-    expect(rubricBand(3.99)).toBe(4);
-    expect(rubricBand(1.31)).toBe(1);
+    expect(depthBand(3.99)).toBe(4);
+    expect(depthBand(1.31)).toBe(1);
   });
 
   it("treats out-of-range or invalid levels as the nearest end of the scale", () => {
-    expect(rubricBand(-1)).toBe(0);
-    expect(rubricBand(9)).toBe(4);
-    expect(rubricBand(Number.NaN)).toBe(0);
+    expect(depthBand(-1)).toBe(0);
+    expect(depthBand(9)).toBe(4);
+    expect(depthBand(Number.NaN)).toBe(0);
   });
 });
 
@@ -38,7 +38,7 @@ describe("countKeywordCoverage", () => {
 
 describe("keywordLevelHint", () => {
   it("shows the Depth Level out of four", () => {
-    expect(keywordLevelHint("required", 3)).toBe("Required - Applied (3/4)");
+    expect(keywordLevelHint("required", 3)).toBe("Required - Applied / Production (3/4)");
   });
 
   it("shows Absent without a fraction", () => {
