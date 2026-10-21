@@ -39,7 +39,7 @@ A hint shown in an empty field in the scoring UI. It is never part of the resume
 A skill or term extracted from a job description, with its aliases, that a Tailored Resume is scored against.
 
 **Explicit Skill**:
-A Keyword whose term or one of its aliases literally appears in the Tailored Resume. Only Explicit Skills earn credit.
+A Keyword whose term or one of its aliases literally appears in a Placement. A term that appears only in a company name, location, school name, or the header does not count. Only Explicit Skills earn credit.
 _Avoid_: Matched skill, hit
 
 **Implied Skill**:
@@ -60,7 +60,7 @@ A Placement with no dates attached: the Technical Skills section, the Profession
 _Avoid_: Keyword stuffing (when meaning any Skills Listing)
 
 **Current Role**:
-An Experience Entry whose end date is "Present" (or "Current", "Now", "Ongoing", "Today"), or missing while a start date exists. A resume can have more than one.
+An Experience Entry whose end date is "Present" (or "Current", "Now", "Ongoing", "Today"), or left blank after a range separator ("Jan 2023 –"). A lone date with no range, such as "Mar 2023", is unreadable, not current. A resume can have more than one.
 
 **Recency**:
 How long ago a Work History Placement ended. A Current Role has full Recency.

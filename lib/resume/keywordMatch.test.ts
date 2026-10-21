@@ -87,7 +87,16 @@ describe("scoreKeywordLevels", () => {
     expect(creditFor(keyword("Python"), ADVANCED, shortAndOld)).toBeCloseTo(0.5);
   });
 
-  it.each(["Summer internship", "2019", ""])(
+  it("ignores a term that appears only in a company name, location, or school name", () => {
+    const resume = resumeWith({
+      experience: [{ title: "Analyst", company: "Salesforce", location: "Austin", dates: "Jan 2022 - Present", bullets: [] }],
+      education: [{ institution: "Salesforce Academy", location: "", degree: "BS", dates: "", bullets: [] }],
+    });
+
+    expect(creditFor(keyword("Salesforce"), ADVANCED, resume)).toBe(0);
+  });
+
+  it.each(["Summer internship", "2019", "Mar 2023", ""])(
     "gives unreadable dates (%j) the minimum Work History weight",
     (dates) => {
       const resume = resumeWith({ experience: [job(dates, ["Python scripts"])] });
