@@ -310,7 +310,7 @@ const DUAL_PLACEMENT_BONUS = 0.1;
 const CURRENT_ROLE_WEIGHT = 1;
 const MIN_WORK_HISTORY_WEIGHT = 0.5;
 const PROJECT_MAX_WEIGHT = 0.8;
-const CURRENT_END = /^(present|current|now)$/i;
+const CURRENT_END = /^(present|current|now|ongoing|today)$/i;
 
 /** One Experience or Projects Entry the Keyword appears in. */
 type WorkHistoryPlacement = { dates: string; maxWeight: number };
@@ -349,6 +349,7 @@ function hasAnyPlacement(placements: Placements): boolean {
 }
 
 const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+const FULL_RECENCY = 1;
 const RECENCY_DECAY_PER_YEAR = 0.1;
 
 /** Months since year 0, so differences are plain subtraction. */
@@ -375,8 +376,8 @@ function parseMonthIndex(text: string, bareYearMonth: number): number | null {
 const SHORT_DURATION_FACTOR = 0.8;
 const FULL_DURATION_START_YEARS = 1;
 const FULL_DURATION_YEARS = 3;
-/** "start - end", "start – end", "2019-2021", or "start to end". The end may be blank. */
-const DATE_RANGE = /^(.*?)(?:\s*[–—]\s*|\s+-\s*|(?<=\d{4})-|\s+to\s+)(.*)$/i;
+/** "start - end", "start -- end", "start – end", "2019-2021", or "start to end". The end may be blank. */
+const DATE_RANGE = /^(.*?)(?:\s*[–—−]\s*|\s+--?\s*|(?<=\d{4})-|\s+to\s+)(.*)$/i;
 
 type DateRange = { startMonth: number; endMonth: number; isCurrent: boolean };
 
@@ -410,7 +411,7 @@ function datedWeight(dates: string, now: Date): number {
   const yearsSinceEnd = range.isCurrent
     ? 0
     : Math.max(0, toMonthIndex(now) - range.endMonth) / 12;
-  const recency = CURRENT_ROLE_WEIGHT - RECENCY_DECAY_PER_YEAR * yearsSinceEnd;
+  const recency = FULL_RECENCY - RECENCY_DECAY_PER_YEAR * yearsSinceEnd;
   const years = Math.max(0, range.endMonth - range.startMonth) / 12;
   return Math.max(MIN_WORK_HISTORY_WEIGHT, recency * durationFactor(years));
 }

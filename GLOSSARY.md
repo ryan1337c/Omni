@@ -60,7 +60,7 @@ A Placement with no dates attached: the Technical Skills section, the Profession
 _Avoid_: Keyword stuffing (when meaning any Skills Listing)
 
 **Current Role**:
-An Experience Entry whose end date is "Present", "Current", "Now", or missing while a start date exists. A resume can have more than one.
+An Experience Entry whose end date is "Present" (or "Current", "Now", "Ongoing", "Today"), or missing while a start date exists. A resume can have more than one.
 
 **Recency**:
 How long ago a Work History Placement ended. A Current Role has full Recency.

@@ -96,7 +96,16 @@ describe("scoreKeywordLevels", () => {
     },
   );
 
-  it.each(["Jan 2023 -", "2023 – Current", "01/2023 to now"])(
+  it.each(["Jan 2018 -- Oct 2023", "Jan 2018 − Oct 2023", "Jan 2018—Oct 2023"])(
+    "reads %j as a date range",
+    (dates) => {
+      const resume = resumeWith({ experience: [job(dates, ["Python scripts"])] });
+
+      expect(creditFor(keyword("Python"), ADVANCED, resume)).toBeCloseTo(0.7);
+    },
+  );
+
+  it.each(["Jan 2023 -", "2023 – Current", "01/2023 to now", "May 2021 – Ongoing", "2022 - Today"])(
     "treats %j as a Current Role",
     (dates) => {
       const resume = resumeWith({ experience: [job(dates, ["Python scripts"])] });
