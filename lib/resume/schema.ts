@@ -91,9 +91,11 @@ export type ResumeHeader = {
 
   /**
    * One scoring pass over a keyword list.
-   * `levels[i]` is 0 (Absent) or the 1–4 Depth Level for `keywords[i]` (fractions kept).
+   * `levels[i]` is 0 (Absent) or the 1–3 Depth Level for a Hard or Soft `keywords[i]`
+   * (fractions kept), and the 0–1 Match Probability for an Other `keywords[i]`.
    * `scoredBy` records the source so callers can tell a Jev pass from the
-   * fallback (every Explicit Skill Mentioned) without inspecting the numbers.
+   * fallback (every Explicit Skill Mentioned, Other only on a literal match)
+   * without inspecting the numbers.
    *
    * Produced by `jevScore.ts`; aggregated by `keywordMatch.ts` on the server and again in
    * the browser by `useKeywordScoring.ts`; validated by `parseKeywordScoring` in

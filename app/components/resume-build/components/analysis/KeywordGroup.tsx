@@ -1,7 +1,7 @@
 import type { KeywordMatchResult } from '@/lib/resume/keywordMatch';
 
 import KeywordTag from './KeywordTag';
-import { keywordLevelHint } from './depthBands';
+import { keywordChip } from './depthBands';
 
 type KeywordGroupProps = {
   title: string;
@@ -10,7 +10,7 @@ type KeywordGroupProps = {
 };
 
 export default function KeywordGroup({ title, subtitle, results }: KeywordGroupProps) {
-  // `matched` is true only for Explicit Skills.
+  // `matched` is true for Explicit Skills and for Other Keywords that earn credit.
   const presentCount = results.filter((result) => result.matched).length;
 
   return (
@@ -26,14 +26,18 @@ export default function KeywordGroup({ title, subtitle, results }: KeywordGroupP
       </div>
 
       <div className="flex flex-wrap gap-1.5">
-        {results.map(({ keyword, level }, index) => (
-          <KeywordTag
-            key={`${keyword.term}-${index}`}
-            label={keyword.term}
-            level={level}
-            hint={keywordLevelHint(keyword.importance, level)}
-          />
-        ))}
+        {results.map((result, index) => {
+          const { band, srLabel, hint } = keywordChip(result);
+          return (
+            <KeywordTag
+              key={`${result.keyword.term}-${index}`}
+              label={result.keyword.term}
+              band={band}
+              srLabel={srLabel}
+              hint={hint}
+            />
+          );
+        })}
       </div>
     </section>
   );

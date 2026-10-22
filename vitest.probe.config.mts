@@ -7,6 +7,8 @@ export default defineConfig({
   },
   test: {
     include: ["**/*.probe.ts"],
+    // Probes exist to print results for a human; passing tests would otherwise hide them.
+    silent: false,
     exclude: ["node_modules/**", ".next/**"],
   },
 });
