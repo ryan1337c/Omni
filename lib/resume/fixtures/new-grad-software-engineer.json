@@ -1,0 +1,50 @@
+{
+  "keywords": [
+    { "term": "Python", "aliases": [], "category": "hard", "importance": "required" },
+    { "term": "PostgreSQL", "aliases": ["Postgres"], "category": "hard", "importance": "required" },
+    { "term": "Debugging", "aliases": [], "category": "soft", "importance": "preferred" },
+    { "term": "BS in Computer Science", "aliases": [], "category": "other", "importance": "required" },
+    { "term": "1-3+ years experience", "aliases": [], "category": "other", "importance": "required" },
+    { "term": "Regulated domains", "aliases": [], "category": "other", "importance": "preferred" },
+    { "term": "MS in Electrical Engineering", "aliases": [], "category": "other", "importance": "preferred" }
+  ],
+  "resume": {
+    "header": { "name": "Sample Candidate", "phone": "", "email": "", "linkedin": "", "github": "" },
+    "summary": "",
+    "education": [
+      {
+        "institution": "Lassonde School of Engineering, York University",
+        "location": "Toronto, ON",
+        "degree": "Bachelor of Science in Computer Science, Honours",
+        "dates": "Expected May 2026",
+        "bullets": ["GPA: 3.7/4.0", "Relevant Coursework: Data Structures, Design and Analysis of Algorithms, Software Design"]
+      }
+    ],
+    "experience": [
+      {
+        "title": "Software Developer",
+        "company": "Sysconverge",
+        "location": "Toronto, ON",
+        "dates": "Jan 2024 - Present",
+        "bullets": [
+          "Designed PostgreSQL schemas for production features, improving query efficiency and data integrity",
+          "Applied Gen AI-assisted debugging to test and resolve critical QA issues, cutting bug resolution time 50%"
+        ]
+      }
+    ],
+    "projects": [
+      {
+        "name": "Panorama - Image Stitching",
+        "technologies": "Python, OpenCV, NumPy",
+        "dates": "January 2026",
+        "bullets": ["Implemented multi-image feature detection and matching in Python with OpenCV"]
+      }
+    ],
+    "skills": [
+      { "category": "Languages", "items": "Python, TypeScript, JavaScript, Java" },
+      { "category": "Developer Tools", "items": "PostgreSQL, Supabase, Docker, AWS" }
+    ],
+    "honors": [],
+    "sectionOrder": ["summary", "education", "experience", "projects", "skills", "honors"]
+  }
+}

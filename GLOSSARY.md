@@ -38,13 +38,23 @@ A hint shown in an empty field in the scoring UI. It is never part of the resume
 **Keyword**:
 A skill or term extracted from a job description, with its aliases, that a Tailored Resume is scored against.
 
+**Keyword Category**:
+The kind of Keyword: Hard Skill (tools, technologies, methods), Soft Skill (interpersonal and work-style traits), or Other (degrees, certifications, years of experience, languages, domains). Hard and Soft Skills earn credit only as Explicit Skills; Other Keywords earn credit only as Semantic Matches.
+
 **Explicit Skill**:
-A Keyword whose term or one of its aliases literally appears in a Placement. A term that appears only in a company name, location, school name, or the header does not count. Only Explicit Skills earn credit.
+A Hard or Soft Skill whose term or one of its aliases literally appears in a Placement. A term that appears only in a company name, location, school name, or the header does not count. Among Hard and Soft Skills, only Explicit Skills earn credit.
 _Avoid_: Matched skill, hit
 
 **Implied Skill**:
-A Keyword the resume suggests but never names by its term or an alias. It earns no credit.
+A Hard or Soft Skill the resume suggests but never names by its term or an alias. It earns no credit.
 _Avoid_: Inferred skill, implicit match
+
+**Semantic Match**:
+An Other Keyword the resume satisfies in meaning, whatever the wording. "Bachelor of Science in Computer Science, Honours" is a Semantic Match for "BS in Computer Science". Placement, Recency, Duration, and Depth Level do not apply.
+
+**Match Probability**:
+How likely it is, from 0 to 1, that the resume satisfies an Other Keyword. It decides how much credit a Semantic Match earns.
+_Avoid_: Confidence (Jev uses that word for how certain it is about its own answer)
 
 **Placement**:
 Where an Explicit Skill appears in the resume. There are two kinds: Work History and Skills Listing. One Keyword can have several Placements.
@@ -72,5 +82,5 @@ How long the Entry behind a Work History Placement lasted.
 An Explicit Skill that appears both in Work History and in a Skills Listing.
 
 **Depth Level**:
-How much practical use of an Explicit Skill the resume shows. In order: Mentioned, Familiarity, Applied / Production, Advanced / Specialized. It is judged from what the work shows, never from job title, Duration, or a list of technologies alone.
+How much practical use of an Explicit Skill the resume shows. In order: Mentioned, Familiarity, Applied / Production. Applied / Production earns full credit. It is judged from what the work shows, never from job title, Duration, or a list of technologies alone.
 _Avoid_: Proficiency, rubric level, seniority

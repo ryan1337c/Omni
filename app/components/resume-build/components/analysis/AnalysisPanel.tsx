@@ -34,16 +34,33 @@ function groupByCategory(results: KeywordMatchResult[]): Record<KeywordCategory,
   return groups;
 }
 
-/** "3 of 12 keywords show hands-on use, 1 shows familiarity, 4 are only mentioned." */
-function coverageSentence(results: KeywordMatchResult[]): string {
+/** "3 of 12 skills show hands-on use, 1 shows familiarity, 4 are only mentioned." */
+function depthSentence(results: KeywordMatchResult[]): string {
   const { handsOn, familiar, mentioned, total } = countKeywordCoverage(
     results.map((result) => result.level),
   );
-  const keyword = total === 1 ? 'keyword' : 'keywords';
+  const skill = total === 1 ? 'skill' : 'skills';
   const show = handsOn === 1 ? 'shows' : 'show';
   const familiarVerb = familiar === 1 ? 'shows' : 'show';
   const mentionedVerb = mentioned === 1 ? 'is' : 'are';
-  return `${handsOn} of ${total} ${keyword} ${show} hands-on use, ${familiar} ${familiarVerb} familiarity, ${mentioned} ${mentionedVerb} only mentioned.`;
+  return `${handsOn} of ${total} ${skill} ${show} hands-on use, ${familiar} ${familiarVerb} familiarity, ${mentioned} ${mentionedVerb} only mentioned.`;
+}
+
+/** "2 of 3 other requirements shown." Counts any credit, like the Other group's count. */
+function otherSentence(results: KeywordMatchResult[]): string {
+  const shown = results.filter((result) => result.matched).length;
+  const requirement = results.length === 1 ? 'requirement' : 'requirements';
+  return `${shown} of ${results.length} other ${requirement} shown.`;
+}
+
+function coverageSentence(groups: Record<KeywordCategory, KeywordMatchResult[]>): string {
+  const skills = [...groups.hard, ...groups.soft];
+  return [
+    skills.length > 0 ? depthSentence(skills) : '',
+    groups.other.length > 0 ? otherSentence(groups.other) : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
 }
 
 export default function AnalysisPanel({
@@ -58,7 +75,7 @@ export default function AnalysisPanel({
 }: AnalysisPanelProps) {
   const { score, label, results } = analysis;
   const groups = useMemo(() => groupByCategory(results), [results]);
-  const summary = useMemo(() => coverageSentence(results), [results]);
+  const summary = useMemo(() => coverageSentence(groups), [groups]);
   const canReanalyze = isStale && !isScoring;
 
   return (
@@ -72,7 +89,8 @@ export default function AnalysisPanel({
           <p className="mt-1 text-sm text-slate-500 dark:text-gray-400">{summary}</p>
           {scoredBy === 'keyword' && (
             <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">
-              Depth scoring unavailable, so every keyword found counts as Mentioned.
+              Depth scoring unavailable, so every skill found counts as Mentioned and other
+              requirements count only on an exact match.
             </p>
           )}
           <div className="mt-3 flex justify-end">
@@ -139,7 +157,7 @@ export default function AnalysisPanel({
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-slate-200 pt-4 text-xs text-slate-500 dark:border-slate-700 dark:text-gray-400">
         {LEGEND.map(({ band, label: bandLabel }) => (
           <span key={band} className="flex items-center gap-2">
-            <KeywordTag label="Skill" level={band} /> {bandLabel}
+            <KeywordTag label="Skill" band={band} /> {bandLabel}
           </span>
         ))}
       </div>

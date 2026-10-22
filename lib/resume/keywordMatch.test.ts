@@ -8,11 +8,15 @@ const NOW = new Date("2026-10-01T00:00:00Z");
 
 const ABSENT = 0;
 const MENTIONED = 1;
+const FAMILIARITY = 2;
 const APPLIED = 3;
-const ADVANCED = 4;
 
 function keyword(term: string, aliases: string[] = []): JdKeyword {
   return { term, aliases, category: "hard", importance: "required" };
+}
+
+function other(term: string, aliases: string[] = []): JdKeyword {
+  return { term, aliases, category: "other", importance: "required" };
 }
 
 function resumeWith(sections: Record<string, unknown>) {
@@ -31,12 +35,12 @@ function creditFor(term: JdKeyword, level: number, resume: ReturnType<typeof res
 }
 
 describe("scoreKeywordLevels", () => {
-  it("gives an Implied Skill no credit even when Jev rates it Advanced", () => {
+  it("gives an Implied Skill no credit even when Jev rates it Applied / Production", () => {
     const resume = resumeWith({
       experience: [job("Jan 2022 - Present", ["Deployed services on ECS and Lambda"])],
     });
 
-    const score = scoreKeywordLevels([keyword("AWS")], [ADVANCED], resume, { now: NOW });
+    const score = scoreKeywordLevels([keyword("AWS")], [APPLIED], resume, { now: NOW });
 
     expect(score.results[0].weight).toBe(0);
     expect(score.results[0].matched).toBe(false);
@@ -46,8 +50,8 @@ describe("scoreKeywordLevels", () => {
   it("scores a skill found only in the Technical Skills section as a Skills Listing (0.4)", () => {
     const resume = resumeWith({ skills: [{ category: "Languages", items: "Python, Go" }] });
 
-    expect(creditFor(keyword("Python"), MENTIONED, resume)).toBeCloseTo(0.1);
-    expect(creditFor(keyword("Python"), ADVANCED, resume)).toBeCloseTo(0.4);
+    expect(creditFor(keyword("Python"), MENTIONED, resume)).toBeCloseTo(0.4 / 3);
+    expect(creditFor(keyword("Python"), APPLIED, resume)).toBeCloseTo(0.4);
   });
 
   it("gives full placement weight to a Current Role held for 3+ years", () => {
@@ -55,8 +59,8 @@ describe("scoreKeywordLevels", () => {
       experience: [job("Jan 2022 - Present", ["Shipped 14 Python microservices"])],
     });
 
-    expect(creditFor(keyword("Python"), ADVANCED, resume)).toBeCloseTo(1);
-    expect(creditFor(keyword("Python"), MENTIONED, resume)).toBeCloseTo(0.25);
+    expect(creditFor(keyword("Python"), APPLIED, resume)).toBeCloseTo(1);
+    expect(creditFor(keyword("Python"), MENTIONED, resume)).toBeCloseTo(1 / 3);
   });
 
   it("decays an older role by 0.1 per year since it ended, down to 0.5", () => {
@@ -67,16 +71,16 @@ describe("scoreKeywordLevels", () => {
       experience: [job("Jan 2008 - Dec 2014", ["Built Python data pipelines"])],
     });
 
-    expect(creditFor(keyword("Python"), ADVANCED, endedThreeYearsAgo)).toBeCloseTo(0.7);
-    expect(creditFor(keyword("Python"), ADVANCED, endedLongAgo)).toBeCloseTo(0.5);
+    expect(creditFor(keyword("Python"), APPLIED, endedThreeYearsAgo)).toBeCloseTo(0.7);
+    expect(creditFor(keyword("Python"), APPLIED, endedLongAgo)).toBeCloseTo(0.5);
   });
 
   it("scales by Duration from 0.8 under a year to 1.0 at three years", () => {
     const sixMonths = resumeWith({ experience: [job("Apr 2026 - Present", ["Python APIs"])] });
     const twoYears = resumeWith({ experience: [job("Oct 2024 - Present", ["Python APIs"])] });
 
-    expect(creditFor(keyword("Python"), ADVANCED, sixMonths)).toBeCloseTo(0.8);
-    expect(creditFor(keyword("Python"), ADVANCED, twoYears)).toBeCloseTo(0.9);
+    expect(creditFor(keyword("Python"), APPLIED, sixMonths)).toBeCloseTo(0.8);
+    expect(creditFor(keyword("Python"), APPLIED, twoYears)).toBeCloseTo(0.9);
   });
 
   it("never lets a Work History placement fall to the Skills Listing weight", () => {
@@ -84,7 +88,7 @@ describe("scoreKeywordLevels", () => {
       experience: [job("Jan 2012 - Jun 2012", ["Python scripts"])],
     });
 
-    expect(creditFor(keyword("Python"), ADVANCED, shortAndOld)).toBeCloseTo(0.5);
+    expect(creditFor(keyword("Python"), APPLIED, shortAndOld)).toBeCloseTo(0.5);
   });
 
   it("ignores a term that appears only in a company name, location, or school name", () => {
@@ -93,7 +97,7 @@ describe("scoreKeywordLevels", () => {
       education: [{ institution: "Salesforce Academy", location: "", degree: "BS", dates: "", bullets: [] }],
     });
 
-    expect(creditFor(keyword("Salesforce"), ADVANCED, resume)).toBe(0);
+    expect(creditFor(keyword("Salesforce"), APPLIED, resume)).toBe(0);
   });
 
   it.each(["Summer internship", "2019", "Mar 2023", ""])(
@@ -101,7 +105,7 @@ describe("scoreKeywordLevels", () => {
     (dates) => {
       const resume = resumeWith({ experience: [job(dates, ["Python scripts"])] });
 
-      expect(creditFor(keyword("Python"), ADVANCED, resume)).toBeCloseTo(0.5);
+      expect(creditFor(keyword("Python"), APPLIED, resume)).toBeCloseTo(0.5);
     },
   );
 
@@ -110,7 +114,7 @@ describe("scoreKeywordLevels", () => {
     (dates) => {
       const resume = resumeWith({ experience: [job(dates, ["Python scripts"])] });
 
-      expect(creditFor(keyword("Python"), ADVANCED, resume)).toBeCloseTo(0.7);
+      expect(creditFor(keyword("Python"), APPLIED, resume)).toBeCloseTo(0.7);
     },
   );
 
@@ -119,7 +123,7 @@ describe("scoreKeywordLevels", () => {
     (dates) => {
       const resume = resumeWith({ experience: [job(dates, ["Python scripts"])] });
 
-      expect(creditFor(keyword("Python"), ADVANCED, resume)).toBeCloseTo(1);
+      expect(creditFor(keyword("Python"), APPLIED, resume)).toBeCloseTo(1);
     },
   );
 
@@ -135,8 +139,8 @@ describe("scoreKeywordLevels", () => {
       ],
     });
 
-    expect(creditFor(keyword("Python"), ADVANCED, ongoing)).toBeCloseTo(0.8);
-    expect(creditFor(keyword("Python"), ADVANCED, endedThreeYearsAgo)).toBeCloseTo(0.7);
+    expect(creditFor(keyword("Python"), APPLIED, ongoing)).toBeCloseTo(0.8);
+    expect(creditFor(keyword("Python"), APPLIED, endedThreeYearsAgo)).toBeCloseTo(0.7);
   });
 
   describe("Dual Placement", () => {
@@ -148,7 +152,7 @@ describe("scoreKeywordLevels", () => {
         skills,
       });
 
-      expect(creditFor(keyword("Python"), APPLIED, resume)).toBeCloseTo(0.85);
+      expect(creditFor(keyword("Python"), FAMILIARITY, resume)).toBeCloseTo(2 / 3 + 0.1);
     });
 
     it("counts a Project as Work History for the bonus", () => {
@@ -157,7 +161,7 @@ describe("scoreKeywordLevels", () => {
         skills,
       });
 
-      expect(creditFor(keyword("Python"), ADVANCED, resume)).toBeCloseTo(0.9);
+      expect(creditFor(keyword("Python"), APPLIED, resume)).toBeCloseTo(0.9);
     });
 
     it("never takes a keyword above full credit", () => {
@@ -166,7 +170,48 @@ describe("scoreKeywordLevels", () => {
         skills,
       });
 
-      expect(creditFor(keyword("Python"), ADVANCED, resume)).toBe(1);
+      expect(creditFor(keyword("Python"), APPLIED, resume)).toBe(1);
+    });
+  });
+
+  describe("Other Keywords", () => {
+    const degree = resumeWith({
+      education: [
+        {
+          institution: "York University",
+          location: "Toronto, ON",
+          degree: "Bachelor of Science in Computer Science, Honours",
+          dates: "Expected May 2026",
+          bullets: [],
+        },
+      ],
+    });
+
+    it("gives full credit at a Match Probability of 0.9, ignoring Placement and literal wording", () => {
+      const score = scoreKeywordLevels([other("BS in Computer Science")], [0.95], degree, { now: NOW });
+
+      expect(score.results[0].weight).toBe(1);
+      expect(score.results[0].matched).toBe(true);
+      expect(score.score).toBe(100);
+    });
+
+    it("gives no credit below a Match Probability of 0.5", () => {
+      const result = scoreKeywordLevels([other("MS in Computer Science")], [0.45], degree, { now: NOW })
+        .results[0];
+
+      expect(result.weight).toBe(0);
+      expect(result.matched).toBe(false);
+    });
+
+    it("scales linearly between 0.5 and 0.9", () => {
+      expect(creditFor(other("1-3+ years of experience"), 0.7, degree)).toBeCloseTo(0.5);
+    });
+
+    it("reports the Match Probability as the result's level", () => {
+      const result = scoreKeywordLevels([other("BS in Computer Science")], [0.8], degree, { now: NOW })
+        .results[0];
+
+      expect(result.level).toBe(0.8);
     });
   });
 });

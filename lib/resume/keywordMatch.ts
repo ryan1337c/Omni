@@ -7,9 +7,10 @@ export type CategoryScore = {
 
 /**
  * One keyword after scoring.
- * `level` is 0 (Absent) or the 1–4 Depth Level.
- * `weight` is the 0–1 credit after Placement (importance is applied later).
- * `matched` is true only for Explicit Skills.
+ * `level` is 0 (Absent) or the 1–3 Depth Level for a Hard or Soft Skill, and the
+ * 0–1 Match Probability for an Other Keyword.
+ * `weight` is the 0–1 credit (importance is applied later).
+ * `matched` is true for Explicit Skills and for Other Keywords that earn credit.
  */
 export type KeywordMatchResult = {
   keyword: JdKeyword;
@@ -294,9 +295,9 @@ export function getMatchLabel(score: number): MatchLabel {
 /**
  * Scoring is split so each piece can change independently (SRP):
  * - `isMatched` / `findKeywordSpans` — literal text for the highlighter.
- * - `estimateKeywordLevels` — fallback Depth Levels (Explicit → Mentioned, else Absent).
+ * - `estimateKeywordLevels` — fallback levels (Explicit → Mentioned, literal Other → 1, else 0).
  * - `scoreKeywordLevels` — Placement, Recency, Duration, and Dual Placement over
- *   Depth Levels from any source (DIP).
+ *   Depth Levels, and Match Probability → credit for Other Keywords, from any source (DIP).
  */
 
 /** Level reported for a Keyword that is not an Explicit Skill. */
@@ -306,7 +307,6 @@ export const DEPTH_LEVEL_NAMES = [
   "Mentioned",
   "Familiarity",
   "Applied / Production",
-  "Advanced / Specialized",
 ] as const;
 const MENTIONED_LEVEL = 1;
 const MIN_DEPTH_LEVEL = MENTIONED_LEVEL;
@@ -441,9 +441,38 @@ function clampDepthLevel(level: number): number {
   return Math.min(MAX_DEPTH_LEVEL, Math.max(MIN_DEPTH_LEVEL, level));
 }
 
-/** Depth Level 1–4 → 0.25 / 0.5 / 0.75 / 1. Fractions are kept. */
+/** Depth Level 1–3 → 1/3 / 2/3 / 1. Fractions are kept. */
 export function depthLevelToWeight(level: number): number {
   return clampDepthLevel(level) / MAX_DEPTH_LEVEL;
+}
+
+/** Below this Match Probability Jev is guessing, so the Keyword earns nothing. */
+export const MATCH_PROBABILITY_FLOOR = 0.5;
+/** At or above this Match Probability the Keyword earns full credit. */
+export const MATCH_PROBABILITY_FULL = 0.9;
+
+/** Other Keywords earn credit by meaning, not by literal match or Placement. */
+export function isSemanticKeyword(keyword: JdKeyword): boolean {
+  return resolveCategory(keyword.category) === "other";
+}
+
+function clampProbability(probability: number): number {
+  if (!Number.isFinite(probability)) return 0;
+  return Math.min(1, Math.max(0, probability));
+}
+
+/** 0 below the floor, 1 at or above the full mark, linear in between. */
+export function matchProbabilityToCredit(probability: number): number {
+  const p = clampProbability(probability);
+  if (p < MATCH_PROBABILITY_FLOOR) return 0;
+  if (p >= MATCH_PROBABILITY_FULL) return 1;
+  return (p - MATCH_PROBABILITY_FLOOR) / (MATCH_PROBABILITY_FULL - MATCH_PROBABILITY_FLOOR);
+}
+
+function toSemanticMatchResult(keyword: JdKeyword, probability: number): KeywordMatchResult {
+  const p = clampProbability(probability);
+  const weight = matchProbabilityToCredit(p);
+  return { keyword, level: p, weight, matched: weight > 0 };
 }
 
 function placementWeight(placements: Placements, now: Date): number {
@@ -481,16 +510,18 @@ export function isExplicitSkill(keyword: JdKeyword, resume: ResumeContent): bool
 }
 
 /**
- * Fallback when Jev is unavailable: every Explicit Skill is Mentioned, everything else Absent.
- * Placement, Recency, and Duration still apply in `scoreKeywordLevels`.
+ * Fallback when Jev is unavailable: every Explicit Skill is Mentioned, and an Other Keyword
+ * whose term or alias appears literally has Match Probability 1. Everything else is 0.
+ * Placement, Recency, and Duration still apply to Hard and Soft Skills in `scoreKeywordLevels`.
  */
 export function estimateKeywordLevels(
   keywords: JdKeyword[],
   content: ResumeContent,
 ): number[] {
-  return keywords.map((keyword) =>
-    isExplicitSkill(keyword, content) ? MENTIONED_LEVEL : ABSENT_LEVEL,
-  );
+  return keywords.map((keyword) => {
+    if (!isExplicitSkill(keyword, content)) return ABSENT_LEVEL;
+    return isSemanticKeyword(keyword) ? 1 : MENTIONED_LEVEL;
+  });
 }
 
 export type ScoreKeywordLevelsOptions = {
@@ -499,8 +530,9 @@ export type ScoreKeywordLevelsOptions = {
 };
 
 /**
- * Weighted resume score from Depth Levels aligned with `keywords` by index.
- * Per Keyword: depth weight × best Placement weight, + Dual Placement bonus, capped at 1.
+ * Weighted resume score from levels aligned with `keywords` by index.
+ * Hard and Soft Skills: depth weight × best Placement weight, + Dual Placement bonus, capped at 1.
+ * Other Keywords: `matchProbabilityToCredit` of the Match Probability.
  * Open for new scorers (Jev, fallback, tests): pass levels in, do not change this function.
  */
 export function scoreKeywordLevels(
@@ -520,7 +552,9 @@ export function scoreKeywordLevels(
   const weighted = emptyCategoryScores();
 
   const results = keywords.map((keyword, index) => {
-    const result = toKeywordMatchResult(keyword, levels[index], resume, now);
+    const result = isSemanticKeyword(keyword)
+      ? toSemanticMatchResult(keyword, levels[index])
+      : toKeywordMatchResult(keyword, levels[index], resume, now);
     const importance = IMPORTANCE_WEIGHTS[keyword.importance] ?? IMPORTANCE_WEIGHTS.preferred;
     const bucket = resolveCategory(keyword.category);
 

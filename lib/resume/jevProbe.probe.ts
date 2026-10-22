@@ -7,7 +7,8 @@ import { scoreKeywordLevels } from "./keywordMatch";
 import { parseKeywords, parseResumeContent } from "./parseResumeJson";
 
 /**
- * Sends every fixture to the real Jev API and prints each Keyword's Depth Level and credit.
+ * Sends every fixture to the real Jev API and prints each Keyword's Depth Level (Hard, Soft)
+ * or Match Probability (Other) and credit.
  * Run with `npm run jev:probe`; needs TYPESAFE_API_KEY in the environment or `.env.local`.
  * Not part of `npm test`: it costs API calls and its output is for a human to judge.
  */
@@ -31,7 +32,8 @@ describe.skipIf(!process.env.TYPESAFE_API_KEY)("Jev probe", () => {
     console.table(
       score.results.map(({ keyword, level, weight }) => ({
         keyword: keyword.term,
-        depthLevel: level,
+        category: keyword.category,
+        depthLevelOrMatchProbability: Number(level.toFixed(2)),
         credit: Number(weight.toFixed(2)),
       })),
     );
