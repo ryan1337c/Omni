@@ -6,11 +6,24 @@ export type FakeJevAnswers = {
   score?: number;
   /** Answer to every yes/no question, 0–1: presence in an Entry request, Match Probability otherwise. */
   noul?: number;
+  /** Yes/no answer, by Bullet text, to questions that point at that Bullet; other Bullets get `noul`. */
+  bullets?: Record<string, number>;
   /** Respond 503 instead of answering. */
   fail?: boolean;
 };
 
 type AnswerFor = (request: FakeJevRequest) => FakeJevAnswers;
+
+const BULLET_PATH = /`bullets\[(\d+)\]`/;
+
+/** The text of the Bullet a question points at by its state path, if any. */
+function bulletText(request: FakeJevRequest, question: JevQuestion): string | undefined {
+  const path = BULLET_PATH.exec(question.instructions);
+  const bullets = request.state.bullets;
+  if (!path || !Array.isArray(bullets)) return undefined;
+  const text = bullets[Number(path[1])];
+  return typeof text === "string" ? text : undefined;
+}
 
 /**
  * Test double for the Jev API: answers every question in a request with the same preset values
@@ -22,12 +35,16 @@ export function fakeJev(answers: FakeJevAnswers | AnswerFor = {}) {
   const fetch = (async (_url: string, init: RequestInit) => {
     const body = JSON.parse(String(init.body)) as FakeJevRequest;
     requests.push(body);
-    const { score = 2, noul = 0.95, fail = false } = answerFor(body);
+    const { score = 2, noul = 0.95, bullets = {}, fail = false } = answerFor(body);
     if (fail) return new Response("", { status: 503 });
+    const noulFor = (question: JevQuestion) => {
+      const text = bulletText(body, question);
+      return text !== undefined && text in bullets ? bullets[text] : noul;
+    };
     const answers = Object.fromEntries(
       Object.entries(body.questions).map(([key, question]) => [
         key,
-        question.type === "noul" ? { type: "noul", noul } : { type: "score", score },
+        question.type === "noul" ? { type: "noul", noul: noulFor(question) } : { type: "score", score },
       ]),
     );
     return new Response(JSON.stringify({ answers }), { status: 200 });

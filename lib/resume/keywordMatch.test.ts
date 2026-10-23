@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { byEntry, fakeJev, type FakeJevAnswers } from "./fakeJev";
+import { resumeHighlights } from "./highlights";
 import { scoreKeywords } from "./jevScore";
 import { highlightedKeywords, scoreKeywordEvidence, type ResumeScore } from "./keywordMatch";
 import { parseResumeContent } from "./parseResumeJson";
@@ -14,6 +15,10 @@ const APPLIED = 3;
 
 function keyword(term: string, aliases: string[] = []): JdKeyword {
   return { term, aliases, category: "hard", importance: "required" };
+}
+
+function soft(term: string, aliases: string[] = []): JdKeyword {
+  return { term, aliases, category: "soft", importance: "required" };
 }
 
 function other(term: string, aliases: string[] = []): JdKeyword {
@@ -331,6 +336,157 @@ describe("Keyword credit", () => {
         [MENTIONED, 1 / 3],
         [0, 0],
       ]);
+    });
+  });
+
+  describe("Soft Skills judged per Bullet", () => {
+    const LED_MIGRATION = "Led 4 engineers through a Postgres migration";
+    const BUILT_API = "Built a REST API in Go";
+
+    it("gives an Implied Soft Skill shown by a Bullet in a Current Role 0.8 of the named credit", async () => {
+      const resume = resumeWith({ experience: [job("Jan 2022 - Present", [BUILT_API, LED_MIGRATION])] });
+
+      const score = await scoreWithJev([soft("Leadership")], { bullets: { [BUILT_API]: 0.1, [LED_MIGRATION]: 0.9 } }, resume);
+
+      expect(score.results[0]).toMatchObject({ level: APPLIED, matched: true });
+      expect(score.results[0].weight).toBeCloseTo(0.8);
+      expect(score.results[0].evidence).toMatchObject({ explicit: false });
+    });
+
+    it("rates a self-description Mentioned, never Familiarity", async () => {
+      const claimInSummary = resumeWith({
+        summary: "Strong communicator and team player.",
+        experience: [job("Jan 2022 - Present", [BUILT_API])],
+      });
+      const claimInBullet = resumeWith({
+        experience: [job("Jan 2022 - Present", ["Strong communicator who shipped Python services"])],
+      });
+      const communication = soft("Communication", ["communicator"]);
+      const notAnExample = { bullets: { [BUILT_API]: 0.1, "Strong communicator who shipped Python services": 0.2 } };
+
+      const fromSummary = await scoreWithJev([communication], { ...ratedAt(FAMILIARITY), ...notAnExample }, claimInSummary);
+      const fromBullet = await scoreWithJev([communication], { ...ratedAt(FAMILIARITY), ...notAnExample }, claimInBullet);
+
+      expect(fromSummary.results[0]).toMatchObject({ level: MENTIONED, matched: true });
+      expect(fromSummary.results[0].weight).toBeCloseTo(0.4 / 3);
+      expect(fromBullet.results[0]).toMatchObject({ level: MENTIONED, matched: true });
+      expect(fromBullet.results[0].weight).toBeCloseTo(1 / 3);
+    });
+
+    it("rates a named Soft Skill with a demonstrating Bullet Applied / Production, in full", async () => {
+      const resume = resumeWith({
+        summary: "Engineering leadership across platform teams.",
+        experience: [job("Jan 2022 - Present", [BUILT_API, LED_MIGRATION])],
+      });
+
+      const score = await scoreWithJev([soft("Leadership")], { bullets: { [BUILT_API]: 0.1, [LED_MIGRATION]: 0.9 } }, resume);
+
+      expect(score.results[0]).toMatchObject({ level: APPLIED, weight: 1 });
+      expect(score.results[0].evidence).toMatchObject({ explicit: true });
+    });
+
+    it("does not count a Bullet whose answer is below 0.7, and is Absent when never named", async () => {
+      const resume = resumeWith({ experience: [job("Jan 2022 - Present", [LED_MIGRATION])] });
+
+      const score = await scoreWithJev([soft("Leadership")], { bullets: { [LED_MIGRATION]: 0.69 } }, resume);
+
+      expect(score.results[0]).toMatchObject({ level: 0, weight: 0, matched: false });
+    });
+
+    it("highlights the demonstrating Bullet and no other", async () => {
+      const resume = resumeWith({ experience: [job("Jan 2022 - Present", [BUILT_API, LED_MIGRATION])] });
+
+      const { results } = await scoreWithJev([soft("Leadership")], { bullets: { [BUILT_API]: 0.1, [LED_MIGRATION]: 0.9 } }, resume);
+      const highlights = resumeHighlights(results, resume, resume);
+
+      expect(highlights.isDemonstratingBullet({ section: "experience", entry: 0, bullet: 1 })).toBe(true);
+      expect(highlights.isDemonstratingBullet({ section: "experience", entry: 0, bullet: 0 })).toBe(false);
+    });
+
+    it("weights the demonstrating Entry by Recency and Duration", async () => {
+      const resume = resumeWith({
+        experience: [
+          job("Jan 2022 - Present", [BUILT_API], "Backend Engineer"),
+          job("Jan 2018 - Oct 2023", [LED_MIGRATION], "Tech Lead"),
+        ],
+        skills: [{ category: "Strengths", items: "Leadership" }],
+      });
+
+      const score = await scoreWithJev([soft("Leadership")], { bullets: { [BUILT_API]: 0.1, [LED_MIGRATION]: 0.9 } }, resume);
+
+      expect(score.results[0].level).toBe(APPLIED);
+      expect(score.results[0].weight).toBeCloseTo(0.7 + 0.1);
+    });
+  });
+
+  describe("highlights after Entries change, before Re-analyze", () => {
+    const backend = job("Jan 2022 - Present", ["Built Go microservices", "Mentored 3 new hires through onboarding"], "Backend Engineer");
+    const marketing = job("2018 - 2021", ["Led the go-to-market launch"], "Marketing Lead");
+    const added = job("2016 - 2018", ["Wrote Go tooling"], "Intern");
+    const scored = resumeWith({ experience: [backend, marketing], skills: [{ category: "Languages", items: "Go" }] });
+    const answers = byEntry(
+      { "Marketing Lead": { noul: 0.05 } },
+      { ...ratedAt(APPLIED), bullets: { "Built Go microservices": 0.1, "Mentored 3 new hires through onboarding": 0.9 } },
+    );
+
+    async function highlightsIn(live: ResumeContent) {
+      const { results } = await scoreWithJev([keyword("Go"), soft("Mentorship")], answers, scored);
+      const highlights = resumeHighlights(results, scored, live);
+      return {
+        terms: (entry: number) => highlights.keywordsIn({ section: "experience", entry }).map((k) => k.term),
+        demonstrates: (entry: number, bullet: number) =>
+          highlights.isDemonstratingBullet({ section: "experience", entry, bullet }),
+      };
+    }
+
+    it("follows each Entry when Entries are reordered", async () => {
+      const live = { ...scored, experience: [marketing, backend] };
+
+      const { terms, demonstrates } = await highlightsIn(live);
+
+      expect(terms(0)).toEqual([]);
+      expect(terms(1)).toEqual(["Go"]);
+      expect(demonstrates(0, 0)).toBe(false);
+      expect(demonstrates(1, 1)).toBe(true);
+    });
+
+    it("follows each Entry when one is added or removed before it", async () => {
+      const withAdded = await highlightsIn({ ...scored, experience: [added, backend, marketing] });
+      const withRemoved = await highlightsIn({ ...scored, experience: [marketing] });
+
+      expect(withAdded.terms(1)).toEqual(["Go"]);
+      expect(withAdded.terms(2)).toEqual([]);
+      expect(withAdded.demonstrates(1, 1)).toBe(true);
+      expect(withRemoved.terms(0)).toEqual([]);
+      expect(withRemoved.demonstrates(0, 0)).toBe(false);
+    });
+
+    it("highlights no skill in an Entry that was not scored", async () => {
+      const { terms, demonstrates } = await highlightsIn({ ...scored, experience: [added, backend, marketing] });
+
+      expect(terms(0)).toEqual([]);
+      expect(demonstrates(0, 0)).toBe(false);
+    });
+
+    it("follows Education Entries too, and highlights no skill in one that was not scored", async () => {
+      const york = { institution: "York University", location: "", degree: "BS", dates: "2018 - 2022", bullets: ["Go coursework"] };
+      const seneca = { institution: "Seneca College", location: "", degree: "Diploma", dates: "2016 - 2018", bullets: ["Go labs"] };
+      const scoredSchool = resumeWith({ education: [york] });
+
+      const { results } = await scoreWithJev([keyword("Go")], ratedAt(FAMILIARITY), scoredSchool);
+      const highlights = resumeHighlights(results, scoredSchool, { ...scoredSchool, education: [seneca, york] });
+      const terms = (entry: number) => highlights.keywordsIn({ section: "education", entry }).map((k) => k.term);
+
+      expect(terms(0)).toEqual([]);
+      expect(terms(1)).toEqual(["Go"]);
+    });
+
+    it("stops highlighting a demonstrating Bullet once its text is edited", async () => {
+      const edited = { ...backend, bullets: ["Built Go microservices", "Mentored new hires"] };
+
+      const { demonstrates } = await highlightsIn({ ...scored, experience: [edited, marketing] });
+
+      expect(demonstrates(0, 1)).toBe(false);
     });
   });
 

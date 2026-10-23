@@ -96,6 +96,7 @@ export default function ResumeResults({ tailored, jobTitle, onStartOver, onError
                 resume={resume}
                 actions={actions}
                 highlightKeywords={highlightKeywords ? analysis.results : NO_HIGHLIGHTS}
+                scoredResume={scoredResume}
               />
             </div>
           </section>

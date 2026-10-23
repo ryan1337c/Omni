@@ -1,4 +1,5 @@
 import type {
+    BulletRef,
     JdKeyword,
     KeywordEvidence,
     KeywordScoring,
@@ -12,9 +13,7 @@ import { SECTION_TITLES } from "./schema";
 import {
     DEPTH_LEVEL_NAMES,
     estimateKeywordEvidence,
-    explicitSkillEvidence,
     findLiteralPlacements,
-    isExplicitSkill,
     isSamePlacementSource,
     isSemanticKeyword,
     isWorkHistory,
@@ -54,6 +53,11 @@ const PRESENCE_CRITERIA = {
 const SENSE_CRITERIA = {
     true: "The words name the skill itself, as a tool, technology, method, or practice (e.g. \"Go\" in a list of programming languages, or \"built services in Go\").",
     false: "The words mean something else (e.g. \"Go\" in \"go-to-market\", \"Spring\" in \"Spring 2024\"), or are only part of a name that is not the skill.",
+};
+
+const DEMONSTRATION_CRITERIA = {
+    true: "The Bullet describes something the candidate did that is clearly an instance of the trait, and the trait is a main point of the Bullet (e.g. \"Led 4 engineers through a database migration\" for Leadership; \"Negotiated scope between design and sales to unblock a launch\" for Communication).",
+    false: "The trait is only something any competent work involves, is claimed without an example (e.g. \"Strong communicator and team player\"), or is not what the Bullet is about (e.g. \"Built a REST API in Go\" is not an example of Teamwork or Problem Solving).",
 };
 
 export type ScoreKeywordsOptions = {
@@ -102,6 +106,16 @@ function buildPresenceQuestion(keyword: JdKeyword) {
     };
 }
 
+/** `bullet` indexes the `bullets` of the one Entry in the request's state. */
+function buildDemonstrationQuestion(keyword: JdKeyword, bullet: number) {
+    const label = keywordLabel(keyword);
+    return {
+        type: "noul" as const,
+        instructions: `Would a recruiter cite \`bullets[${bullet}]\` as a specific example of the candidate's ${label}? Yes only if ${label} is a main point of that Bullet, not something any competent work involves.`,
+        criteria: DEMONSTRATION_CRITERIA,
+    };
+}
+
 /** How a sense check points at its Placement inside the whole resume. */
 function placementName(source: PlacementSource, resume: ResumeContent): string {
     if (source.section === "education") {
@@ -124,6 +138,7 @@ type JevQuestion =
     | ReturnType<typeof buildDepthQuestion>
     | ReturnType<typeof buildMatchQuestion>
     | ReturnType<typeof buildPresenceQuestion>
+    | ReturnType<typeof buildDemonstrationQuestion>
     | ReturnType<typeof buildSenseQuestion>;
 type JevQuestions = Record<string, JevQuestion>;
 type JevAnswers = Record<string, unknown>;
@@ -153,6 +168,10 @@ function entryState(resume: ResumeContent, source: EntrySource) {
     return { name, technologies, dates, bullets };
 }
 
+function entryBullets(resume: ResumeContent, source: EntrySource): string[] {
+    return resume[source.section][source.entry].bullets;
+}
+
 function workHistorySources(resume: ResumeContent): EntrySource[] {
     return [
         ...resume.experience.map((_, entry) => ({ section: "experience" as const, entry })),
@@ -178,6 +197,10 @@ function presenceKey(index: number): string {
 
 function entryDepthKey(index: number): string {
     return `kw_${index}_depth`;
+}
+
+function demonstrationKey(index: number, bullet: number): string {
+    return `kw_${index}_b${bullet}`;
 }
 
 function senseKey(index: number, source: PlacementSource): string {
@@ -211,8 +234,8 @@ function answerField(answer: unknown, field: "score" | "noul"): number {
 }
 
 /**
- * Whole resume: Match Probability for every Other Keyword, Depth Level for every Explicit Soft Skill,
- * and a sense check for every Hard Skill named in the Professional Summary, Education, or Honors.
+ * Whole resume: Match Probability for every Other Keyword, and a sense check for every Hard Skill
+ * named in the Professional Summary, Education, or Honors.
  */
 function buildResumeQuestions(keywords: JdKeyword[], resume: ResumeContent): JevQuestions {
     const questions: JevQuestions = {};
@@ -223,20 +246,27 @@ function buildResumeQuestions(keywords: JdKeyword[], resume: ResumeContent): Jev
             for (const source of senseCheckedPlacements(keyword, resume)) {
                 questions[senseKey(index, source)] = buildSenseQuestion(keyword, source, resume);
             }
-        } else if (isExplicitSkill(keyword, resume)) {
-            questions[questionKey(index)] = buildDepthQuestion(keyword, "the resume text");
         }
     });
     return questions;
 }
 
-/** Every Hard Skill gets a presence and a Depth Level question in each Work History Entry. */
-function buildEntryQuestions(keywords: JdKeyword[]): JevQuestions {
+/**
+ * In each Work History Entry: a presence and a Depth Level question for every Hard Skill, and for
+ * every Soft Skill one question per Bullet asking whether it is a specific example of the trait.
+ */
+function buildEntryQuestions(keywords: JdKeyword[], bulletCount: number): JevQuestions {
     const questions: JevQuestions = {};
     keywords.forEach((keyword, index) => {
-        if (!isHardSkill(keyword)) return;
-        questions[presenceKey(index)] = buildPresenceQuestion(keyword);
-        questions[entryDepthKey(index)] = buildDepthQuestion(keyword, "this Entry");
+        if (isSemanticKeyword(keyword)) return;
+        if (isHardSkill(keyword)) {
+            questions[presenceKey(index)] = buildPresenceQuestion(keyword);
+            questions[entryDepthKey(index)] = buildDepthQuestion(keyword, "this Entry");
+            return;
+        }
+        for (let bullet = 0; bullet < bulletCount; bullet++) {
+            questions[demonstrationKey(index, bullet)] = buildDemonstrationQuestion(keyword, bullet);
+        }
     });
     return questions;
 }
@@ -332,6 +362,47 @@ function hardSkillEvidence(
     return { kind: "skill", explicit, placements: [...workHistory, ...listings], demonstratingBullets: [] };
 }
 
+/**
+ * Applied / Production in each Work History Entry with a demonstrating Bullet (presence = its best
+ * Bullet's answer), Mentioned in each other Entry or Skills Listing that names it (no sense check:
+ * the sense criteria describe tools, not traits). Explicit when named anywhere.
+ */
+function softSkillEvidence(
+    keyword: JdKeyword,
+    index: number,
+    resume: ResumeContent,
+    entryAnswers: EntryAnswers[],
+): SkillEvidence {
+    const literal = findLiteralPlacements(keyword, resume);
+    const isNamedIn = (source: PlacementEvidence["source"]) =>
+        literal.some((named) => isSamePlacementSource(named, source));
+    const demonstratingBullets: BulletRef[] = [];
+    const workHistory = entryAnswers.flatMap(({ source, answers }): PlacementEvidence[] => {
+        const { section, entry } = source;
+        if (section === "education") return [];
+        const yes = entryBullets(resume, source).map((_, bullet) =>
+            answerField(answers[demonstrationKey(index, bullet)], "noul"),
+        );
+        yes.forEach((probability, bullet) => {
+            if (probability >= PRESENCE_CUTOFF) demonstratingBullets.push({ section, entry, bullet });
+        });
+        const presence = Math.max(0, ...yes);
+        if (presence < PRESENCE_CUTOFF && isNamedIn(source)) {
+            return [{ source, presence: 1, depthLevel: MENTIONED_LEVEL }];
+        }
+        return [{ source, presence, depthLevel: MAX_DEPTH_LEVEL }];
+    });
+    const listings: PlacementEvidence[] = literal
+        .filter((source) => !isWorkHistory(source))
+        .map((source) => ({ source, presence: 1, depthLevel: MENTIONED_LEVEL }));
+    return {
+        kind: "skill",
+        explicit: literal.length > 0,
+        placements: [...workHistory, ...listings],
+        demonstratingBullets,
+    };
+}
+
 function evidenceFromAnswers(
     keywords: JdKeyword[],
     resume: ResumeContent,
@@ -339,17 +410,13 @@ function evidenceFromAnswers(
     entryAnswers: EntryAnswers[],
 ): KeywordEvidence[] {
     return keywords.map((keyword, index): KeywordEvidence => {
-        const answer = resumeAnswers[questionKey(index)];
         if (isSemanticKeyword(keyword)) {
-            return { kind: "other", matchProbability: answerField(answer, "noul") };
+            return { kind: "other", matchProbability: answerField(resumeAnswers[questionKey(index)], "noul") };
         }
         if (isHardSkill(keyword)) {
             return hardSkillEvidence(keyword, index, resume, resumeAnswers, entryAnswers);
         }
-        if (!isExplicitSkill(keyword, resume)) {
-            return { kind: "skill", explicit: false, placements: [], demonstratingBullets: [] };
-        }
-        return explicitSkillEvidence(keyword, resume, scoreToLevel(answerField(answer, "score")));
+        return softSkillEvidence(keyword, index, resume, entryAnswers);
     });
 }
 
@@ -358,11 +425,10 @@ async function scoreKeywordsWithJev(
     resume: ResumeContent,
     options: ScoreKeywordsOptions,
 ): Promise<KeywordEvidence[]> {
-    const entryQuestions = buildEntryQuestions(keywords);
     const requests = [
-        ...(Object.keys(entryQuestions).length === 0 ? [] : workHistorySources(resume)).map((source) => ({
+        ...workHistorySources(resume).map((source) => ({
             source,
-            questions: entryQuestions,
+            questions: buildEntryQuestions(keywords, entryBullets(resume, source).length),
         })),
         ...educationSources(resume).map((source) => ({
             source,
@@ -380,11 +446,11 @@ async function scoreKeywordsWithJev(
 /**
  * Parallel Jev requests, all-or-nothing:
  * - one per Experience and Projects Entry, whose state is only that Entry: presence and Depth Level
- *   of every Hard Skill;
+ *   of every Hard Skill, and whether each Bullet is a specific example of each Soft Skill;
  * - one per Education Entry, whose state is only that Entry: Depth Level of the Hard Skills it names;
- * - one with the whole resume: Match Probability of every Other Keyword, Depth Level of every
- *   Explicit Soft Skill, and a sense check for each Hard Skill named in the Professional Summary,
- *   an Education Entry, or Honors. Technical Skills matches are trusted.
+ * - one with the whole resume: Match Probability of every Other Keyword, and a sense check for each
+ *   Hard Skill named in the Professional Summary, an Education Entry, or Honors. Technical Skills
+ *   matches are trusted.
  * Requests with no questions are not sent.
  * Never throws: missing key / timeout / any failed request → `estimateKeywordEvidence` for every Keyword.
  */
