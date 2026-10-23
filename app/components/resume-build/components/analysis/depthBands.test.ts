@@ -7,6 +7,7 @@ import {
   countKeywordCoverage,
   depthBand,
   depthBandName,
+  depthLevelGuide,
   keywordChip,
   keywordLevelHint,
   KEYWORD_GUIDE,
@@ -107,6 +108,48 @@ describe("guide text", () => {
     expect(NOT_NAMED_GUIDE.meaning.trim()).not.toBe("");
     expect(NOT_NAMED_GUIDE.hardTip("Kubernetes")).toBe('Add "Kubernetes" to that Bullet.');
     expect(NOT_NAMED_GUIDE.softTip("Leadership")).toMatch(/^Optional:.*"Leadership"/);
+  });
+});
+
+describe("depthLevelGuide", () => {
+  it("lists Hard Skills, Soft Skills, and Other Keywords in order, each state with its sample chip look, meaning, and tip", () => {
+    const guide = depthLevelGuide();
+
+    expect(guide.groups.map((group) => [group.title, group.states.map((state) => [state.name, state.band])])).toEqual([
+      ["Hard Skills", [["Absent", 0], ["Mentioned", 1], ["Familiarity", 2], ["Applied / Production", 3]]],
+      ["Soft Skills", [["Absent", 0], ["Mentioned", 1], ["Applied / Production", 3]]],
+      ["Other Keywords", [["Not shown", 0], ["Partly shown", 2], ["Shown", 3]]],
+    ]);
+    for (const state of guide.groups.flatMap((group) => group.states)) {
+      expect(state.meaning.trim(), `${state.name} meaning`).not.toBe("");
+      expect(state.tip.trim(), `${state.name} tip`).not.toBe("");
+    }
+  });
+
+  it("uses the same text as the chip popover", () => {
+    const guide = depthLevelGuide();
+    const hard = guide.groups.find((group) => group.title === "Hard Skills");
+    const chip = keywordChip(
+      {
+        keyword: keyword("hard"),
+        level: 2,
+        weight: 0.5,
+        matched: true,
+        evidence: { kind: "skill", explicit: true, placements: [{ source: { section: "skills" }, presence: 1, depthLevel: 2 }], demonstratingBullets: [] },
+      },
+      resume,
+    );
+
+    expect(hard?.states.find((state) => state.name === "Familiarity")?.meaning).toBe(chip.meaning);
+  });
+
+  it("explains the not named marker once, on a Depth Level chip, with a generic tip for Hard and an optional one for Soft Skills", () => {
+    expect(depthLevelGuide().notNamed).toEqual({
+      band: 3,
+      meaning: NOT_NAMED_GUIDE.meaning,
+      hardTip: "Add the skill's exact name to that Bullet.",
+      softTip: expect.stringMatching(/^Optional:.*the trait's name/),
+    });
   });
 });
 
