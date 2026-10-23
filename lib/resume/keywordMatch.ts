@@ -357,13 +357,14 @@ export function findLiteralPlacements(keyword: JdKeyword, resume: ResumeContent)
       sources.push({ section: "education", entry: index });
     }
   });
-  const skillsListing = [
-    summary,
-    ...skills.flatMap((entry) => [entry.category, entry.items]),
-    ...honors.flatMap((entry) => [entry.title, entry.issuer, entry.description]),
-  ];
-  if (anyMatch(keyword, skillsListing)) {
-    sources.push({ section: "skillsListing" });
+  if (anyMatch(keyword, [summary])) {
+    sources.push({ section: "summary" });
+  }
+  if (anyMatch(keyword, skills.flatMap((entry) => [entry.category, entry.items]))) {
+    sources.push({ section: "skills" });
+  }
+  if (anyMatch(keyword, honors.flatMap((entry) => [entry.title, entry.issuer, entry.description]))) {
+    sources.push({ section: "honors" });
   }
   return sources;
 }
@@ -373,8 +374,8 @@ export function isWorkHistory(source: PlacementSource): boolean {
 }
 
 export function isSamePlacementSource(a: PlacementSource, b: PlacementSource): boolean {
-  if (a.section === "skillsListing" || b.section === "skillsListing") return a.section === b.section;
-  return a.section === b.section && a.entry === b.entry;
+  if (a.section !== b.section) return false;
+  return !("entry" in a) || !("entry" in b) || a.entry === b.entry;
 }
 
 const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
@@ -437,7 +438,9 @@ function placementWeight(source: PlacementSource, resume: ResumeContent, now: Da
     case "projects":
       return Math.min(PROJECT_MAX_WEIGHT, datedWeight(resume.projects[source.entry]?.dates ?? "", now));
     case "education":
-    case "skillsListing":
+    case "summary":
+    case "skills":
+    case "honors":
       return SKILLS_LISTING_WEIGHT;
   }
 }

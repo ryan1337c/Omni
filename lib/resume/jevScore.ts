@@ -8,6 +8,7 @@ import type {
     ResumeContent,
     SkillEvidence,
 } from "./schema";
+import { SECTION_TITLES } from "./schema";
 import {
     DEPTH_LEVEL_NAMES,
     estimateKeywordEvidence,
@@ -47,6 +48,11 @@ const MATCH_CRITERIA = {
 const PRESENCE_CRITERIA = {
     true: "The Entry describes the candidate's own work using it, either by name or through something that clearly is it (e.g. running services on EKS with Helm uses Kubernetes; writing goroutines uses Go).",
     false: "The Entry does not show it in use, shows only something related but different (e.g. using a website built with React is not using React), or the word appears in another sense (e.g. \"Go\" in \"go-to-market\" is not the Go language).",
+};
+
+const SENSE_CRITERIA = {
+    true: "The words name the skill itself, as a tool, technology, method, or practice (e.g. \"Go\" in a list of programming languages, or \"built services in Go\").",
+    false: "The words mean something else (e.g. \"Go\" in \"go-to-market\", \"Spring\" in \"Spring 2024\"), or are only part of a name that is not the skill.",
 };
 
 export type ScoreKeywordsOptions = {
@@ -95,10 +101,28 @@ function buildPresenceQuestion(keyword: JdKeyword) {
     };
 }
 
+/** How a sense check points at its Placement inside the whole resume. */
+function placementName(source: PlacementSource, resume: ResumeContent): string {
+    if (source.section === "education") {
+        const { degree, institution } = resume.education[source.entry];
+        return `the Education Entry "${[degree, institution].filter(Boolean).join(", ")}"`;
+    }
+    return `the ${SECTION_TITLES[source.section]} section`;
+}
+
+function buildSenseQuestion(keyword: JdKeyword, source: PlacementSource, resume: ResumeContent) {
+    return {
+        type: "noul" as const,
+        instructions: `In ${placementName(source, resume)}, is ${keywordLabel(keyword)} named in that sense, as the skill itself?`,
+        criteria: SENSE_CRITERIA,
+    };
+}
+
 type JevQuestion =
     | ReturnType<typeof buildDepthQuestion>
     | ReturnType<typeof buildMatchQuestion>
-    | ReturnType<typeof buildPresenceQuestion>;
+    | ReturnType<typeof buildPresenceQuestion>
+    | ReturnType<typeof buildSenseQuestion>;
 type JevQuestions = Record<string, JevQuestion>;
 type JevAnswers = Record<string, unknown>;
 
@@ -154,6 +178,17 @@ function entryDepthKey(index: number): string {
     return `kw_${index}_depth`;
 }
 
+function senseKey(index: number, source: PlacementSource): string {
+    return "entry" in source ? `kw_${index}_sense_${source.section}_${source.entry}` : `kw_${index}_sense_${source.section}`;
+}
+
+/** Literal matches outside Work History that get a sense check; Technical Skills matches are trusted. */
+function senseCheckedPlacements(keyword: JdKeyword, resume: ResumeContent): PlacementSource[] {
+    return findLiteralPlacements(keyword, resume).filter(
+        (source) => !isWorkHistory(source) && source.section !== "skills",
+    );
+}
+
 /** Jev score is 0–2 (criteria length − 1). Level is 1–3. Keep fractions. */
 export function scoreToLevel(score: number): number {
     if (!Number.isFinite(score)) {
@@ -189,6 +224,10 @@ function buildResumeQuestions(keywords: JdKeyword[], resume: ResumeContent): Jev
             questions[questionKey(index)] = buildMatchQuestion(keyword);
         } else if (isHardSkill(keyword) ? hasLiteralSkillsListing(keyword, resume) : isExplicitSkill(keyword, resume)) {
             questions[questionKey(index)] = buildDepthQuestion(keyword, "the resume text");
+        }
+        if (!isHardSkill(keyword)) return;
+        for (const source of senseCheckedPlacements(keyword, resume)) {
+            questions[senseKey(index, source)] = buildSenseQuestion(keyword, source, resume);
         }
     });
     return questions;
@@ -283,16 +322,16 @@ function hardSkillEvidence(
         const entry = entryAnswers.find((answered) => isSamePlacementSource(answered.source, source));
         return scoreToLevel(answerField((entry?.answers ?? resumeAnswers)[entry ? entryDepthKey(index) : questionKey(index)], "score"));
     };
+    const presenceAt = (source: PlacementSource): number =>
+        source.section === "skills" ? 1 : answerField(resumeAnswers[senseKey(index, source)], "noul");
     const listings: PlacementEvidence[] = literal
         .filter((source) => !isWorkHistory(source))
-        .map((source) => ({ source, presence: 1, depthLevel: depthAt(source) }));
-    const explicit =
-        listings.length > 0 ||
-        workHistory.some(
-            (placement) =>
-                placement.presence >= PRESENCE_CUTOFF &&
-                literal.some((source) => isSamePlacementSource(source, placement.source)),
-        );
+        .map((source) => ({ source, presence: presenceAt(source), depthLevel: depthAt(source) }));
+    const explicit = [...workHistory, ...listings].some(
+        (placement) =>
+            placement.presence >= PRESENCE_CUTOFF &&
+            literal.some((source) => isSamePlacementSource(source, placement.source)),
+    );
     return { kind: "skill", explicit, placements: [...workHistory, ...listings], demonstratingBullets: [] };
 }
 

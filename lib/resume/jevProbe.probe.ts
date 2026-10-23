@@ -22,7 +22,7 @@ const FIXTURES_DIR = join(__dirname, "fixtures");
 const fixtures = readdirSync(FIXTURES_DIR).filter((file) => file.endsWith(".json"));
 
 function sourceLabel(source: PlacementSource): string {
-  return source.section === "skillsListing" ? "listing" : `${source.section}[${source.entry}]`;
+  return "entry" in source ? `${source.section}[${source.entry}]` : source.section;
 }
 
 describe.skipIf(!process.env.TYPESAFE_API_KEY)("Jev probe", () => {
