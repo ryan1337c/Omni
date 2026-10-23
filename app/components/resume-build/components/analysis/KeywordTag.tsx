@@ -16,8 +16,8 @@ type KeywordTagProps = {
 /** Absent is dashed; fill strengthens with depth. */
 const BAND_CLASS: Record<DepthBand, string> = {
   0: 'border-dashed border-slate-300 text-slate-400 dark:border-slate-600 dark:text-slate-500',
-  1: 'border-slate-300 text-slate-600 dark:border-slate-500 dark:text-slate-300',
-  2: 'border-slate-300 bg-slate-100 text-slate-700 dark:border-slate-500 dark:bg-slate-700/50 dark:text-slate-200',
+  1: 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300',
+  2: 'border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-500/30 dark:bg-sky-500/15 dark:text-sky-300',
   3: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-300',
 };
 

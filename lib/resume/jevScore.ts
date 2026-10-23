@@ -140,7 +140,8 @@ async function askJev(
             signal: controller.signal,
         });
         if (!response.ok) {
-            throw new Error(`Jev request failed (${response.status})`);
+            const detail = await response.text().catch(() => "");
+            throw new Error(`Jev request failed (${response.status}): ${detail.slice(0, 500)}`);
         }
         const payload = (await response.json()) as { answers?: unknown };
         if (!payload.answers || typeof payload.answers !== "object") {
