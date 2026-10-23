@@ -18,6 +18,7 @@ import {
   type SectionId,
   type SkillEntry,
   type TailoredResumeResponse,
+  type WholeSectionPlacement,
 } from "./schema";
 
 // Caps so a huge or malformed model payload cannot explode later LaTeX/PDF work.
@@ -284,6 +285,7 @@ export function parseKeywords(value: unknown): JdKeyword[] {
 }
 
 const PLACEMENT_ENTRY_SECTIONS = new Set<PlacementEntrySection>(["experience", "projects", "education"]);
+const WHOLE_SECTION_PLACEMENTS = new Set<WholeSectionPlacement>(["summary", "skills", "honors"]);
 const BULLET_SECTIONS = new Set<BulletRef["section"]>(["experience", "projects"]);
 
 function asFiniteNumber(value: unknown, label: string): number {
@@ -302,7 +304,9 @@ function asIndex(value: unknown, label: string): number {
 
 function parsePlacementSource(value: unknown): PlacementSource {
   const obj = asObject(value, "placement source");
-  if (obj.section === "skillsListing") return { section: "skillsListing" };
+  if (WHOLE_SECTION_PLACEMENTS.has(obj.section as WholeSectionPlacement)) {
+    return { section: obj.section as WholeSectionPlacement };
+  }
   if (!PLACEMENT_ENTRY_SECTIONS.has(obj.section as PlacementEntrySection)) {
     throw new InvalidResumeJsonError("Unknown placement section");
   }

@@ -76,7 +76,7 @@ describe("scoreKeywords", () => {
         explicit: true,
         placements: [
           { source: { section: "experience", entry: 0 }, presence: 0.93, depthLevel: 2 },
-          { source: { section: "skillsListing" }, presence: 1, depthLevel: 2 },
+          { source: { section: "skills" }, presence: 1, depthLevel: 1 },
         ],
         demonstratingBullets: [],
       },
@@ -125,6 +125,47 @@ describe("scoreKeywords", () => {
     expect(staffState).not.toContain("Initech");
     expect(staffState).not.toContain("Tracker");
     expect(staffState).not.toContain("York University");
+  });
+
+  it("sends each Education Entry as its own request, asking only about the Hard Skills it names", async () => {
+    const jev = fakeJev();
+    const twoSchools = {
+      ...resume,
+      education: [
+        { institution: "York University", location: "", degree: "BS", dates: "2018 - 2022", bullets: ["Built a React to-do app in a web development course"] },
+        { institution: "Seneca College", location: "", degree: "Diploma", dates: "2016 - 2018", bullets: ["Wrote Java labs"] },
+      ],
+    };
+
+    await scoreKeywords([keyword("React"), keyword("Java"), keyword("Kubernetes")], twoSchools, {
+      apiKey: "test",
+      fetch: jev.fetch,
+    });
+
+    const york = jev.requests.find((request) => entryName(request) === "York University")!;
+    const yorkState = JSON.stringify(york.state);
+    expect(yorkState).toContain("React to-do app");
+    expect(yorkState).not.toContain("Seneca");
+    expect(yorkState).not.toContain("Acme");
+    const asked = Object.values(york.questions).map((question) => question.instructions).join("\n");
+    expect(asked).toContain("React");
+    expect(asked).not.toContain("Java");
+    expect(asked).not.toContain("Kubernetes");
+  });
+
+  it("never implies a skill from Education", async () => {
+    const jev = fakeJev({ score: 2, noul: 0.99 });
+    const coursework = {
+      ...resume,
+      experience: [],
+      education: [
+        { institution: "York University", location: "", degree: "BS", dates: "2018 - 2022", bullets: ["Built a to-do app with JSX components and hooks"] },
+      ],
+    };
+
+    const scoring = await scoreKeywords([keyword("React")], coursework, { apiKey: "test", fetch: jev.fetch });
+
+    expect(scoring.evidence).toEqual([{ kind: "skill", explicit: false, placements: [], demonstratingBullets: [] }]);
   });
 
   it("falls back to Mentioned for Explicit Skills and literal matching for Other Keywords when Jev fails", async () => {

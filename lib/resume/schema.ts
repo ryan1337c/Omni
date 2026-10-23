@@ -92,14 +92,17 @@ export type ResumeHeader = {
   /** Sections whose Entries are each their own Placement. `entry` indexes that section's array. */
   export type PlacementEntrySection = "experience" | "projects" | "education";
 
-  /** Where a Placement is: one Entry, or the Skills Listing (Professional Summary, Technical Skills, Honors). */
+  /** Skills Listing Sections that are one Placement as a whole. */
+  export type WholeSectionPlacement = "summary" | "skills" | "honors";
+
+  /** Where a Placement is: one Entry, or a whole Professional Summary, Technical Skills, or Honors Section. */
   export type PlacementSource =
     | { section: PlacementEntrySection; entry: number }
-    | { section: "skillsListing" };
+    | { section: WholeSectionPlacement };
 
   export type PlacementEvidence = {
     source: PlacementSource;
-    /** 0–1 likelihood that the Placement shows the skill in that sense. A literal match is 1. */
+    /** 0–1 likelihood that the Placement shows the skill in that sense. A literal match in Technical Skills is 1. */
     presence: number;
     /** 1–3 Depth Level at this Placement, fractions kept. */
     depthLevel: number;
