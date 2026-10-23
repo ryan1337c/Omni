@@ -319,13 +319,15 @@ export const DEPTH_LEVEL_NAMES = [
   "Familiarity",
   "Applied / Production",
 ] as const;
-const MENTIONED_LEVEL = 1;
+export const MENTIONED_LEVEL = 1;
 const MIN_DEPTH_LEVEL = MENTIONED_LEVEL;
 export const MAX_DEPTH_LEVEL = DEPTH_LEVEL_NAMES.length;
-/** A Placement counts only when Jev's presence answer is at least this. */
+/** A Placement counts, and a Bullet demonstrates a Soft Skill, only when Jev's answer is at least this. */
 export const PRESENCE_CUTOFF = 0.7;
 /** Share of the named credit an Implied Hard Skill earns: applicant tracking systems search tools by name. */
 export const IMPLIED_HARD_SKILL_MULTIPLIER = 0.5;
+/** Share of the named credit an Implied Soft Skill earns: traits are better shown than claimed. */
+export const IMPLIED_SOFT_SKILL_MULTIPLIER = 0.8;
 const SKILLS_LISTING_WEIGHT = 0.4;
 const DUAL_PLACEMENT_BONUS = 0.1;
 
@@ -535,9 +537,8 @@ function toSkillMatchResult(
   };
 }
 
-/** Soft Skills are never Implied yet, so only Hard Skills are reduced. */
 function impliedMultiplier(keyword: JdKeyword): number {
-  return resolveCategory(keyword.category) === "hard" ? IMPLIED_HARD_SKILL_MULTIPLIER : 1;
+  return resolveCategory(keyword.category) === "hard" ? IMPLIED_HARD_SKILL_MULTIPLIER : IMPLIED_SOFT_SKILL_MULTIPLIER;
 }
 
 /** The Placements that earn credit: those whose presence reaches `PRESENCE_CUTOFF`. */
@@ -614,7 +615,8 @@ export type ScoreKeywordEvidenceOptions = {
  * Weighted resume score from evidence aligned with `keywords` by index.
  * Hard and Soft Skills: among Placements with presence ≥ `PRESENCE_CUTOFF`, the best one's depth
  * weight × Placement weight, + Dual Placement bonus, capped at 1, then × `IMPLIED_HARD_SKILL_MULTIPLIER`
- * for an Implied Hard Skill. Other Keywords: `matchProbabilityToCredit` of the Match Probability.
+ * or `IMPLIED_SOFT_SKILL_MULTIPLIER` for an Implied Skill. Other Keywords: `matchProbabilityToCredit`
+ * of the Match Probability.
  * Open for new scorers (Jev, fallback): pass evidence in, do not change this function.
  */
 export function scoreKeywordEvidence(

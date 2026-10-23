@@ -50,14 +50,15 @@ async function scoreWith(keywords: JdKeyword[], fetch: typeof globalThis.fetch) 
 }
 
 describe("scoreKeywords", () => {
-  it("still asks about Soft Skills only when they are Explicit, on the whole resume", async () => {
-    const jev = fakeJev({ score: 2 });
+  it("asks about Soft Skills inside the Entry requests, without adding a request", async () => {
+    const hardOnly = fakeJev();
+    const withSoft = fakeJev();
 
-    const { scoring, score } = await scoreWith([keyword("Teamwork", "soft")], jev.fetch);
+    await scoreWith([keyword("Python")], hardOnly.fetch);
+    const { scoring } = await scoreWith([keyword("Python"), keyword("Teamwork", "soft")], withSoft.fetch);
 
-    expect(jev.requests).toHaveLength(0);
     expect(scoring.scoredBy).toBe("jev");
-    expect(score.results.map((r) => [r.level, r.weight, r.matched])).toEqual([[0, 0, false]]);
+    expect(withSoft.requests.map(entryName)).toEqual(hardOnly.requests.map(entryName));
   });
 
   it("carries each Keyword's evidence: Placements, Explicit or not, and Match Probability", async () => {

@@ -16,6 +16,10 @@ function keyword(term: string, aliases: string[] = []): JdKeyword {
   return { term, aliases, category: "hard", importance: "required" };
 }
 
+function soft(term: string, aliases: string[] = []): JdKeyword {
+  return { term, aliases, category: "soft", importance: "required" };
+}
+
 function other(term: string, aliases: string[] = []): JdKeyword {
   return { term, aliases, category: "other", importance: "required" };
 }
@@ -326,6 +330,76 @@ describe("Keyword credit", () => {
         [MENTIONED, 1 / 3],
         [0, 0],
       ]);
+    });
+  });
+
+  describe("Soft Skills judged per Bullet", () => {
+    const LED_MIGRATION = "Led 4 engineers through a Postgres migration";
+    const BUILT_API = "Built a REST API in Go";
+
+    it("gives an Implied Soft Skill shown by a Bullet in a Current Role 0.8 of the named credit", async () => {
+      const resume = resumeWith({ experience: [job("Jan 2022 - Present", [BUILT_API, LED_MIGRATION])] });
+
+      const score = await scoreWithJev([soft("Leadership")], { bullets: { [BUILT_API]: 0.1, [LED_MIGRATION]: 0.9 } }, resume);
+
+      expect(score.results[0]).toMatchObject({ level: APPLIED, matched: true });
+      expect(score.results[0].weight).toBeCloseTo(0.8);
+      expect(score.results[0].evidence).toMatchObject({ explicit: false });
+    });
+
+    it("rates a self-description Mentioned, never Familiarity", async () => {
+      const claimInSummary = resumeWith({
+        summary: "Strong communicator and team player.",
+        experience: [job("Jan 2022 - Present", [BUILT_API])],
+      });
+      const claimInBullet = resumeWith({
+        experience: [job("Jan 2022 - Present", ["Strong communicator who shipped Python services"])],
+      });
+      const communication = soft("Communication", ["communicator"]);
+      const notAnExample = { bullets: { [BUILT_API]: 0.1, "Strong communicator who shipped Python services": 0.2 } };
+
+      const fromSummary = await scoreWithJev([communication], { ...ratedAt(FAMILIARITY), ...notAnExample }, claimInSummary);
+      const fromBullet = await scoreWithJev([communication], { ...ratedAt(FAMILIARITY), ...notAnExample }, claimInBullet);
+
+      expect(fromSummary.results[0]).toMatchObject({ level: MENTIONED, matched: true });
+      expect(fromSummary.results[0].weight).toBeCloseTo(0.4 / 3);
+      expect(fromBullet.results[0]).toMatchObject({ level: MENTIONED, matched: true });
+      expect(fromBullet.results[0].weight).toBeCloseTo(1 / 3);
+    });
+
+    it("rates a named Soft Skill with a demonstrating Bullet Applied / Production, in full", async () => {
+      const resume = resumeWith({
+        summary: "Engineering leadership across platform teams.",
+        experience: [job("Jan 2022 - Present", [BUILT_API, LED_MIGRATION])],
+      });
+
+      const score = await scoreWithJev([soft("Leadership")], { bullets: { [BUILT_API]: 0.1, [LED_MIGRATION]: 0.9 } }, resume);
+
+      expect(score.results[0]).toMatchObject({ level: APPLIED, weight: 1 });
+      expect(score.results[0].evidence).toMatchObject({ explicit: true });
+    });
+
+    it("does not count a Bullet whose answer is below 0.7, and is Absent when never named", async () => {
+      const resume = resumeWith({ experience: [job("Jan 2022 - Present", [LED_MIGRATION])] });
+
+      const score = await scoreWithJev([soft("Leadership")], { bullets: { [LED_MIGRATION]: 0.69 } }, resume);
+
+      expect(score.results[0]).toMatchObject({ level: 0, weight: 0, matched: false });
+    });
+
+    it("weights the demonstrating Entry by Recency and Duration", async () => {
+      const resume = resumeWith({
+        experience: [
+          job("Jan 2022 - Present", [BUILT_API], "Backend Engineer"),
+          job("Jan 2018 - Oct 2023", [LED_MIGRATION], "Tech Lead"),
+        ],
+        skills: [{ category: "Strengths", items: "Leadership" }],
+      });
+
+      const score = await scoreWithJev([soft("Leadership")], { bullets: { [BUILT_API]: 0.1, [LED_MIGRATION]: 0.9 } }, resume);
+
+      expect(score.results[0].level).toBe(APPLIED);
+      expect(score.results[0].weight).toBeCloseTo(0.7 + 0.1);
     });
   });
 
