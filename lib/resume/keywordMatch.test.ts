@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { byEntry, fakeJev, type FakeJevAnswers } from "./fakeJev";
 import { scoreKeywords } from "./jevScore";
-import { scoreKeywordEvidence, type ResumeScore } from "./keywordMatch";
+import { highlightedKeywords, scoreKeywordEvidence, type ResumeScore } from "./keywordMatch";
 import { parseResumeContent } from "./parseResumeJson";
 import type { JdKeyword, ResumeContent } from "./schema";
 
@@ -273,6 +273,35 @@ describe("Keyword credit", () => {
 
       expect(score.results[0]).toMatchObject({ level: 0, weight: 0, matched: false });
       expect(score.results[0].evidence).toMatchObject({ explicit: false });
+      expect(highlightedKeywords(score.results, { section: "experience", entry: 0 })).toEqual([]);
+    });
+
+    it("highlights a skill only in the Entries where Jev confirmed the sense", async () => {
+      const resume = resumeWith({
+        experience: [
+          job("Jan 2022 - Present", ["Built Go microservices"], "Backend Engineer"),
+          job("2018 - 2021", ["Led the go-to-market launch"], "Marketing Lead"),
+        ],
+        skills: [{ category: "Languages", items: "Go" }],
+      });
+      const answers = byEntry({ "Marketing Lead": { noul: 0.05 } }, ratedAt(APPLIED));
+
+      const { results } = await scoreWithJev([keyword("Go")], answers, resume);
+
+      const terms = (entry: Parameters<typeof highlightedKeywords>[1]) =>
+        highlightedKeywords(results, entry).map((k) => k.term);
+      expect(terms({ section: "experience", entry: 0 })).toEqual(["Go"]);
+      expect(terms({ section: "experience", entry: 1 })).toEqual([]);
+      expect(terms(null)).toEqual(["Go"]);
+    });
+
+    it("never highlights an Implied Skill", async () => {
+      const resume = resumeWith({ experience: [job("Jan 2022 - Present", ["Ran services on EKS"])] });
+
+      const { results } = await scoreWithJev([keyword("Kubernetes")], ratedAt(APPLIED), resume);
+
+      expect(results[0].matched).toBe(true);
+      expect(highlightedKeywords(results, { section: "experience", entry: 0 })).toEqual([]);
     });
 
     it("falls back to exact wording for every Keyword when any one Entry request fails", async () => {

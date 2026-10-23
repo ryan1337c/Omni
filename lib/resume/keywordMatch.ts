@@ -545,6 +545,33 @@ export function countingPlacements(evidence: SkillEvidence): PlacementEvidence[]
   return evidence.placements.filter((placement) => placement.presence >= PRESENCE_CUTOFF);
 }
 
+/** One Experience or Projects Entry, for text that sits inside it. */
+export type WorkHistoryEntryRef = { section: "experience" | "projects"; entry: number };
+
+/**
+ * Keywords to highlight in one Work History Entry's text, or in text outside every Work History
+ * Entry when `entry` is null. Implied Skills have no word to highlight, and a literal match in an
+ * Entry where Jev rejected the sense is left unmarked.
+ */
+export function highlightedKeywords(
+  results: KeywordMatchResult[],
+  entry: WorkHistoryEntryRef | null,
+): JdKeyword[] {
+  return results
+    .filter(({ matched, evidence }) => {
+      if (!matched) return false;
+      if (evidence.kind === "other") return true;
+      if (!evidence.explicit) return false;
+      return !(
+        entry &&
+        evidence.placements.some(
+          (placement) => isSamePlacementSource(placement.source, entry) && placement.presence < PRESENCE_CUTOFF,
+        )
+      );
+    })
+    .map(({ keyword }) => keyword);
+}
+
 export function isExplicitSkill(keyword: JdKeyword, resume: ResumeContent): boolean {
   return findLiteralPlacements(keyword, resume).length > 0;
 }

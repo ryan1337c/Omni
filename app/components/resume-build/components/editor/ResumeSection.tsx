@@ -3,9 +3,11 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { GripVertical, ListPlus } from 'lucide-react';
 import { FiArrowDown, FiArrowUp, FiPlus, FiTrash2 } from 'react-icons/fi';
+import type { WorkHistoryEntryRef } from '@/lib/resume/keywordMatch';
 import { MAX_SECTION_ENTRIES } from '@/lib/resume/parseResumeJson';
 import { SECTION_TITLES, type SectionId } from '@/lib/resume/schema';
 
+import { workHistoryEntryProps } from '../../hooks/useResumeKeywordHighlights';
 import ControlButton from './ControlButton';
 import { focusAtEnd } from './EditableText';
 import { useSectionReorder } from './SectionReorder';
@@ -127,13 +129,15 @@ type ResumeEntryProps = {
   onRemove: () => void;
   /** Omit to hide the add-bullet control (e.g. sections without bullets, or at the bullet cap). */
   onAddBullet?: () => void;
+  /** Set for Experience and Projects Entries, whose keywords are highlighted per Entry. */
+  workHistoryEntry?: WorkHistoryEntryRef;
   children: ReactNode;
 };
 
 /** One entry in a section. Its controls sit in the left page margin, clear of the bullet controls on the right. */
-export function ResumeEntry({ removeLabel, onRemove, onAddBullet, children }: ResumeEntryProps) {
+export function ResumeEntry({ removeLabel, onRemove, onAddBullet, workHistoryEntry, children }: ResumeEntryProps) {
   return (
-    <div className="group/entry relative">
+    <div className="group/entry relative" {...(workHistoryEntry && workHistoryEntryProps(workHistoryEntry))}>
       {children}
       <div className="absolute right-full top-0 mr-[calc(0.15in+0.25rem)] flex flex-col gap-0.5 opacity-0 transition-opacity group-hover/entry:opacity-100 group-focus-within/entry:opacity-100">
         <ControlButton label={removeLabel} icon={FiTrash2} tone="danger" onClick={onRemove} />
