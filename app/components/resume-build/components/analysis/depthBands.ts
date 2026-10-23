@@ -12,7 +12,7 @@ import type { JdKeyword, PlacementSource, ResumeContent } from "@/lib/resume/sch
 /**
  * Presentation for Depth Levels and Match Probabilities.
  * Credit and the "present" threshold stay in `keywordMatch` (SRP).
- * This module only names the rounded band the chips, tooltip, and summary use.
+ * This module only names the rounded band the chips, popover, and summary use, and holds the user guide text.
  */
 
 /** Band 0 is Absent: a skill with no Placement that counts. Bands 1–3 are Depth Levels. */
@@ -79,6 +79,117 @@ const MATCH_BAND_LOOK: Record<MatchBandName, DepthBand> = {
   Shown: HANDS_ON_BAND,
 };
 
+/**
+ * Plain-language guide for users, read by chip popovers and the legend.
+ * Jev's Depth Level criteria live in `jevScore` and must not be reworded from here.
+ */
+export type GuideState = {
+  name: DepthBandName | MatchBandName;
+  /** Which chip look the state uses. */
+  band: DepthBand;
+  meaning: string;
+  /** How to reach the next level. */
+  tip: string;
+};
+
+export type GuideGroup = {
+  category: JdKeyword["category"];
+  title: string;
+  states: readonly GuideState[];
+};
+
+const FULL_CREDIT_TIP = "Full credit. No change needed.";
+
+export const KEYWORD_GUIDE: readonly GuideGroup[] = [
+  {
+    category: "hard",
+    title: "Hard Skills",
+    states: [
+      {
+        name: "Absent",
+        band: ABSENT_LEVEL,
+        meaning: "The resume doesn't show this skill.",
+        tip: "If you've used it, add a Bullet that names it and says what you did with it.",
+      },
+      {
+        name: "Mentioned",
+        band: MENTIONED_BAND,
+        meaning: "The skill is named, but nothing shows you using it.",
+        tip: "Add a Bullet showing what you built with it and the result.",
+      },
+      {
+        name: "Familiarity",
+        band: FAMILIARITY_BAND,
+        meaning: "Shows introductory use, such as coursework, a tutorial, or a small exercise.",
+        tip: "Add a Bullet about using it in a real project or job, with what you owned and the outcome.",
+      },
+      {
+        name: "Applied / Production",
+        band: HANDS_ON_BAND,
+        meaning: "Shows real use in a project or job, with responsibilities or results.",
+        tip: "Full credit. Showing it in your Current Role keeps it weighted highest.",
+      },
+    ],
+  },
+  {
+    category: "soft",
+    title: "Soft Skills",
+    states: [
+      {
+        name: "Absent",
+        band: ABSENT_LEVEL,
+        meaning: "The resume doesn't name or show this trait.",
+        tip: "Add a Bullet that is a specific example of it, with who was involved and the result.",
+      },
+      {
+        name: "Mentioned",
+        band: MENTIONED_BAND,
+        meaning: 'The trait is only named or claimed, as in "strong communicator".',
+        tip: "Back the claim with a Bullet that shows it in action, with who was involved and the result.",
+      },
+      {
+        name: "Applied / Production",
+        band: HANDS_ON_BAND,
+        meaning: "A Bullet is a specific example of this trait.",
+        tip: FULL_CREDIT_TIP,
+      },
+    ],
+  },
+  {
+    category: "other",
+    title: "Other Keywords",
+    states: [
+      {
+        name: "Not shown",
+        band: MATCH_BAND_LOOK["Not shown"],
+        meaning: "The resume doesn't show this requirement.",
+        tip: "If you meet it, state it plainly, such as the degree name or your years of experience.",
+      },
+      {
+        name: "Partly shown",
+        band: MATCH_BAND_LOOK["Partly shown"],
+        meaning: "The resume may meet this requirement, but it isn't clear.",
+        tip: "State it directly, in words close to the job description's.",
+      },
+      {
+        name: "Shown",
+        band: MATCH_BAND_LOOK.Shown,
+        meaning: "The resume clearly meets this requirement.",
+        tip: FULL_CREDIT_TIP,
+      },
+    ],
+  },
+];
+
+/** Without a term, tips name the skill generically, for the legend. */
+export const NOT_NAMED_GUIDE = {
+  meaning:
+    "Your Work History shows this skill but the resume never names it, so it earns less credit: applicant tracking systems and recruiters search by name.",
+  hardTip: (term?: string) => `Add ${term ? `"${term}"` : "the skill's exact name"} to that Bullet.`,
+  softTip: (term?: string) =>
+    `Optional: if it reads naturally, add ${term ? `"${term}"` : "the trait's name"} to that Bullet. The example already earns most of the credit.`,
+};
+
 function importanceLabel(importance: JdKeyword["importance"]): string {
   return importance === "required" ? "Required" : "Preferred";
 }
@@ -101,12 +212,24 @@ export type KeywordChip = {
   band: DepthBand;
   /** Screen-reader text, e.g. "Familiarity, 2 of 3" or "Shown". */
   srLabel: string;
+  /** Importance and state, e.g. "Required - Familiarity (2/3)". */
   hint: string;
+  /** The state's one-line meaning from `KEYWORD_GUIDE`. */
+  meaning: string;
   /** An Implied Skill: shown in Work History but never named on the resume. */
   notNamed: boolean;
+  /** Entries that showed an Implied Skill, e.g. "Staff Engineer, Acme". Empty otherwise. */
+  shownIn: string[];
+  /** How to name an Implied Skill; null for every other chip. */
+  tip: string | null;
 };
 
 const NOT_NAMED = "not named";
+
+function guideMeaning(category: JdKeyword["category"], name: GuideState["name"]): string {
+  const group = KEYWORD_GUIDE.find((candidate) => candidate.category === category);
+  return group?.states.find((state) => state.name === name)?.meaning ?? "";
+}
 
 /** "Staff Engineer, Acme" for a job, the project name for a project. */
 function entryLabel(source: PlacementSource, resume: ResumeContent): string {
@@ -126,15 +249,22 @@ export function keywordChip({ keyword, level, matched, evidence }: KeywordMatchR
       band: MATCH_BAND_LOOK[name],
       srLabel: name,
       hint: keywordMatchHint(keyword.importance, level),
+      meaning: guideMeaning("other", name),
       notNamed: false,
+      shownIn: [],
+      tip: null,
     };
   }
-  const band = depthBand(level);
+  const isSoft = keyword.category === "soft";
+  const rawBand = depthBand(level);
+  // Soft Skills skip Familiarity.
+  const band = isSoft && rawBand === FAMILIARITY_BAND ? MENTIONED_BAND : rawBand;
   const name = BAND_NAMES[band];
   const srLabel = band === ABSENT_LEVEL ? name : `${name}, ${band} of ${MAX_DEPTH_LEVEL}`;
-  const hint = keywordLevelHint(keyword.importance, level);
+  const hint = keywordLevelHint(keyword.importance, band);
+  const meaning = guideMeaning(isSoft ? "soft" : "hard", name);
   if (!matched || evidence.kind !== "skill" || evidence.explicit) {
-    return { band, srLabel, hint, notNamed: false };
+    return { band, srLabel, hint, meaning, notNamed: false, shownIn: [], tip: null };
   }
   const shownIn = countingPlacements(evidence)
     .map((placement) => entryLabel(placement.source, resume))
@@ -142,7 +272,10 @@ export function keywordChip({ keyword, level, matched, evidence }: KeywordMatchR
   return {
     band,
     srLabel: `${srLabel}, ${NOT_NAMED}`,
-    hint: `${hint}, ${NOT_NAMED}. Shown in: ${shownIn.join("; ")}`,
+    hint,
+    meaning,
     notNamed: true,
+    shownIn,
+    tip: isSoft ? NOT_NAMED_GUIDE.softTip(keyword.term) : NOT_NAMED_GUIDE.hardTip(keyword.term),
   };
 }

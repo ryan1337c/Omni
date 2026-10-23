@@ -9,8 +9,10 @@ import {
   depthBandName,
   keywordChip,
   keywordLevelHint,
+  KEYWORD_GUIDE,
   keywordMatchHint,
   matchBandName,
+  NOT_NAMED_GUIDE,
 } from "./depthBands";
 
 function keyword(category: JdKeyword["category"]): JdKeyword {
@@ -85,15 +87,83 @@ describe("keywordMatchHint", () => {
   });
 });
 
+describe("guide text", () => {
+  const CHIP_STATES: Record<JdKeyword["category"], string[]> = {
+    hard: ["Absent", "Mentioned", "Familiarity", "Applied / Production"],
+    soft: ["Absent", "Mentioned", "Applied / Production"],
+    other: ["Not shown", "Partly shown", "Shown"],
+  };
+
+  it.each(Object.entries(CHIP_STATES))("gives every %s chip state, and only those, a meaning line and a tip", (category, states) => {
+    const group = KEYWORD_GUIDE.find((candidate) => candidate.category === category);
+    expect(group?.states.map((state) => state.name)).toEqual(states);
+    for (const state of group?.states ?? []) {
+      expect(state.meaning.trim(), `${category} ${state.name} meaning`).not.toBe("");
+      expect(state.tip.trim(), `${category} ${state.name} tip`).not.toBe("");
+    }
+  });
+
+  it("explains the not named marker once, with a tip naming the skill for Hard Skills and an optional one for Soft Skills", () => {
+    expect(NOT_NAMED_GUIDE.meaning.trim()).not.toBe("");
+    expect(NOT_NAMED_GUIDE.hardTip("Kubernetes")).toBe('Add "Kubernetes" to that Bullet.');
+    expect(NOT_NAMED_GUIDE.softTip("Leadership")).toMatch(/^Optional:.*"Leadership"/);
+  });
+});
+
 describe("keywordChip", () => {
+  function guideMeaning(category: JdKeyword["category"], name: string): string | undefined {
+    return KEYWORD_GUIDE.find((group) => group.category === category)?.states.find((state) => state.name === name)?.meaning;
+  }
+
+  function namedSkill(level: number): SkillEvidence {
+    return {
+      kind: "skill",
+      explicit: true,
+      placements: level > 0 ? [{ source: { section: "experience", entry: 0 }, presence: 1, depthLevel: level }] : [],
+      demonstratingBullets: [],
+    };
+  }
+
   it("uses the top look with no depth fraction for a shown Other Keyword", () => {
     const evidence = { kind: "other", matchProbability: 0.95 } as const;
     expect(keywordChip({ keyword: keyword("other"), level: 0.95, weight: 1, matched: true, evidence }, resume)).toEqual({
       band: 3,
       srLabel: "Shown",
       hint: "Required - Shown (95%)",
+      meaning: guideMeaning("other", "Shown"),
       notNamed: false,
+      shownIn: [],
+      tip: null,
     });
+  });
+
+  it.each([
+    ["hard", 0, "Absent"],
+    ["hard", 1, "Mentioned"],
+    ["hard", 2, "Familiarity"],
+    ["hard", 3, "Applied / Production"],
+    ["soft", 0, "Absent"],
+    ["soft", 1, "Mentioned"],
+    ["soft", 3, "Applied / Production"],
+  ] as const)("gives a named %s skill at level %d the %s meaning, with no tip or Entries", (category, level, name) => {
+    const chip = keywordChip(
+      { keyword: keyword(category), level, weight: 0, matched: level > 0, evidence: namedSkill(level) },
+      resume,
+    );
+    expect(chip).toMatchObject({ meaning: guideMeaning(category, name), notNamed: false, shownIn: [], tip: null });
+  });
+
+  it.each([
+    [0.3, "Not shown"],
+    [0.7, "Partly shown"],
+    [0.95, "Shown"],
+  ])("gives an Other Keyword at Match Probability %d the %s meaning", (probability, name) => {
+    const evidence = { kind: "other", matchProbability: probability } as const;
+    const chip = keywordChip(
+      { keyword: keyword("other"), level: probability, weight: 0, matched: name !== "Not shown", evidence },
+      resume,
+    );
+    expect(chip).toMatchObject({ meaning: guideMeaning("other", name), notNamed: false, tip: null });
   });
 
   it("reads a Hard Skill's level as a Depth Level", () => {
@@ -107,11 +177,14 @@ describe("keywordChip", () => {
       band: 2,
       srLabel: "Familiarity, 2 of 3",
       hint: "Required - Familiarity (2/3)",
+      meaning: guideMeaning("hard", "Familiarity"),
       notNamed: false,
+      shownIn: [],
+      tip: null,
     });
   });
 
-  it("marks an Implied Skill as not named, keeps its Depth Level look, and lists the Entries that showed it", () => {
+  it("marks an Implied Hard Skill as not named, lists the Entries that showed it, and tips to add the term", () => {
     const evidence: SkillEvidence = {
       kind: "skill",
       explicit: false,
@@ -126,8 +199,27 @@ describe("keywordChip", () => {
     expect(keywordChip({ keyword: keyword("hard"), level: 3, weight: 0.5, matched: true, evidence }, resume)).toEqual({
       band: 3,
       srLabel: "Applied / Production, 3 of 3, not named",
-      hint: "Required - Applied / Production (3/3), not named. Shown in: Staff Engineer, Acme; Tracker",
+      hint: "Required - Applied / Production (3/3)",
+      meaning: guideMeaning("hard", "Applied / Production"),
       notNamed: true,
+      shownIn: ["Staff Engineer, Acme", "Tracker"],
+      tip: 'Add "Skill" to that Bullet.',
+    });
+  });
+
+  it("frames the tip for an Implied Soft Skill as optional", () => {
+    const evidence: SkillEvidence = {
+      kind: "skill",
+      explicit: false,
+      placements: [{ source: { section: "experience", entry: 1 }, presence: 0.85, depthLevel: 3 }],
+      demonstratingBullets: [{ section: "experience", entry: 1, bullet: 0 }],
+    };
+
+    expect(keywordChip({ keyword: keyword("soft"), level: 3, weight: 0.8, matched: true, evidence }, resume)).toMatchObject({
+      band: 3,
+      notNamed: true,
+      shownIn: ["Developer, Initech"],
+      tip: expect.stringMatching(/^Optional:.*"Skill"/),
     });
   });
 });
