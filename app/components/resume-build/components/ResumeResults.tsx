@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { FiArrowLeft, FiDownload, FiLoader } from 'react-icons/fi';
-import type { JdKeyword, TailoredResumeResult } from '@/lib/resume/schema';
+import type { KeywordMatchResult } from '@/lib/resume/keywordMatch';
+import type { TailoredResumeResult } from '@/lib/resume/schema';
 
 import { useKeywordScoring } from '../hooks/useKeywordScoring';
 import { useResumeDownload } from '../hooks/useResumeDownload';
@@ -19,7 +20,7 @@ type ResumeResultsProps = {
   onError: (message: string) => void;
 };
 
-const NO_HIGHLIGHTS: JdKeyword[] = [];
+const NO_HIGHLIGHTS: KeywordMatchResult[] = [];
 
 /**
  * Results step: keyword analysis on the left, the editable resume on the right.
@@ -27,17 +28,13 @@ const NO_HIGHLIGHTS: JdKeyword[] = [];
  */
 export default function ResumeResults({ tailored, jobTitle, onStartOver, onError }: ResumeResultsProps) {
   const { resume, actions } = useResumeEditor(tailored.resume);
-  const { analysis, isStale, isScoring, scoredBy, reanalyze } = useKeywordScoring(
+  const { analysis, isStale, isScoring, scoredBy, scoredResume, reanalyze } = useKeywordScoring(
     tailored,
     resume,
     onError,
   );
   const { download, isDownloading } = useResumeDownload(onError);
   const [highlightKeywords, setHighlightKeywords] = useState(false);
-  const matchedKeywords = useMemo(
-    () => analysis.results.filter((result) => result.matched).map((result) => result.keyword),
-    [analysis.results],
-  );
 
   return (
     // Below xl the panels stack and the whole view scrolls; from xl up each panel scrolls on its own.
@@ -82,6 +79,7 @@ export default function ResumeResults({ tailored, jobTitle, onStartOver, onError
                     isStale={isStale}
                     isScoring={isScoring}
                     scoredBy={scoredBy}
+                    scoredResume={scoredResume}
                     onReanalyze={reanalyze}
                   />
                 ),
@@ -97,7 +95,7 @@ export default function ResumeResults({ tailored, jobTitle, onStartOver, onError
               <JakeResumePaper
                 resume={resume}
                 actions={actions}
-                highlightKeywords={highlightKeywords ? matchedKeywords : NO_HIGHLIGHTS}
+                highlightKeywords={highlightKeywords ? analysis.results : NO_HIGHLIGHTS}
               />
             </div>
           </section>

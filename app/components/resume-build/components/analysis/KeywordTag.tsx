@@ -1,4 +1,4 @@
-import { FiCheck } from 'react-icons/fi';
+import { FiAlertCircle, FiCheck } from 'react-icons/fi';
 
 import { MAX_DEPTH_LEVEL } from '@/lib/resume/keywordMatch';
 
@@ -11,6 +11,8 @@ type KeywordTagProps = {
   srLabel?: string;
   /** Shown as a native tooltip, e.g. "Required - Applied / Production (3/3)". */
   hint?: string;
+  /** An Implied Skill: keeps its band look and adds a "not named" marker. */
+  notNamed?: boolean;
 };
 
 /** Absent is dashed; fill strengthens with depth. */
@@ -22,7 +24,7 @@ const BAND_CLASS: Record<DepthBand, string> = {
 };
 
 /** One keyword chip. The check is reserved for the top band; lower bands are outline or fill only. */
-export default function KeywordTag({ label, band, srLabel, hint }: KeywordTagProps) {
+export default function KeywordTag({ label, band, srLabel, hint, notNamed = false }: KeywordTagProps) {
   return (
     <span
       title={hint}
@@ -30,6 +32,7 @@ export default function KeywordTag({ label, band, srLabel, hint }: KeywordTagPro
     >
       {band === MAX_DEPTH_LEVEL && <FiCheck className="h-3 w-3 flex-shrink-0" aria-hidden />}
       {label}
+      {notNamed && <FiAlertCircle className="h-3 w-3 flex-shrink-0 opacity-80" aria-hidden />}
       {srLabel && <span className="sr-only">({srLabel})</span>}
     </span>
   );

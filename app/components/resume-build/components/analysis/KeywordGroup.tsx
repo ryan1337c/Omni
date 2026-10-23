@@ -1,4 +1,5 @@
 import type { KeywordMatchResult } from '@/lib/resume/keywordMatch';
+import type { ResumeContent } from '@/lib/resume/schema';
 
 import KeywordTag from './KeywordTag';
 import { keywordChip } from './depthBands';
@@ -7,10 +8,12 @@ type KeywordGroupProps = {
   title: string;
   subtitle: string;
   results: KeywordMatchResult[];
+  /** The resume `results` were scored against, for naming the Entries that showed an Implied Skill. */
+  scoredResume: ResumeContent;
 };
 
-export default function KeywordGroup({ title, subtitle, results }: KeywordGroupProps) {
-  // `matched` is true for Explicit Skills and for Other Keywords that earn credit.
+export default function KeywordGroup({ title, subtitle, results, scoredResume }: KeywordGroupProps) {
+  // `matched` is true for Explicit and Implied Skills and for Other Keywords that earn credit.
   const presentCount = results.filter((result) => result.matched).length;
 
   return (
@@ -27,7 +30,7 @@ export default function KeywordGroup({ title, subtitle, results }: KeywordGroupP
 
       <div className="flex flex-wrap gap-1.5">
         {results.map((result, index) => {
-          const { band, srLabel, hint } = keywordChip(result);
+          const { band, srLabel, hint, notNamed } = keywordChip(result, scoredResume);
           return (
             <KeywordTag
               key={`${result.keyword.term}-${index}`}
@@ -35,6 +38,7 @@ export default function KeywordGroup({ title, subtitle, results }: KeywordGroupP
               band={band}
               srLabel={srLabel}
               hint={hint}
+              notNamed={notNamed}
             />
           );
         })}

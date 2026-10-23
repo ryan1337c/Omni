@@ -1,7 +1,8 @@
 "use client";
 
 import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { DEFAULT_SECTION_ORDER, type JdKeyword, type ResumeContent, type SectionId } from '@/lib/resume/schema';
+import type { KeywordMatchResult } from '@/lib/resume/keywordMatch';
+import { DEFAULT_SECTION_ORDER, type ResumeContent, type SectionId } from '@/lib/resume/schema';
 
 import { PAPER_HEIGHT_PX, PAPER_WIDTH_PX } from '../../constants';
 import type { ResumeEditorActions } from '../../hooks/useResumeEditor';
@@ -18,8 +19,8 @@ import SummarySection from './SummarySection';
 type JakeResumePaperProps = {
   resume: ResumeContent;
   actions: ResumeEditorActions;
-  /** Matched keywords to paint. An empty list leaves the page unmarked. */
-  highlightKeywords: JdKeyword[];
+  /** Scored keywords to paint where they count. An empty list leaves the page unmarked. */
+  highlightKeywords: KeywordMatchResult[];
 };
 
 /**

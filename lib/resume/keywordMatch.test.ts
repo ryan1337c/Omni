@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { fakeJev, type FakeJevAnswers } from "./fakeJev";
+import { byEntry, fakeJev, type FakeJevAnswers } from "./fakeJev";
 import { scoreKeywords } from "./jevScore";
-import { scoreKeywordEvidence, type ResumeScore } from "./keywordMatch";
+import { highlightedKeywords, scoreKeywordEvidence, type ResumeScore } from "./keywordMatch";
 import { parseResumeContent } from "./parseResumeJson";
 import type { JdKeyword, ResumeContent } from "./schema";
 
@@ -43,7 +43,7 @@ function job(dates: string, bullets: string[], title = "Software Engineer") {
 
 async function scoreWithJev(
   keywords: JdKeyword[],
-  answers: FakeJevAnswers,
+  answers: Parameters<typeof fakeJev>[0],
   resume: ResumeContent,
 ): Promise<ResumeScore> {
   const jev = fakeJev(answers);
@@ -56,16 +56,17 @@ async function creditFor(term: JdKeyword, answers: FakeJevAnswers, resume: Resum
 }
 
 describe("Keyword credit", () => {
-  it("gives an Implied Skill no credit even when Jev rates it Applied / Production", async () => {
+  it("gives an Implied Hard Skill at Applied / Production in a Current Role half the named credit", async () => {
     const resume = resumeWith({
       experience: [job("Jan 2022 - Present", ["Deployed services on ECS and Lambda"])],
     });
 
     const score = await scoreWithJev([keyword("AWS")], ratedAt(APPLIED), resume);
 
-    expect(score.results[0].weight).toBe(0);
-    expect(score.results[0].matched).toBe(false);
-    expect(score.score).toBe(0);
+    expect(score.results[0].weight).toBeCloseTo(0.5);
+    expect(score.results[0].level).toBe(APPLIED);
+    expect(score.results[0].matched).toBe(true);
+    expect(score.results[0].evidence).toMatchObject({ explicit: false });
   });
 
   it("scores a skill found only in the Technical Skills section as a Skills Listing (0.4)", async () => {
@@ -133,13 +134,18 @@ describe("Keyword credit", () => {
     expect(await creditFor(keyword("Python"), ratedAt(APPLIED), shortAndOld)).toBeCloseTo(0.5);
   });
 
-  it("ignores a term that appears only in a company name, location, or school name", async () => {
+  it("does not count a term in a company name, location, or school name as naming the skill", async () => {
     const resume = resumeWith({
       experience: [{ title: "Analyst", company: "Salesforce", location: "Austin", dates: "Jan 2022 - Present", bullets: [] }],
       education: [{ institution: "Salesforce Academy", location: "", degree: "BS", dates: "", bullets: [] }],
     });
 
-    expect(await creditFor(keyword("Salesforce"), ratedAt(APPLIED), resume)).toBe(0);
+    const notShown = await scoreWithJev([keyword("Salesforce")], { ...ratedAt(APPLIED), noul: 0.1 }, resume);
+    const shownUnnamed = await scoreWithJev([keyword("Salesforce")], ratedAt(APPLIED), resume);
+
+    expect(notShown.results[0].weight).toBe(0);
+    expect(shownUnnamed.results[0].evidence).toMatchObject({ explicit: false });
+    expect(shownUnnamed.results[0].weight).toBeCloseTo(0.5);
   });
 
   it.each(["Summer internship", "2019", "Mar 2023", ""])(
@@ -222,6 +228,104 @@ describe("Keyword credit", () => {
       });
 
       expect(await creditFor(keyword("Python"), ratedAt(APPLIED), resume)).toBe(1);
+    });
+  });
+
+  describe("judged by meaning, one Entry at a time", () => {
+    it("counts a skill named in Technical Skills and shown unnamed in a Bullet in full, with the Dual Placement bonus", async () => {
+      const resume = resumeWith({
+        experience: [job("Jan 2022 - Present", ["Ran 30 services on EKS with Helm"])],
+        skills: [{ category: "Tools", items: "Kubernetes" }],
+      });
+
+      const score = await scoreWithJev([keyword("Kubernetes")], ratedAt(FAMILIARITY), resume);
+
+      expect(score.results[0].evidence).toMatchObject({ explicit: true });
+      expect(score.results[0].weight).toBeCloseTo(2 / 3 + 0.1);
+    });
+
+    it("scores deep use in an old Entry and a mention in the Current Role by the best Placement", async () => {
+      const resume = resumeWith({
+        experience: [
+          job("Jan 2022 - Present", ["Python scripts"], "Manager"),
+          job("Jan 2008 - Dec 2014", ["Built Python data pipelines"], "Data Engineer"),
+        ],
+      });
+      const answers = byEntry({ Manager: { score: MENTIONED - 1 }, "Data Engineer": { score: APPLIED - 1 } });
+
+      const score = await scoreWithJev([keyword("Python")], answers, resume);
+
+      expect(score.results[0].level).toBe(APPLIED);
+      expect(score.results[0].weight).toBeCloseTo(0.5);
+    });
+
+    it("does not count a Placement whose presence is below 0.7", async () => {
+      const resume = resumeWith({ experience: [job("Jan 2022 - Present", ["Ran services on EKS"])] });
+
+      expect(await creditFor(keyword("Kubernetes"), { ...ratedAt(APPLIED), noul: 0.69 }, resume)).toBe(0);
+      expect(await creditFor(keyword("Kubernetes"), { ...ratedAt(APPLIED), noul: 0.7 }, resume)).toBeCloseTo(0.5);
+    });
+
+    it("treats a literal match whose sense Jev rejects as Absent", async () => {
+      const resume = resumeWith({ experience: [job("Jan 2022 - Present", ["Led the go-to-market launch"])] });
+
+      const score = await scoreWithJev([keyword("Go")], { ...ratedAt(APPLIED), noul: 0.05 }, resume);
+
+      expect(score.results[0]).toMatchObject({ level: 0, weight: 0, matched: false });
+      expect(score.results[0].evidence).toMatchObject({ explicit: false });
+      expect(highlightedKeywords(score.results, { section: "experience", entry: 0 })).toEqual([]);
+    });
+
+    it("highlights a skill only in the Entries where Jev confirmed the sense", async () => {
+      const resume = resumeWith({
+        experience: [
+          job("Jan 2022 - Present", ["Built Go microservices"], "Backend Engineer"),
+          job("2018 - 2021", ["Led the go-to-market launch"], "Marketing Lead"),
+        ],
+        skills: [{ category: "Languages", items: "Go" }],
+      });
+      const answers = byEntry({ "Marketing Lead": { noul: 0.05 } }, ratedAt(APPLIED));
+
+      const { results } = await scoreWithJev([keyword("Go")], answers, resume);
+
+      const terms = (entry: Parameters<typeof highlightedKeywords>[1]) =>
+        highlightedKeywords(results, entry).map((k) => k.term);
+      expect(terms({ section: "experience", entry: 0 })).toEqual(["Go"]);
+      expect(terms({ section: "experience", entry: 1 })).toEqual([]);
+      expect(terms(null)).toEqual(["Go"]);
+    });
+
+    it("never highlights an Implied Skill", async () => {
+      const resume = resumeWith({ experience: [job("Jan 2022 - Present", ["Ran services on EKS"])] });
+
+      const { results } = await scoreWithJev([keyword("Kubernetes")], ratedAt(APPLIED), resume);
+
+      expect(results[0].matched).toBe(true);
+      expect(highlightedKeywords(results, { section: "experience", entry: 0 })).toEqual([]);
+    });
+
+    it("falls back to exact wording for every Keyword when any one Entry request fails", async () => {
+      const resume = resumeWith({
+        experience: [
+          job("Jan 2022 - Present", ["Shipped Python services"], "Staff Engineer"),
+          job("2018 - 2021", ["Ran services on EKS"], "Developer"),
+        ],
+      });
+      const jev = fakeJev(byEntry({ Developer: { fail: true } }, ratedAt(APPLIED)));
+      const keywords = [keyword("Python"), keyword("Kubernetes")];
+
+      const quiet = console.error;
+      console.error = () => {};
+      const scoring = await scoreKeywords(keywords, resume, { apiKey: "test", fetch: jev.fetch }).finally(() => {
+        console.error = quiet;
+      });
+      const score = scoreKeywordEvidence(keywords, scoring.evidence, resume, { now: NOW });
+
+      expect(scoring.scoredBy).toBe("keyword");
+      expect(score.results.map((r) => [r.level, r.weight])).toEqual([
+        [MENTIONED, 1 / 3],
+        [0, 0],
+      ]);
     });
   });
 

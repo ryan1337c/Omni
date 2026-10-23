@@ -311,7 +311,7 @@ export function getMatchLabel(score: number): MatchLabel {
  *   Dual Placement, and Match Probability → credit for Other Keywords, from any source (DIP).
  */
 
-/** Level reported for a Keyword that is not an Explicit Skill. */
+/** Level reported for a Hard or Soft Skill with no Placement that counts. */
 export const ABSENT_LEVEL = 0;
 /** Depth Level `n` is `DEPTH_LEVEL_NAMES[n - 1]`. */
 export const DEPTH_LEVEL_NAMES = [
@@ -322,6 +322,10 @@ export const DEPTH_LEVEL_NAMES = [
 const MENTIONED_LEVEL = 1;
 const MIN_DEPTH_LEVEL = MENTIONED_LEVEL;
 export const MAX_DEPTH_LEVEL = DEPTH_LEVEL_NAMES.length;
+/** A Placement counts only when Jev's presence answer is at least this. */
+export const PRESENCE_CUTOFF = 0.7;
+/** Share of the named credit an Implied Hard Skill earns: applicant tracking systems search tools by name. */
+export const IMPLIED_HARD_SKILL_MULTIPLIER = 0.5;
 const SKILLS_LISTING_WEIGHT = 0.4;
 const DUAL_PLACEMENT_BONUS = 0.1;
 
@@ -335,7 +339,7 @@ function anyMatch(keyword: JdKeyword, texts: string[]): boolean {
 }
 
 /** Every Entry, and the Skills Listing, that names the Keyword literally. */
-function findLiteralPlacements(keyword: JdKeyword, resume: ResumeContent): PlacementSource[] {
+export function findLiteralPlacements(keyword: JdKeyword, resume: ResumeContent): PlacementSource[] {
   const { summary, education, experience, projects, skills, honors } = resume;
   const sources: PlacementSource[] = [];
   experience.forEach((entry, index) => {
@@ -364,8 +368,13 @@ function findLiteralPlacements(keyword: JdKeyword, resume: ResumeContent): Place
   return sources;
 }
 
-function isWorkHistory(source: PlacementSource): boolean {
+export function isWorkHistory(source: PlacementSource): boolean {
   return source.section === "experience" || source.section === "projects";
+}
+
+export function isSamePlacementSource(a: PlacementSource, b: PlacementSource): boolean {
+  if (a.section === "skillsListing" || b.section === "skillsListing") return a.section === b.section;
+  return a.section === b.section && a.entry === b.entry;
 }
 
 const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
@@ -507,7 +516,7 @@ function toSkillMatchResult(
   resume: ResumeContent,
   now: Date,
 ): KeywordMatchResult {
-  const { placements } = evidence;
+  const placements = countingPlacements(evidence);
   if (placements.length === 0) {
     return { keyword, level: ABSENT_LEVEL, weight: 0, matched: false, evidence };
   }
@@ -516,13 +525,51 @@ function toSkillMatchResult(
   const isDualPlacement =
     placements.some((placement) => isWorkHistory(placement.source)) &&
     placements.some((placement) => !isWorkHistory(placement.source));
+  const named = Math.min(1, credits[best] + (isDualPlacement ? DUAL_PLACEMENT_BONUS : 0));
   return {
     keyword,
     level: clampDepthLevel(placements[best].depthLevel),
-    weight: Math.min(1, credits[best] + (isDualPlacement ? DUAL_PLACEMENT_BONUS : 0)),
+    weight: evidence.explicit ? named : named * impliedMultiplier(keyword),
     matched: true,
     evidence,
   };
+}
+
+/** Soft Skills are never Implied yet, so only Hard Skills are reduced. */
+function impliedMultiplier(keyword: JdKeyword): number {
+  return resolveCategory(keyword.category) === "hard" ? IMPLIED_HARD_SKILL_MULTIPLIER : 1;
+}
+
+/** The Placements that earn credit: those whose presence reaches `PRESENCE_CUTOFF`. */
+export function countingPlacements(evidence: SkillEvidence): PlacementEvidence[] {
+  return evidence.placements.filter((placement) => placement.presence >= PRESENCE_CUTOFF);
+}
+
+/** One Experience or Projects Entry, for text that sits inside it. */
+export type WorkHistoryEntryRef = { section: "experience" | "projects"; entry: number };
+
+/**
+ * Keywords to highlight in one Work History Entry's text, or in text outside every Work History
+ * Entry when `entry` is null. Implied Skills have no word to highlight, and a literal match in an
+ * Entry where Jev rejected the sense is left unmarked.
+ */
+export function highlightedKeywords(
+  results: KeywordMatchResult[],
+  entry: WorkHistoryEntryRef | null,
+): JdKeyword[] {
+  return results
+    .filter(({ matched, evidence }) => {
+      if (!matched) return false;
+      if (evidence.kind === "other") return true;
+      if (!evidence.explicit) return false;
+      return !(
+        entry &&
+        evidence.placements.some(
+          (placement) => isSamePlacementSource(placement.source, entry) && placement.presence < PRESENCE_CUTOFF,
+        )
+      );
+    })
+    .map(({ keyword }) => keyword);
 }
 
 export function isExplicitSkill(keyword: JdKeyword, resume: ResumeContent): boolean {
@@ -565,8 +612,9 @@ export type ScoreKeywordEvidenceOptions = {
 
 /**
  * Weighted resume score from evidence aligned with `keywords` by index.
- * Hard and Soft Skills: the best Placement's depth weight × Placement weight, + Dual Placement
- * bonus, capped at 1. Other Keywords: `matchProbabilityToCredit` of the Match Probability.
+ * Hard and Soft Skills: among Placements with presence ≥ `PRESENCE_CUTOFF`, the best one's depth
+ * weight × Placement weight, + Dual Placement bonus, capped at 1, then × `IMPLIED_HARD_SKILL_MULTIPLIER`
+ * for an Implied Hard Skill. Other Keywords: `matchProbabilityToCredit` of the Match Probability.
  * Open for new scorers (Jev, fallback): pass evidence in, do not change this function.
  */
 export function scoreKeywordEvidence(

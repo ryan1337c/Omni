@@ -24,6 +24,8 @@ export type KeywordScoringView = {
   isStale: boolean;
   isScoring: boolean;
   scoredBy: KeywordScoring["scoredBy"];
+  /** The resume `analysis` describes; Placement Entry indexes point into it. */
+  scoredResume: ResumeContent;
   reanalyze: () => Promise<void>;
 };
 
@@ -118,6 +120,7 @@ export function useKeywordScoring(
     isStale: resume !== scoredResume,
     isScoring,
     scoredBy: scoring.scoredBy,
+    scoredResume,
     reanalyze,
   };
 }

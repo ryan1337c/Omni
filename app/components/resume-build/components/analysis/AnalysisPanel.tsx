@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import { FiLoader, FiRefreshCw } from 'react-icons/fi';
 import type { KeywordMatchResult, ResumeScore } from '@/lib/resume/keywordMatch';
-import type { KeywordCategory, KeywordScoring } from '@/lib/resume/schema';
+import type { KeywordCategory, KeywordScoring, ResumeContent } from '@/lib/resume/schema';
 
 import { KEYWORD_GROUPS, SCORE_RING_COLORS } from '../../constants';
 import KeywordGroup from './KeywordGroup';
@@ -20,6 +20,8 @@ type AnalysisPanelProps = {
   isStale: boolean;
   isScoring: boolean;
   scoredBy: KeywordScoring['scoredBy'];
+  /** The resume `analysis` describes, which may differ from the one on screen. */
+  scoredResume: ResumeContent;
   onReanalyze: () => void;
 };
 
@@ -71,6 +73,7 @@ export default function AnalysisPanel({
   isStale,
   isScoring,
   scoredBy,
+  scoredResume,
   onReanalyze,
 }: AnalysisPanelProps) {
   const { score, label, results } = analysis;
@@ -89,8 +92,9 @@ export default function AnalysisPanel({
           <p className="mt-1 text-sm text-slate-500 dark:text-gray-400">{summary}</p>
           {scoredBy === 'keyword' && (
             <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">
-              Depth scoring unavailable, so every skill found counts as Mentioned and other
-              requirements count only on an exact match.
+              Meaning-based scoring unavailable, so skills were matched by exact wording only:
+              each one found counts as Mentioned, and other requirements count only on an exact
+              match.
             </p>
           )}
           <div className="mt-3 flex justify-end">
@@ -125,7 +129,13 @@ export default function AnalysisPanel({
 
       {KEYWORD_GROUPS.map(({ category, title, subtitle }) =>
         groups[category].length > 0 ? (
-          <KeywordGroup key={category} title={title} subtitle={subtitle} results={groups[category]} />
+          <KeywordGroup
+            key={category}
+            title={title}
+            subtitle={subtitle}
+            results={groups[category]}
+            scoredResume={scoredResume}
+          />
         ) : null,
       )}
 

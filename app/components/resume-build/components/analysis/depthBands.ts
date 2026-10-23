@@ -1,12 +1,13 @@
 import {
   ABSENT_LEVEL,
+  countingPlacements,
   DEPTH_LEVEL_NAMES,
   isSemanticKeyword,
   matchProbabilityToCredit,
   MAX_DEPTH_LEVEL,
   type KeywordMatchResult,
 } from "@/lib/resume/keywordMatch";
-import type { JdKeyword } from "@/lib/resume/schema";
+import type { JdKeyword, PlacementSource, ResumeContent } from "@/lib/resume/schema";
 
 /**
  * Presentation for Depth Levels and Match Probabilities.
@@ -14,7 +15,7 @@ import type { JdKeyword } from "@/lib/resume/schema";
  * This module only names the rounded band the chips, tooltip, and summary use.
  */
 
-/** Band 0 is Absent: an Implied Skill or a Keyword not on the resume. Bands 1–3 are Depth Levels. */
+/** Band 0 is Absent: a skill with no Placement that counts. Bands 1–3 are Depth Levels. */
 export type DepthBand = 0 | 1 | 2 | 3;
 
 const BAND_NAMES = ["Absent", ...DEPTH_LEVEL_NAMES] as const;
@@ -101,18 +102,47 @@ export type KeywordChip = {
   /** Screen-reader text, e.g. "Familiarity, 2 of 3" or "Shown". */
   srLabel: string;
   hint: string;
+  /** An Implied Skill: shown in Work History but never named on the resume. */
+  notNamed: boolean;
 };
 
-export function keywordChip({ keyword, level }: KeywordMatchResult): KeywordChip {
+const NOT_NAMED = "not named";
+
+/** "Staff Engineer, Acme" for a job, the project name for a project. */
+function entryLabel(source: PlacementSource, resume: ResumeContent): string {
+  if (source.section === "experience") {
+    const job = resume.experience[source.entry];
+    return job ? [job.title, job.company].filter(Boolean).join(", ") : "";
+  }
+  if (source.section === "projects") return resume.projects[source.entry]?.name ?? "";
+  return "";
+}
+
+/** `resume` is the one the evidence was scored against, so Entry indexes line up. */
+export function keywordChip({ keyword, level, matched, evidence }: KeywordMatchResult, resume: ResumeContent): KeywordChip {
   if (isSemanticKeyword(keyword)) {
     const name = matchBandName(level);
-    return { band: MATCH_BAND_LOOK[name], srLabel: name, hint: keywordMatchHint(keyword.importance, level) };
+    return {
+      band: MATCH_BAND_LOOK[name],
+      srLabel: name,
+      hint: keywordMatchHint(keyword.importance, level),
+      notNamed: false,
+    };
   }
   const band = depthBand(level);
   const name = BAND_NAMES[band];
+  const srLabel = band === ABSENT_LEVEL ? name : `${name}, ${band} of ${MAX_DEPTH_LEVEL}`;
+  const hint = keywordLevelHint(keyword.importance, level);
+  if (!matched || evidence.kind !== "skill" || evidence.explicit) {
+    return { band, srLabel, hint, notNamed: false };
+  }
+  const shownIn = countingPlacements(evidence)
+    .map((placement) => entryLabel(placement.source, resume))
+    .filter(Boolean);
   return {
     band,
-    srLabel: band === ABSENT_LEVEL ? name : `${name}, ${band} of ${MAX_DEPTH_LEVEL}`,
-    hint: keywordLevelHint(keyword.importance, level),
+    srLabel: `${srLabel}, ${NOT_NAMED}`,
+    hint: `${hint}, ${NOT_NAMED}. Shown in: ${shownIn.join("; ")}`,
+    notNamed: true,
   };
 }

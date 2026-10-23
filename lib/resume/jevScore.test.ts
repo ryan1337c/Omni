@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { failingJev, fakeJev } from "./fakeJev";
+import { entryName, failingJev, fakeJev } from "./fakeJev";
 import { scoreKeywords } from "./jevScore";
 import { scoreKeywordEvidence } from "./keywordMatch";
 import { parseResumeContent } from "./parseResumeJson";
@@ -50,19 +50,14 @@ async function scoreWith(keywords: JdKeyword[], fetch: typeof globalThis.fetch) 
 }
 
 describe("scoreKeywords", () => {
-  it("asks Jev only about Explicit Skills and reports Implied Skills as Absent", async () => {
+  it("still asks about Soft Skills only when they are Explicit, on the whole resume", async () => {
     const jev = fakeJev({ score: 2 });
 
-    const { scoring, score } = await scoreWith([keyword("AWS"), keyword("Python")], jev.fetch);
+    const { scoring, score } = await scoreWith([keyword("Teamwork", "soft")], jev.fetch);
 
-    const asked = Object.values(jev.requests[0].questions).map((q) => q.instructions);
-    expect(asked).toHaveLength(1);
-    expect(asked[0]).toContain("Python");
+    expect(jev.requests).toHaveLength(0);
     expect(scoring.scoredBy).toBe("jev");
-    expect(score.results.map((r) => [r.level, r.weight, r.matched])).toEqual([
-      [0, 0, false],
-      [3, 1, true],
-    ]);
+    expect(score.results.map((r) => [r.level, r.weight, r.matched])).toEqual([[0, 0, false]]);
   });
 
   it("carries each Keyword's evidence: Placements, Explicit or not, and Match Probability", async () => {
@@ -80,12 +75,17 @@ describe("scoreKeywords", () => {
         kind: "skill",
         explicit: true,
         placements: [
-          { source: { section: "experience", entry: 0 }, presence: 1, depthLevel: 2 },
+          { source: { section: "experience", entry: 0 }, presence: 0.93, depthLevel: 2 },
           { source: { section: "skillsListing" }, presence: 1, depthLevel: 2 },
         ],
         demonstratingBullets: [],
       },
-      { kind: "skill", explicit: false, placements: [], demonstratingBullets: [] },
+      {
+        kind: "skill",
+        explicit: false,
+        placements: [{ source: { section: "experience", entry: 0 }, presence: 0.93, depthLevel: 2 }],
+        demonstratingBullets: [],
+      },
       { kind: "other", matchProbability: 0.93 },
     ]);
   });
@@ -102,14 +102,29 @@ describe("scoreKeywords", () => {
     expect(score.results[0].weight).toBe(1);
   });
 
-  it("asks depth and match questions in one request", async () => {
+  it("sends each Experience and Projects Entry as its own request, plus one whole-resume request", async () => {
     const jev = fakeJev();
+    const twoJobsAndAProject = {
+      ...resume,
+      experience: [
+        { title: "Staff Engineer", company: "Acme", location: "", dates: "Jan 2022 - Present", bullets: ["Ran services on EKS"] },
+        { title: "Developer", company: "Initech", location: "", dates: "2018 - 2021", bullets: ["Wrote Go-to-market reports"] },
+      ],
+      projects: [{ name: "Tracker", technologies: "Flask", dates: "2020 - 2021", bullets: ["Built a REST API"] }],
+    };
 
-    await scoreWith([keyword("Python"), keyword("BS in Computer Science", "other")], jev.fetch);
+    await scoreKeywords([keyword("Kubernetes"), keyword("BS in Computer Science", "other")], twoJobsAndAProject, {
+      apiKey: "test",
+      fetch: jev.fetch,
+    });
 
-    expect(jev.requests).toHaveLength(1);
-    const types = Object.values(jev.requests[0].questions).map((q) => q.type);
-    expect(types).toEqual(["score", "noul"]);
+    expect(jev.requests.map(entryName).sort()).toEqual(["Developer", "Staff Engineer", "Tracker", undefined]);
+    const staff = jev.requests.find((request) => entryName(request) === "Staff Engineer")!;
+    const staffState = JSON.stringify(staff.state);
+    expect(staffState).toContain("Ran services on EKS");
+    expect(staffState).not.toContain("Initech");
+    expect(staffState).not.toContain("Tracker");
+    expect(staffState).not.toContain("York University");
   });
 
   it("falls back to Mentioned for Explicit Skills and literal matching for Other Keywords when Jev fails", async () => {
