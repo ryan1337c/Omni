@@ -1,7 +1,7 @@
 import type { KeywordMatchResult } from '@/lib/resume/keywordMatch';
 import type { ResumeContent } from '@/lib/resume/schema';
 
-import KeywordTag from './KeywordTag';
+import KeywordChipPopover from './KeywordChipPopover';
 import { keywordChip } from './depthBands';
 
 type KeywordGroupProps = {
@@ -29,19 +29,13 @@ export default function KeywordGroup({ title, subtitle, results, scoredResume }:
       </div>
 
       <div className="flex flex-wrap gap-1.5">
-        {results.map((result, index) => {
-          const { band, srLabel, hint, notNamed } = keywordChip(result, scoredResume);
-          return (
-            <KeywordTag
-              key={`${result.keyword.term}-${index}`}
-              label={result.keyword.term}
-              band={band}
-              srLabel={srLabel}
-              hint={hint}
-              notNamed={notNamed}
-            />
-          );
-        })}
+        {results.map((result, index) => (
+          <KeywordChipPopover
+            key={`${result.keyword.term}-${index}`}
+            label={result.keyword.term}
+            chip={keywordChip(result, scoredResume)}
+          />
+        ))}
       </div>
     </section>
   );
