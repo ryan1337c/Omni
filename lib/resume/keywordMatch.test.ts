@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { fakeJev, type FakeJevAnswers } from "./fakeJev";
 import { scoreKeywords } from "./jevScore";
-import { scoreKeywordLevels, type ResumeScore } from "./keywordMatch";
+import { scoreKeywordEvidence, type ResumeScore } from "./keywordMatch";
 import { parseResumeContent } from "./parseResumeJson";
 import type { JdKeyword, ResumeContent } from "./schema";
 
@@ -48,7 +48,7 @@ async function scoreWithJev(
 ): Promise<ResumeScore> {
   const jev = fakeJev(answers);
   const scoring = await scoreKeywords(keywords, resume, { apiKey: "test", fetch: jev.fetch });
-  return scoreKeywordLevels(keywords, scoring.levels, resume, { now: NOW });
+  return scoreKeywordEvidence(keywords, scoring.evidence, resume, { now: NOW });
 }
 
 async function creditFor(term: JdKeyword, answers: FakeJevAnswers, resume: ResumeContent) {

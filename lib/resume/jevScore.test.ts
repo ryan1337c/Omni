@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { failingJev, fakeJev } from "./fakeJev";
 import { scoreKeywords } from "./jevScore";
-import { scoreKeywordLevels } from "./keywordMatch";
+import { scoreKeywordEvidence } from "./keywordMatch";
 import { parseResumeContent } from "./parseResumeJson";
 import type { JdKeyword } from "./schema";
 
@@ -46,7 +46,7 @@ async function withQuietConsole<T>(run: () => Promise<T>): Promise<T> {
 
 async function scoreWith(keywords: JdKeyword[], fetch: typeof globalThis.fetch) {
   const scoring = await scoreKeywords(keywords, resume, { apiKey: "test", fetch });
-  return { scoring, score: scoreKeywordLevels(keywords, scoring.levels, resume, { now: NOW }) };
+  return { scoring, score: scoreKeywordEvidence(keywords, scoring.evidence, resume, { now: NOW }) };
 }
 
 describe("scoreKeywords", () => {
@@ -62,6 +62,31 @@ describe("scoreKeywords", () => {
     expect(score.results.map((r) => [r.level, r.weight, r.matched])).toEqual([
       [0, 0, false],
       [3, 1, true],
+    ]);
+  });
+
+  it("carries each Keyword's evidence: Placements, Explicit or not, and Match Probability", async () => {
+    const jev = fakeJev({ score: 1, noul: 0.93 });
+    const listed = { ...resume, skills: [{ category: "Languages", items: "Python" }] };
+
+    const scoring = await scoreKeywords(
+      [keyword("Python"), keyword("AWS"), keyword("BS in Computer Science", "other")],
+      listed,
+      { apiKey: "test", fetch: jev.fetch },
+    );
+
+    expect(scoring.evidence).toEqual([
+      {
+        kind: "skill",
+        explicit: true,
+        placements: [
+          { source: { section: "experience", entry: 0 }, presence: 1, depthLevel: 2 },
+          { source: { section: "skillsListing" }, presence: 1, depthLevel: 2 },
+        ],
+        demonstratingBullets: [],
+      },
+      { kind: "skill", explicit: false, placements: [], demonstratingBullets: [] },
+      { kind: "other", matchProbability: 0.93 },
     ]);
   });
 

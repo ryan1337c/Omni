@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { scoreKeywords } from "./jevScore";
-import { scoreKeywordLevels } from "./keywordMatch";
+import { scoreKeywordEvidence } from "./keywordMatch";
 import { parseKeywords, parseResumeContent } from "./parseResumeJson";
 
 /**
@@ -26,7 +26,7 @@ describe.skipIf(!process.env.TYPESAFE_API_KEY)("Jev probe", () => {
     const resume = parseResumeContent(raw.resume);
 
     const scoring = await scoreKeywords(keywords, resume);
-    const score = scoreKeywordLevels(keywords, scoring.levels, resume);
+    const score = scoreKeywordEvidence(keywords, scoring.evidence, resume);
 
     console.log(`\n${file}: score ${score.score} (${score.label})`);
     console.table(

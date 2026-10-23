@@ -1,4 +1,5 @@
 import { AuthServices } from "@/lib/authServices";
+import { parseKeywordScoring } from "@/lib/resume/parseResumeJson";
 import type { JdKeyword, KeywordScoring, ResumeContent } from "@/lib/resume/schema";
 
 import type { ResumeRequestInput } from "./types";
@@ -44,31 +45,6 @@ function readErrorMessage(data: unknown): string | null {
 }
 
 /**
- * Accept only a pass that lines up with the keywords we sent.
- * A short or non-numeric `levels` array would crash the score aggregator.
- */
-function parseKeywordScoring(data: unknown, keywordCount: number): KeywordScoring {
-  if (data === null || typeof data !== "object") {
-    throw new Error("Something went wrong");
-  }
-
-  const record = data as { levels?: unknown; scoredBy?: unknown };
-  const { levels, scoredBy } = record;
-  if (scoredBy !== "jev" && scoredBy !== "keyword") {
-    throw new Error("Something went wrong");
-  }
-  if (
-    !Array.isArray(levels) ||
-    levels.length !== keywordCount ||
-    !levels.every((level): level is number => typeof level === "number" && Number.isFinite(level))
-  ) {
-    throw new Error("Something went wrong");
-  }
-
-  return { levels, scoredBy };
-}
-
-/**
  * Re-score an edited resume against the keywords from tailoring.
  * Returns `KeywordScoring` only (ISP): the caller already has the resume and keywords.
  * Status codes and the JSON body stay here (SRP); the hook only stores the result.
@@ -93,7 +69,12 @@ export async function scoreResumeRequest(
     throw new Error(readErrorMessage(data) ?? "Something went wrong");
   }
 
-  return parseKeywordScoring(data, keywords.length);
+  try {
+    // Evidence that doesn't line up with the keywords we sent would crash the score aggregator.
+    return parseKeywordScoring(data, keywords);
+  } catch {
+    throw new Error("Something went wrong");
+  }
 }
 
 /**
