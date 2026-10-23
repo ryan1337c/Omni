@@ -3,15 +3,21 @@
 import { useLayoutEffect, type RefObject } from "react";
 
 import { resumeHighlights, type ResumeHighlights } from "@/lib/resume/highlights";
-import { findKeywordSpans, type KeywordMatchResult } from "@/lib/resume/keywordMatch";
-import type { JdKeyword, PlacementSource, ResumeContent } from "@/lib/resume/schema";
+import { findKeywordSpans, isWorkHistory, type KeywordMatchResult } from "@/lib/resume/keywordMatch";
+import {
+  PLACEMENT_ENTRY_SECTIONS,
+  WHOLE_SECTION_PLACEMENTS,
+  type JdKeyword,
+  type PlacementSource,
+  type ResumeContent,
+} from "@/lib/resume/schema";
 
 const KEYWORD_HIGHLIGHT = "resume-keyword";
 const BULLET_HIGHLIGHT = "resume-demonstrating-bullet";
 const PLACEMENT_SELECTOR = "[data-placement-section]";
 const BULLET_SELECTOR = "[data-bullet-index]";
-const ENTRY_SECTIONS = new Set(["experience", "projects", "education"]);
-const WHOLE_SECTIONS = new Set(["summary", "skills", "honors"]);
+const ENTRY_SECTIONS = new Set<string>(PLACEMENT_ENTRY_SECTIONS);
+const WHOLE_SECTIONS = new Set<string>(WHOLE_SECTION_PLACEMENTS);
 
 type HighlightRegistry = {
   set: (name: string, highlight: Highlight) => void;
@@ -90,9 +96,8 @@ function collectBulletRanges(root: HTMLElement, highlights: ResumeHighlights): R
     const placement = placementOf(element);
     const bullet = Number(element.dataset.bulletIndex);
     const editable = element.querySelector("[contenteditable]");
-    if (!placement || !editable || !Number.isInteger(bullet)) continue;
-    if (placement.section !== "experience" && placement.section !== "projects") continue;
-    if (!highlights.isDemonstratingBullet({ section: placement.section, entry: placement.entry, bullet })) continue;
+    if (!placement || !isWorkHistory(placement) || !editable || !Number.isInteger(bullet)) continue;
+    if (!highlights.isDemonstratingBullet({ ...placement, bullet })) continue;
     const range = document.createRange();
     range.selectNodeContents(editable);
     ranges.push(range);

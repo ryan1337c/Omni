@@ -20,6 +20,7 @@ import {
     MAX_DEPTH_LEVEL,
     MENTIONED_LEVEL,
     PRESENCE_CUTOFF,
+    resolveCategory,
 } from "./keywordMatch";
 
 export const JEV_ENDPOINT = "https://api.typesafe.ai/v1/systemone";
@@ -77,7 +78,7 @@ function keywordLabel(keyword: JdKeyword): string {
 }
 
 function isHardSkill(keyword: JdKeyword): boolean {
-    return keyword.category === "hard";
+    return resolveCategory(keyword.category) === "hard";
 }
 
 function buildDepthQuestion(keyword: JdKeyword, scope: "the resume text" | "this Entry") {

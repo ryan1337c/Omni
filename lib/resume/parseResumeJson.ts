@@ -1,6 +1,9 @@
-import { isSemanticKeyword } from "./keywordMatch";
+import { isSemanticKeyword, KEYWORD_CATEGORIES } from "./keywordMatch";
 import {
   DEFAULT_SECTION_ORDER,
+  PLACEMENT_ENTRY_SECTIONS,
+  WHOLE_SECTION_PLACEMENTS,
+  WORK_HISTORY_SECTIONS,
   type BulletRef,
   type EducationEntry,
   type ExperienceEntry,
@@ -34,7 +37,7 @@ const MAX_ALIASES_PER_KEYWORD = 8;
 export const MAX_SECTION_ENTRIES = 20;
 const MAX_KEYWORDS = 40;
 
-const KEYWORD_CATEGORIES = new Set<KeywordCategory>(["hard", "soft", "other"]);
+const KEYWORD_CATEGORY_SET = new Set<string>(KEYWORD_CATEGORIES);
 const KEYWORD_IMPORTANCE = new Set<JdKeyword["importance"]>([
   "required",
   "preferred",
@@ -200,10 +203,7 @@ function parseKeyword(value: unknown): JdKeyword | null {
 
   // Enums are strict: a wrong category/importance is a bad payload, not a skip.
   const category = entry.category;
-  if (
-    typeof category !== "string" ||
-    !KEYWORD_CATEGORIES.has(category as KeywordCategory)
-  ) {
+  if (typeof category !== "string" || !KEYWORD_CATEGORY_SET.has(category)) {
     throw new InvalidResumeJsonError(
       `Expected keyword category to be "hard", "soft", or "other"`,
     );
@@ -284,9 +284,9 @@ export function parseKeywords(value: unknown): JdKeyword[] {
   return keywords;
 }
 
-const PLACEMENT_ENTRY_SECTIONS = new Set<PlacementEntrySection>(["experience", "projects", "education"]);
-const WHOLE_SECTION_PLACEMENTS = new Set<WholeSectionPlacement>(["summary", "skills", "honors"]);
-const BULLET_SECTIONS = new Set<BulletRef["section"]>(["experience", "projects"]);
+const ENTRY_SECTION_SET = new Set<string>(PLACEMENT_ENTRY_SECTIONS);
+const WHOLE_SECTION_SET = new Set<string>(WHOLE_SECTION_PLACEMENTS);
+const BULLET_SECTION_SET = new Set<string>(WORK_HISTORY_SECTIONS);
 
 function asFiniteNumber(value: unknown, label: string): number {
   if (typeof value !== "number" || !Number.isFinite(value)) {
@@ -304,10 +304,10 @@ function asIndex(value: unknown, label: string): number {
 
 function parsePlacementSource(value: unknown): PlacementSource {
   const obj = asObject(value, "placement source");
-  if (WHOLE_SECTION_PLACEMENTS.has(obj.section as WholeSectionPlacement)) {
+  if (WHOLE_SECTION_SET.has(obj.section as string)) {
     return { section: obj.section as WholeSectionPlacement };
   }
-  if (!PLACEMENT_ENTRY_SECTIONS.has(obj.section as PlacementEntrySection)) {
+  if (!ENTRY_SECTION_SET.has(obj.section as string)) {
     throw new InvalidResumeJsonError("Unknown placement section");
   }
   return { section: obj.section as PlacementEntrySection, entry: asIndex(obj.entry, "placement entry") };
@@ -324,7 +324,7 @@ function parsePlacement(value: unknown): PlacementEvidence {
 
 function parseBulletRef(value: unknown): BulletRef {
   const obj = asObject(value, "bullet");
-  if (!BULLET_SECTIONS.has(obj.section as BulletRef["section"])) {
+  if (!BULLET_SECTION_SET.has(obj.section as string)) {
     throw new InvalidResumeJsonError("Unknown bullet section");
   }
   return {

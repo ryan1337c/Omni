@@ -1,5 +1,5 @@
 import { highlightedKeywords, isSemanticKeyword, type KeywordMatchResult } from "./keywordMatch";
-import type { BulletRef, JdKeyword, PlacementEntrySection, PlacementSource, ResumeContent } from "./schema";
+import type { BulletRef, EntrySource, JdKeyword, PlacementSource, ResumeContent } from "./schema";
 
 /** What to mark on the resume on screen, which may have changed since it was scored. */
 export type ResumeHighlights = {
@@ -8,8 +8,6 @@ export type ResumeHighlights = {
   /** Whether a live Bullet is the one Jev judged a specific example of a Soft Skill. */
   isDemonstratingBullet(bullet: BulletRef): boolean;
 };
-
-type EntrySource = { section: PlacementEntrySection; entry: number };
 
 function entryIdentity(resume: ResumeContent, { section, entry }: EntrySource): string | undefined {
   switch (section) {
