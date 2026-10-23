@@ -10,6 +10,7 @@ import type {
     SkillEvidence,
 } from "./schema";
 import { SECTION_TITLES } from "./schema";
+import { entryLabel, entryState } from "./entryFields";
 import {
     DEPTH_LEVEL_NAMES,
     estimateKeywordEvidence,
@@ -122,9 +123,8 @@ function buildDemonstrationQuestion(keyword: JdKeyword, bullet: number) {
 
 /** How a sense check points at its Placement inside the whole resume. */
 function placementName(source: PlacementSource, resume: ResumeContent): string {
-    if (source.section === "education") {
-        const { degree, institution } = resume.education[source.entry];
-        return `the Education Entry "${[degree, institution].filter(Boolean).join(", ")}"`;
+    if ("entry" in source) {
+        return `the ${SECTION_TITLES[source.section]} Entry "${entryLabel(resume, source)}"`;
     }
     return `the ${SECTION_TITLES[source.section]} section`;
 }
@@ -164,20 +164,6 @@ function resumeState(resume: ResumeContent) {
         skills: resume.skills,
         honors: resume.honors,
     };
-}
-
-/** Only this Entry, so Jev can't credit it for another Entry's content. */
-function entryState(resume: ResumeContent, source: EntrySource) {
-    if (source.section === "experience") {
-        const { title, company, dates, bullets } = resume.experience[source.entry];
-        return { title, company, dates, bullets };
-    }
-    if (source.section === "education") {
-        const { institution, degree, dates, bullets } = resume.education[source.entry];
-        return { institution, degree, dates, bullets };
-    }
-    const { name, technologies, dates, bullets } = resume.projects[source.entry];
-    return { name, technologies, dates, bullets };
 }
 
 function entryBullets(resume: ResumeContent, source: EntrySource): string[] {

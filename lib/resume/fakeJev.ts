@@ -1,3 +1,5 @@
+import { ENTRY_FIELDS } from "./entryFields";
+
 type JevQuestion = { type: string; instructions: string };
 export type FakeJevRequest = { state: Record<string, unknown>; questions: Record<string, JevQuestion> };
 
@@ -57,8 +59,8 @@ export function fakeJev(answers: FakeJevAnswers | AnswerFor = {}) {
  * undefined for the whole-resume request.
  */
 export function entryName(request: FakeJevRequest): string | undefined {
-  const { title, name, institution } = request.state;
-  for (const label of [title, name, institution]) {
+  for (const { name } of Object.values(ENTRY_FIELDS)) {
+    const label = request.state[name];
     if (typeof label === "string") return label;
   }
   return undefined;

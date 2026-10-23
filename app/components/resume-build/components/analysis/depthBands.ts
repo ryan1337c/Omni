@@ -8,7 +8,8 @@ import {
   resolveCategory,
   type KeywordMatchResult,
 } from "@/lib/resume/keywordMatch";
-import type { JdKeyword, PlacementSource, ResumeContent } from "@/lib/resume/schema";
+import { entryLabel } from "@/lib/resume/entryFields";
+import type { JdKeyword, ResumeContent } from "@/lib/resume/schema";
 
 /**
  * Presentation for Depth Levels and Match Probabilities.
@@ -283,16 +284,6 @@ function guideMeaning(category: JdKeyword["category"], name: GuideState["name"])
   return group?.states.find((state) => state.name === name)?.meaning ?? "";
 }
 
-/** "Staff Engineer, Acme" for a job, the project name for a project. */
-function entryLabel(source: PlacementSource, resume: ResumeContent): string {
-  if (source.section === "experience") {
-    const job = resume.experience[source.entry];
-    return job ? [job.title, job.company].filter(Boolean).join(", ") : "";
-  }
-  if (source.section === "projects") return resume.projects[source.entry]?.name ?? "";
-  return "";
-}
-
 /** `resume` is the one the evidence was scored against, so Entry indexes line up. */
 export function keywordChip(result: KeywordMatchResult, resume: ResumeContent): KeywordChip {
   const { keyword, level, evidence } = result;
@@ -318,7 +309,7 @@ export function keywordChip(result: KeywordMatchResult, resume: ResumeContent): 
     return { band, srLabel, hint, meaning, notNamed: false, shownIn: [], tip: null };
   }
   const shownIn = countingPlacements(evidence)
-    .map((placement) => entryLabel(placement.source, resume))
+    .map(({ source }) => ("entry" in source ? entryLabel(resume, source) : ""))
     .filter(Boolean);
   return {
     band,

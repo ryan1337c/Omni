@@ -1,3 +1,4 @@
+import { entryIdentity } from "./entryFields";
 import { highlightedKeywords, isSemanticKeyword, type KeywordMatchResult } from "./keywordMatch";
 import type { BulletRef, EntrySource, JdKeyword, PlacementSource, ResumeContent } from "./schema";
 
@@ -9,27 +10,10 @@ export type ResumeHighlights = {
   isDemonstratingBullet(bullet: BulletRef): boolean;
 };
 
-function entryIdentity(resume: ResumeContent, { section, entry }: EntrySource): string | undefined {
-  switch (section) {
-    case "experience": {
-      const job = resume.experience[entry];
-      return job && JSON.stringify([job.title, job.company, job.dates]);
-    }
-    case "projects": {
-      const project = resume.projects[entry];
-      return project && JSON.stringify([project.name, project.dates]);
-    }
-    case "education": {
-      const school = resume.education[entry];
-      return school && JSON.stringify([school.institution, school.degree, school.dates]);
-    }
-  }
-}
-
 /**
- * The scored Entry a live Entry is, matched by its title, company, and dates (name and dates for a
- * project; institution, degree, and dates for Education) so added, removed, or reordered Entries keep
- * their own evidence. Null when the live Entry was not scored, was renamed, or can't be told apart.
+ * The scored Entry a live Entry is, matched by its `entryIdentity` so added, removed, or reordered
+ * Entries keep their own evidence. Null when the live Entry was not scored, was renamed, or can't be
+ * told apart.
  */
 function scoredEntryOf(live: EntrySource, scored: ResumeContent, liveResume: ResumeContent): EntrySource | null {
   const identity = entryIdentity(liveResume, live);
