@@ -7,7 +7,9 @@ import type {
   PlacementSource,
   ResumeContent,
   SkillEvidence,
+  WorkHistorySource,
 } from "./schema";
+import { WORK_HISTORY_SECTIONS } from "./schema";
 
 export type CategoryScore = {
   matched: number;
@@ -305,7 +307,7 @@ export function getMatchLabel(score: number): MatchLabel {
 /**
  * Scoring is split so each piece can change independently (SRP):
  * - `isMatched` / `findKeywordSpans` — literal text for the highlighter.
- * - `explicitSkillEvidence` — the Placements that name a skill literally.
+ * - `findLiteralPlacements` — the Placements that name a Keyword literally.
  * - `estimateKeywordEvidence` — fallback evidence (Explicit → Mentioned, literal Other → 1, else 0).
  * - `scoreKeywordEvidence` — best Placement by Depth Level, Recency, and Duration, plus
  *   Dual Placement, and Match Probability → credit for Other Keywords, from any source (DIP).
@@ -371,8 +373,8 @@ export function findLiteralPlacements(keyword: JdKeyword, resume: ResumeContent)
   return sources;
 }
 
-export function isWorkHistory(source: PlacementSource): boolean {
-  return source.section === "experience" || source.section === "projects";
+export function isWorkHistory(source: PlacementSource): source is WorkHistorySource {
+  return (WORK_HISTORY_SECTIONS as readonly string[]).includes(source.section);
 }
 
 export function isSamePlacementSource(a: PlacementSource, b: PlacementSource): boolean {
@@ -467,7 +469,8 @@ function emptyCategoryScores(): Record<KeywordCategory, CategoryScore> {
   };
 }
 
-function resolveCategory(category: JdKeyword["category"]): KeywordCategory {
+/** Unknown categories count as "other" everywhere. */
+export function resolveCategory(category: JdKeyword["category"]): KeywordCategory {
   return KEYWORD_CATEGORIES.includes(category) ? category : "other";
 }
 
@@ -573,20 +576,12 @@ export function highlightedKeywords(
     .map(({ keyword }) => keyword);
 }
 
-export function isExplicitSkill(keyword: JdKeyword, resume: ResumeContent): boolean {
-  return findLiteralPlacements(keyword, resume).length > 0;
-}
-
-/** Every Placement that names the skill literally, each at `depthLevel`. */
-export function explicitSkillEvidence(
-  keyword: JdKeyword,
-  resume: ResumeContent,
-  depthLevel: number,
-): SkillEvidence {
+/** Every Placement that names the skill literally, each at Mentioned, with no sense check. */
+function explicitSkillEvidence(keyword: JdKeyword, resume: ResumeContent): SkillEvidence {
   const placements = findLiteralPlacements(keyword, resume).map((source) => ({
     source,
     presence: 1,
-    depthLevel,
+    depthLevel: MENTIONED_LEVEL,
   }));
   return { kind: "skill", explicit: placements.length > 0, placements, demonstratingBullets: [] };
 }
@@ -601,8 +596,8 @@ export function estimateKeywordEvidence(
   content: ResumeContent,
 ): KeywordEvidence[] {
   return keywords.map((keyword) => {
-    if (!isSemanticKeyword(keyword)) return explicitSkillEvidence(keyword, content, MENTIONED_LEVEL);
-    return { kind: "other", matchProbability: isExplicitSkill(keyword, content) ? 1 : 0 };
+    if (!isSemanticKeyword(keyword)) return explicitSkillEvidence(keyword, content);
+    return { kind: "other", matchProbability: findLiteralPlacements(keyword, content).length > 0 ? 1 : 0 };
   });
 }
 

@@ -4,10 +4,9 @@ import { useId, useState, type ReactNode } from 'react';
 import { FiChevronDown } from 'react-icons/fi';
 
 import KeywordTag from './KeywordTag';
-import { DEPTH_BANDS, depthBandName, depthLevelGuide } from './depthBands';
+import { DEPTH_BANDS, DEPTH_LEVEL_GUIDE as GUIDE, depthBandName } from './depthBands';
 
 const LEGEND = DEPTH_BANDS.map((band) => ({ band, label: depthBandName(band) }));
-const GUIDE = depthLevelGuide();
 
 function GuideRow({ chip, meaning, children }: { chip: ReactNode; meaning: string; children: ReactNode }) {
   return (
@@ -66,10 +65,12 @@ export default function Legend() {
         ))}
 
         <section>
-          <h4 className="mb-2 text-xs font-semibold text-slate-900 dark:text-white">Not named</h4>
+          <h4 className="mb-2 text-xs font-semibold text-slate-900 first-letter:uppercase dark:text-white">
+            {GUIDE.notNamed.label}
+          </h4>
           <ul>
             <GuideRow
-              chip={<KeywordTag label="Skill" band={GUIDE.notNamed.band} srLabel="not named" notNamed />}
+              chip={<KeywordTag label="Skill" band={GUIDE.notNamed.band} srLabel={GUIDE.notNamed.label} implied />}
               meaning={GUIDE.notNamed.meaning}
             >
               <p>Tip for Hard Skills: {GUIDE.notNamed.hardTip}</p>

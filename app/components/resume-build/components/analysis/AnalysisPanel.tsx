@@ -2,20 +2,20 @@
 
 import { useMemo } from 'react';
 import { FiLoader, FiRefreshCw } from 'react-icons/fi';
-import type { KeywordMatchResult, ResumeScore } from '@/lib/resume/keywordMatch';
+import { resolveCategory, type KeywordMatchResult, type ResumeScore } from '@/lib/resume/keywordMatch';
 import type { KeywordCategory, KeywordScoring, ResumeContent } from '@/lib/resume/schema';
 
 import { KEYWORD_GROUPS, SCORE_RING_COLORS } from '../../constants';
 import KeywordGroup from './KeywordGroup';
 import Legend from './Legend';
-import { countKeywordCoverage } from './depthBands';
+import { coverageSummary } from './depthBands';
 import ScoreRing from './ScoreRing';
 
 type AnalysisPanelProps = {
   analysis: ResumeScore;
   jobTitle: string;
-  highlightKeywords: boolean;
-  onHighlightKeywordsChange: (enabled: boolean) => void;
+  isHighlighting: boolean;
+  onHighlightingChange: (enabled: boolean) => void;
   /** True once the editor's resume is not the one this analysis describes. */
   isStale: boolean;
   isScoring: boolean;
@@ -28,46 +28,16 @@ type AnalysisPanelProps = {
 function groupByCategory(results: KeywordMatchResult[]): Record<KeywordCategory, KeywordMatchResult[]> {
   const groups: Record<KeywordCategory, KeywordMatchResult[]> = { hard: [], soft: [], other: [] };
   for (const result of results) {
-    // Mirrors scoreKeywordEvidence, which counts unknown categories as "other".
-    (groups[result.keyword.category] ?? groups.other).push(result);
+    groups[resolveCategory(result.keyword.category)].push(result);
   }
   return groups;
-}
-
-/** "3 of 12 skills show hands-on use, 1 shows familiarity, 4 are only mentioned." */
-function depthSentence(results: KeywordMatchResult[]): string {
-  const { handsOn, familiar, mentioned, total } = countKeywordCoverage(
-    results.map((result) => result.level),
-  );
-  const skill = total === 1 ? 'skill' : 'skills';
-  const show = handsOn === 1 ? 'shows' : 'show';
-  const familiarVerb = familiar === 1 ? 'shows' : 'show';
-  const mentionedVerb = mentioned === 1 ? 'is' : 'are';
-  return `${handsOn} of ${total} ${skill} ${show} hands-on use, ${familiar} ${familiarVerb} familiarity, ${mentioned} ${mentionedVerb} only mentioned.`;
-}
-
-/** "2 of 3 other requirements shown." Counts any credit, like the Other group's count. */
-function otherSentence(results: KeywordMatchResult[]): string {
-  const shown = results.filter((result) => result.matched).length;
-  const requirement = results.length === 1 ? 'requirement' : 'requirements';
-  return `${shown} of ${results.length} other ${requirement} shown.`;
-}
-
-function coverageSentence(groups: Record<KeywordCategory, KeywordMatchResult[]>): string {
-  const skills = [...groups.hard, ...groups.soft];
-  return [
-    skills.length > 0 ? depthSentence(skills) : '',
-    groups.other.length > 0 ? otherSentence(groups.other) : '',
-  ]
-    .filter(Boolean)
-    .join(' ');
 }
 
 export default function AnalysisPanel({
   analysis,
   jobTitle,
-  highlightKeywords,
-  onHighlightKeywordsChange,
+  isHighlighting,
+  onHighlightingChange,
   isStale,
   isScoring,
   scoredBy,
@@ -76,7 +46,7 @@ export default function AnalysisPanel({
 }: AnalysisPanelProps) {
   const { score, label, results } = analysis;
   const groups = useMemo(() => groupByCategory(results), [results]);
-  const summary = useMemo(() => coverageSentence(groups), [groups]);
+  const summary = useMemo(() => coverageSummary(results), [results]);
   const canReanalyze = isStale && !isScoring;
 
   return (
@@ -147,16 +117,16 @@ export default function AnalysisPanel({
         <button
           type="button"
           role="switch"
-          aria-checked={highlightKeywords}
+          aria-checked={isHighlighting}
           aria-label="Highlight keywords"
-          onClick={() => onHighlightKeywordsChange(!highlightKeywords)}
+          onClick={() => onHighlightingChange(!isHighlighting)}
           className={`relative h-6 w-11 flex-shrink-0 rounded-full transition-colors focus:outline-none hover:ring-1 hover:ring-sky-500 hover:ring-offset-2 dark:hover:ring-offset-slate-800 ${
-            highlightKeywords ? 'bg-sky-600 dark:bg-sky-500' : 'bg-slate-300 dark:bg-slate-600'
+            isHighlighting ? 'bg-sky-600 dark:bg-sky-500' : 'bg-slate-300 dark:bg-slate-600'
           }`}
         >
           <span
             className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
-              highlightKeywords ? 'translate-x-5' : 'translate-x-0'
+              isHighlighting ? 'translate-x-5' : 'translate-x-0'
             }`}
           />
         </button>

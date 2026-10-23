@@ -5,9 +5,11 @@ import {
   isSemanticKeyword,
   matchProbabilityToCredit,
   MAX_DEPTH_LEVEL,
+  resolveCategory,
   type KeywordMatchResult,
 } from "@/lib/resume/keywordMatch";
-import type { JdKeyword, PlacementSource, ResumeContent } from "@/lib/resume/schema";
+import { entryLabel } from "@/lib/resume/entryFields";
+import type { JdKeyword, ResumeContent } from "@/lib/resume/schema";
 
 /**
  * Presentation for Depth Levels and Match Probabilities.
@@ -28,13 +30,6 @@ const HANDS_ON_BAND: DepthBand = 3;
 const FAMILIARITY_BAND: DepthBand = 2;
 const MENTIONED_BAND: DepthBand = 1;
 
-export type KeywordCoverage = {
-  handsOn: number;
-  familiar: number;
-  mentioned: number;
-  total: number;
-};
-
 /** Nearest band. Jev may return a fraction; chips and the tooltip use the rounded step. */
 export function depthBand(level: number): DepthBand {
   if (!Number.isFinite(level)) return ABSENT_LEVEL;
@@ -46,20 +41,6 @@ export function depthBand(level: number): DepthBand {
 
 export function depthBandName(level: number): DepthBandName {
   return BAND_NAMES[depthBand(level)];
-}
-
-/** Hard and Soft Skill levels only; Other Keywords have no Depth Level. */
-export function countKeywordCoverage(levels: readonly number[]): KeywordCoverage {
-  let handsOn = 0;
-  let familiar = 0;
-  let mentioned = 0;
-  for (const level of levels) {
-    const band = depthBand(level);
-    if (band >= HANDS_ON_BAND) handsOn += 1;
-    else if (band === FAMILIARITY_BAND) familiar += 1;
-    else if (band === MENTIONED_BAND) mentioned += 1;
-  }
-  return { handsOn, familiar, mentioned, total: levels.length };
 }
 
 export type MatchBandName = "Not shown" | "Partly shown" | "Shown";
@@ -183,6 +164,8 @@ export const KEYWORD_GUIDE: readonly GuideGroup[] = [
 
 /** Without a term, tips name the skill generically, for the legend. */
 export const NOT_NAMED_GUIDE = {
+  /** The marker's name, lowercase so it reads inside a sentence. */
+  label: "not named",
   meaning:
     "Your Work History shows this skill but the resume never names it, so it earns less credit: applicant tracking systems and recruiters search by name.",
   hardTip: (term?: string) => `Add ${term ? `"${term}"` : "the skill's exact name"} to that Bullet.`,
@@ -193,6 +176,7 @@ export const NOT_NAMED_GUIDE = {
 export type DepthLevelGuide = {
   groups: readonly GuideGroup[];
   notNamed: {
+    label: string;
     /** Sample chip look; any Depth Level can carry the marker. */
     band: DepthBand;
     meaning: string;
@@ -202,17 +186,16 @@ export type DepthLevelGuide = {
 };
 
 /** The legend's full guide: every chip state, plus one entry for the "not named" marker. */
-export function depthLevelGuide(): DepthLevelGuide {
-  return {
-    groups: KEYWORD_GUIDE,
-    notNamed: {
-      band: HANDS_ON_BAND,
-      meaning: NOT_NAMED_GUIDE.meaning,
-      hardTip: NOT_NAMED_GUIDE.hardTip(),
-      softTip: NOT_NAMED_GUIDE.softTip(),
-    },
-  };
-}
+export const DEPTH_LEVEL_GUIDE: DepthLevelGuide = {
+  groups: KEYWORD_GUIDE,
+  notNamed: {
+    label: NOT_NAMED_GUIDE.label,
+    band: HANDS_ON_BAND,
+    meaning: NOT_NAMED_GUIDE.meaning,
+    hardTip: NOT_NAMED_GUIDE.hardTip(),
+    softTip: NOT_NAMED_GUIDE.softTip(),
+  },
+};
 
 function importanceLabel(importance: JdKeyword["importance"]): string {
   return importance === "required" ? "Required" : "Preferred";
@@ -240,33 +223,70 @@ export type KeywordChip = {
   hint: string;
   /** The state's one-line meaning from `KEYWORD_GUIDE`. */
   meaning: string;
-  /** An Implied Skill: shown in Work History but never named on the resume. */
-  notNamed: boolean;
+  /** An Implied Skill: shown in Work History but never named on the resume in that sense. */
+  implied: boolean;
   /** Entries that showed an Implied Skill, e.g. "Staff Engineer, Acme". Empty otherwise. */
   shownIn: string[];
   /** How to name an Implied Skill; null for every other chip. */
   tip: string | null;
 };
 
-const NOT_NAMED = "not named";
+/** A Hard or Soft Skill's chip band. Soft Skills skip Familiarity, so a rounded 2 shows as Mentioned. */
+function skillBand(keyword: JdKeyword, level: number): DepthBand {
+  const band = depthBand(level);
+  return resolveCategory(keyword.category) === "soft" && band === FAMILIARITY_BAND ? MENTIONED_BAND : band;
+}
+
+/** Shown in Work History but never named on the resume in that sense. */
+function isImplied({ matched, evidence }: KeywordMatchResult): boolean {
+  return matched && evidence.kind === "skill" && !evidence.explicit;
+}
+
+function plural(count: number, one: string, many: string): string {
+  return count === 1 ? one : many;
+}
+
+/** "3 of 12 skills show hands-on use, 1 shows familiarity, 4 are only mentioned. 2 are shown but not named." */
+function skillSentence(skills: KeywordMatchResult[]): string {
+  const bands = skills.map(({ keyword, level }) => skillBand(keyword, level));
+  const handsOn = bands.filter((band) => band === HANDS_ON_BAND).length;
+  const familiar = bands.filter((band) => band === FAMILIARITY_BAND).length;
+  const mentioned = bands.filter((band) => band === MENTIONED_BAND).length;
+  const implied = skills.filter(isImplied).length;
+  const hasHardSkill = skills.some(({ keyword }) => resolveCategory(keyword.category) === "hard");
+  const clauses = [
+    `${handsOn} of ${skills.length} ${plural(skills.length, "skill", "skills")} ${plural(handsOn, "shows", "show")} hands-on use`,
+    hasHardSkill ? `${familiar} ${plural(familiar, "shows", "show")} familiarity` : "",
+    `${mentioned} ${plural(mentioned, "is", "are")} only mentioned`,
+  ];
+  const coverage = `${clauses.filter(Boolean).join(", ")}.`;
+  if (implied === 0) return coverage;
+  return `${coverage} ${implied} ${plural(implied, "is", "are")} shown but ${NOT_NAMED_GUIDE.label}.`;
+}
+
+/** "2 of 3 other requirements shown." Counts any credit, like the Other group's count. */
+function otherSentence(others: KeywordMatchResult[]): string {
+  const shown = others.filter((result) => result.matched).length;
+  return `${shown} of ${others.length} other ${plural(others.length, "requirement", "requirements")} shown.`;
+}
+
+/** The analysis panel's one-line summary of every Keyword. */
+export function coverageSummary(results: KeywordMatchResult[]): string {
+  const others = results.filter(({ keyword }) => isSemanticKeyword(keyword));
+  const skills = results.filter(({ keyword }) => !isSemanticKeyword(keyword));
+  return [skills.length > 0 ? skillSentence(skills) : "", others.length > 0 ? otherSentence(others) : ""]
+    .filter(Boolean)
+    .join(" ");
+}
 
 function guideMeaning(category: JdKeyword["category"], name: GuideState["name"]): string {
   const group = KEYWORD_GUIDE.find((candidate) => candidate.category === category);
   return group?.states.find((state) => state.name === name)?.meaning ?? "";
 }
 
-/** "Staff Engineer, Acme" for a job, the project name for a project. */
-function entryLabel(source: PlacementSource, resume: ResumeContent): string {
-  if (source.section === "experience") {
-    const job = resume.experience[source.entry];
-    return job ? [job.title, job.company].filter(Boolean).join(", ") : "";
-  }
-  if (source.section === "projects") return resume.projects[source.entry]?.name ?? "";
-  return "";
-}
-
 /** `resume` is the one the evidence was scored against, so Entry indexes line up. */
-export function keywordChip({ keyword, level, matched, evidence }: KeywordMatchResult, resume: ResumeContent): KeywordChip {
+export function keywordChip(result: KeywordMatchResult, resume: ResumeContent): KeywordChip {
+  const { keyword, level, evidence } = result;
   if (isSemanticKeyword(keyword)) {
     const name = matchBandName(level);
     return {
@@ -274,31 +294,29 @@ export function keywordChip({ keyword, level, matched, evidence }: KeywordMatchR
       srLabel: name,
       hint: keywordMatchHint(keyword.importance, level),
       meaning: guideMeaning("other", name),
-      notNamed: false,
+      implied: false,
       shownIn: [],
       tip: null,
     };
   }
-  const isSoft = keyword.category === "soft";
-  const rawBand = depthBand(level);
-  // Soft Skills skip Familiarity.
-  const band = isSoft && rawBand === FAMILIARITY_BAND ? MENTIONED_BAND : rawBand;
+  const isSoft = resolveCategory(keyword.category) === "soft";
+  const band = skillBand(keyword, level);
   const name = BAND_NAMES[band];
   const srLabel = band === ABSENT_LEVEL ? name : `${name}, ${band} of ${MAX_DEPTH_LEVEL}`;
   const hint = keywordLevelHint(keyword.importance, band);
   const meaning = guideMeaning(isSoft ? "soft" : "hard", name);
-  if (!matched || evidence.kind !== "skill" || evidence.explicit) {
-    return { band, srLabel, hint, meaning, notNamed: false, shownIn: [], tip: null };
+  if (!isImplied(result) || evidence.kind !== "skill") {
+    return { band, srLabel, hint, meaning, implied: false, shownIn: [], tip: null };
   }
   const shownIn = countingPlacements(evidence)
-    .map((placement) => entryLabel(placement.source, resume))
+    .map(({ source }) => ("entry" in source ? entryLabel(resume, source) : ""))
     .filter(Boolean);
   return {
     band,
-    srLabel: `${srLabel}, ${NOT_NAMED}`,
+    srLabel: `${srLabel}, ${NOT_NAMED_GUIDE.label}`,
     hint,
     meaning,
-    notNamed: true,
+    implied: true,
     shownIn,
     tip: isSoft ? NOT_NAMED_GUIDE.softTip(keyword.term) : NOT_NAMED_GUIDE.hardTip(keyword.term),
   };

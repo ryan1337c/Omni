@@ -1,3 +1,8 @@
+import { ENTRY_FIELDS } from "./entryFields";
+import { scoreKeywords } from "./jevScore";
+import { scoreKeywordEvidence, type ResumeScore } from "./keywordMatch";
+import type { JdKeyword, KeywordScoring, ResumeContent } from "./schema";
+
 type JevQuestion = { type: string; instructions: string };
 export type FakeJevRequest = { state: Record<string, unknown>; questions: Record<string, JevQuestion> };
 
@@ -57,8 +62,8 @@ export function fakeJev(answers: FakeJevAnswers | AnswerFor = {}) {
  * undefined for the whole-resume request.
  */
 export function entryName(request: FakeJevRequest): string | undefined {
-  const { title, name, institution } = request.state;
-  for (const label of [title, name, institution]) {
+  for (const { name } of Object.values(ENTRY_FIELDS)) {
+    const label = request.state[name];
     if (typeof label === "string") return label;
   }
   return undefined;
@@ -75,4 +80,31 @@ export function byEntry(entries: Record<string, FakeJevAnswers>, rest: FakeJevAn
   };
 }
 
-export const failingJev = (async () => new Response("", { status: 503 })) as typeof globalThis.fetch;
+/** "Now" for Recency and Current Roles in scoring tests. */
+export const SCORED_AT = new Date("2026-10-01T00:00:00Z");
+
+/**
+ * The scoring seam: `scoreKeywords` against a fake Jev, then credit at `SCORED_AT`. Also returns
+ * which scorer ran and the requests Jev received.
+ */
+export async function scoreWithJev(
+  keywords: JdKeyword[],
+  answers: FakeJevAnswers | AnswerFor,
+  resume: ResumeContent,
+): Promise<ResumeScore & { scoredBy: KeywordScoring["scoredBy"]; requests: FakeJevRequest[] }> {
+  const jev = fakeJev(answers);
+  const scoring = await scoreKeywords(keywords, resume, { apiKey: "test", fetch: jev.fetch });
+  const score = scoreKeywordEvidence(keywords, scoring.evidence, resume, { now: SCORED_AT });
+  return { ...score, scoredBy: scoring.scoredBy, requests: jev.requests };
+}
+
+/** Runs a fallback path without its expected `console.error` in the test output. */
+export async function withQuietConsole<T>(run: () => Promise<T>): Promise<T> {
+  const error = console.error;
+  console.error = () => {};
+  try {
+    return await run();
+  } finally {
+    console.error = error;
+  }
+}
