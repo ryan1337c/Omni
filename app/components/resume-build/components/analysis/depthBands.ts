@@ -190,6 +190,30 @@ export const NOT_NAMED_GUIDE = {
     `Optional: if it reads naturally, add ${term ? `"${term}"` : "the trait's name"} to that Bullet. The example already earns most of the credit.`,
 };
 
+export type DepthLevelGuide = {
+  groups: readonly GuideGroup[];
+  notNamed: {
+    /** Sample chip look; any Depth Level can carry the marker. */
+    band: DepthBand;
+    meaning: string;
+    hardTip: string;
+    softTip: string;
+  };
+};
+
+/** The legend's full guide: every chip state, plus one entry for the "not named" marker. */
+export function depthLevelGuide(): DepthLevelGuide {
+  return {
+    groups: KEYWORD_GUIDE,
+    notNamed: {
+      band: HANDS_ON_BAND,
+      meaning: NOT_NAMED_GUIDE.meaning,
+      hardTip: NOT_NAMED_GUIDE.hardTip(),
+      softTip: NOT_NAMED_GUIDE.softTip(),
+    },
+  };
+}
+
 function importanceLabel(importance: JdKeyword["importance"]): string {
   return importance === "required" ? "Required" : "Preferred";
 }

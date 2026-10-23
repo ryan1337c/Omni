@@ -7,8 +7,8 @@ import type { KeywordCategory, KeywordScoring, ResumeContent } from '@/lib/resum
 
 import { KEYWORD_GROUPS, SCORE_RING_COLORS } from '../../constants';
 import KeywordGroup from './KeywordGroup';
-import KeywordTag from './KeywordTag';
-import { countKeywordCoverage, DEPTH_BANDS, depthBandName } from './depthBands';
+import Legend from './Legend';
+import { countKeywordCoverage } from './depthBands';
 import ScoreRing from './ScoreRing';
 
 type AnalysisPanelProps = {
@@ -24,8 +24,6 @@ type AnalysisPanelProps = {
   scoredResume: ResumeContent;
   onReanalyze: () => void;
 };
-
-const LEGEND = DEPTH_BANDS.map((band) => ({ band, label: depthBandName(band) }));
 
 function groupByCategory(results: KeywordMatchResult[]): Record<KeywordCategory, KeywordMatchResult[]> {
   const groups: Record<KeywordCategory, KeywordMatchResult[]> = { hard: [], soft: [], other: [] };
@@ -164,13 +162,7 @@ export default function AnalysisPanel({
         </button>
       </div>
 
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-slate-200 pt-4 text-xs text-slate-500 dark:border-slate-700 dark:text-gray-400">
-        {LEGEND.map(({ band, label: bandLabel }) => (
-          <span key={band} className="flex items-center gap-2">
-            <KeywordTag label="Skill" band={band} /> {bandLabel}
-          </span>
-        ))}
-      </div>
+      <Legend />
     </div>
   );
 }
