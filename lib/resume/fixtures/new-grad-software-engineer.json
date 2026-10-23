@@ -17,7 +17,7 @@
         "location": "Toronto, ON",
         "degree": "Bachelor of Science in Computer Science, Honours",
         "dates": "Expected May 2026",
-        "bullets": ["GPA: 3.7/4.0", "Relevant Coursework: Data Structures, Design and Analysis of Algorithms, Software Design"]
+        "bullets": ["GPA: 3.7/4.0", "Relevant Coursework: Data Structures, Design and Analysis of Algorithms, Software Design", "Built a PostgreSQL-backed library catalog in a databases course"]
       }
     ],
     "experience": [

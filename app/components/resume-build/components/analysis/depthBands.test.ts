@@ -100,7 +100,7 @@ describe("keywordChip", () => {
     const evidence: SkillEvidence = {
       kind: "skill",
       explicit: true,
-      placements: [{ source: { section: "skillsListing" }, presence: 1, depthLevel: 2 }],
+      placements: [{ source: { section: "skills" }, presence: 1, depthLevel: 2 }],
       demonstratingBullets: [],
     };
     expect(keywordChip({ keyword: keyword("hard"), level: 2, weight: 0.5, matched: true, evidence }, resume)).toEqual({

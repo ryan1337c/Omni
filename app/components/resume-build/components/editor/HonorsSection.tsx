@@ -27,7 +27,12 @@ export default function HonorsSection({ entries, actions }: HonorsSectionProps) 
         const hasCore = !!(entry.title || entry.issuer || entry.date);
 
         return (
-          <ResumeEntry key={index} removeLabel="Remove honor" onRemove={() => actions.removeEntry('honors', index)}>
+          <ResumeEntry
+            key={index}
+            removeLabel="Remove honor"
+            onRemove={() => actions.removeEntry('honors', index)}
+            placement={{ section: 'honors' }}
+          >
             <p className="relative mt-[2pt] text-[10pt]">
               <span aria-hidden className="absolute -left-[0.1in] top-[4.5pt] h-[3pt] w-[3pt] rounded-full bg-black" />
               <EditableText value={entry.title} placeholder="Title" className="font-bold" onChange={edit('title')} />

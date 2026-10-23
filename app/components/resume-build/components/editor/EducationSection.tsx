@@ -29,6 +29,7 @@ export default function EducationSection({ entries, actions }: EducationSectionP
             key={index}
             removeLabel="Remove education"
             onRemove={() => actions.removeEntry('education', index)}
+            placement={{ section: 'education', entry: index }}
             onAddBullet={
               entry.bullets.length < MAX_BULLETS_PER_ENTRY ? () => actions.addBullet('education', index) : undefined
             }

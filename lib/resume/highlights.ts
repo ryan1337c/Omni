@@ -1,34 +1,39 @@
-import {
-  highlightedKeywords,
-  isSemanticKeyword,
-  type KeywordMatchResult,
-  type WorkHistoryEntryRef,
-} from "./keywordMatch";
-import type { BulletRef, JdKeyword, ResumeContent } from "./schema";
+import { highlightedKeywords, isSemanticKeyword, type KeywordMatchResult } from "./keywordMatch";
+import type { BulletRef, JdKeyword, PlacementEntrySection, PlacementSource, ResumeContent } from "./schema";
 
 /** What to mark on the resume on screen, which may have changed since it was scored. */
 export type ResumeHighlights = {
-  /** Keywords to highlight in one live Work History Entry's text, or outside every Entry when null. */
-  keywordsIn(entry: WorkHistoryEntryRef | null): JdKeyword[];
+  /** Keywords to highlight in one live Placement's text, or outside every Placement when null. */
+  keywordsIn(source: PlacementSource | null): JdKeyword[];
   /** Whether a live Bullet is the one Jev judged a specific example of a Soft Skill. */
   isDemonstratingBullet(bullet: BulletRef): boolean;
 };
 
-function entryIdentity(resume: ResumeContent, { section, entry }: WorkHistoryEntryRef): string | undefined {
-  if (section === "experience") {
-    const job = resume.experience[entry];
-    return job && JSON.stringify([job.title, job.company, job.dates]);
+type EntrySource = { section: PlacementEntrySection; entry: number };
+
+function entryIdentity(resume: ResumeContent, { section, entry }: EntrySource): string | undefined {
+  switch (section) {
+    case "experience": {
+      const job = resume.experience[entry];
+      return job && JSON.stringify([job.title, job.company, job.dates]);
+    }
+    case "projects": {
+      const project = resume.projects[entry];
+      return project && JSON.stringify([project.name, project.dates]);
+    }
+    case "education": {
+      const school = resume.education[entry];
+      return school && JSON.stringify([school.institution, school.degree, school.dates]);
+    }
   }
-  const project = resume.projects[entry];
-  return project && JSON.stringify([project.name, project.dates]);
 }
 
 /**
- * The scored Entry a live Entry is, matched by title, company, and dates (name and dates for a project)
- * so added, removed, or reordered Entries keep their own evidence. Null when the live Entry was not
- * scored, was renamed, or can't be told apart from another.
+ * The scored Entry a live Entry is, matched by its title, company, and dates (name and dates for a
+ * project; institution, degree, and dates for Education) so added, removed, or reordered Entries keep
+ * their own evidence. Null when the live Entry was not scored, was renamed, or can't be told apart.
  */
-function scoredEntryOf(live: WorkHistoryEntryRef, scored: ResumeContent, liveResume: ResumeContent) {
+function scoredEntryOf(live: EntrySource, scored: ResumeContent, liveResume: ResumeContent): EntrySource | null {
   const identity = entryIdentity(liveResume, live);
   if (identity === undefined) return null;
   if (entryIdentity(scored, live) === identity) return live;
@@ -49,9 +54,9 @@ export function resumeHighlights(
   live: ResumeContent,
 ): ResumeHighlights {
   return {
-    keywordsIn(entry) {
-      if (!entry) return highlightedKeywords(results, null);
-      const scoredEntry = scoredEntryOf(entry, scored, live);
+    keywordsIn(source) {
+      if (!source || !("entry" in source)) return highlightedKeywords(results, source);
+      const scoredEntry = scoredEntryOf(source, scored, live);
       if (!scoredEntry) return highlightedKeywords(results, null).filter(isSemanticKeyword);
       return highlightedKeywords(results, scoredEntry);
     },

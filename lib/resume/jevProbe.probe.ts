@@ -8,10 +8,10 @@ import { parseKeywords, parseResumeContent } from "./parseResumeJson";
 import type { PlacementSource } from "./schema";
 
 /**
- * Sends every fixture to the real Jev API (one request per Experience and Projects Entry, plus the
- * whole-resume request) and prints each Keyword's Depth Level (Hard, Soft) or Match Probability
- * (Other), credit, whether it is Implied, where it counts, and which Bullets demonstrate a Soft
- * Skill, plus request count and wall time.
+ * Sends every fixture to the real Jev API (one request per Experience, Projects, and Education Entry
+ * that has questions, plus the whole-resume request) and prints each Keyword's Depth Level (Hard,
+ * Soft) or Match Probability (Other), credit, whether it is Implied, where it counts, and which
+ * Bullets demonstrate a Soft Skill, plus request count and wall time.
  * Run with `npm run jev:probe`; needs TYPESAFE_API_KEY in the environment or `.env.local`.
  * Not part of `npm test`: it costs API calls and its output is for a human to judge.
  */
@@ -23,7 +23,7 @@ const FIXTURES_DIR = join(__dirname, "fixtures");
 const fixtures = readdirSync(FIXTURES_DIR).filter((file) => file.endsWith(".json"));
 
 function sourceLabel(source: PlacementSource): string {
-  return source.section === "skillsListing" ? "listing" : `${source.section}[${source.entry}]`;
+  return "entry" in source ? `${source.section}[${source.entry}]` : source.section;
 }
 
 describe.skipIf(!process.env.TYPESAFE_API_KEY)("Jev probe", () => {

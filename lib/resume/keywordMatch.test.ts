@@ -74,11 +74,16 @@ describe("Keyword credit", () => {
     expect(score.results[0].evidence).toMatchObject({ explicit: false });
   });
 
-  it("scores a skill found only in the Technical Skills section as a Skills Listing (0.4)", async () => {
+  it("trusts a Technical Skills match without asking Jev, as a Skills Listing at Mentioned", async () => {
     const resume = resumeWith({ skills: [{ category: "Languages", items: "Python, Go" }] });
+    const jev = fakeJev({ ...ratedAt(APPLIED), noul: 0.05 });
 
-    expect(await creditFor(keyword("Python"), ratedAt(MENTIONED), resume)).toBeCloseTo(0.4 / 3);
-    expect(await creditFor(keyword("Python"), ratedAt(APPLIED), resume)).toBeCloseTo(0.4);
+    const scoring = await scoreKeywords([keyword("Go")], resume, { apiKey: "test", fetch: jev.fetch });
+    const score = scoreKeywordEvidence([keyword("Go")], scoring.evidence, resume, { now: NOW });
+
+    expect(jev.requests).toHaveLength(0);
+    expect(score.results[0].level).toBe(MENTIONED);
+    expect(score.results[0].weight).toBeCloseTo(0.4 / 3);
   });
 
   it("scores a skill named only in an Education Entry as a Skills Listing (0.4)", async () => {
@@ -463,12 +468,75 @@ describe("Keyword credit", () => {
       expect(demonstrates(0, 0)).toBe(false);
     });
 
+    it("follows Education Entries too, and highlights no skill in one that was not scored", async () => {
+      const york = { institution: "York University", location: "", degree: "BS", dates: "2018 - 2022", bullets: ["Go coursework"] };
+      const seneca = { institution: "Seneca College", location: "", degree: "Diploma", dates: "2016 - 2018", bullets: ["Go labs"] };
+      const scoredSchool = resumeWith({ education: [york] });
+
+      const { results } = await scoreWithJev([keyword("Go")], ratedAt(FAMILIARITY), scoredSchool);
+      const highlights = resumeHighlights(results, scoredSchool, { ...scoredSchool, education: [seneca, york] });
+      const terms = (entry: number) => highlights.keywordsIn({ section: "education", entry }).map((k) => k.term);
+
+      expect(terms(0)).toEqual([]);
+      expect(terms(1)).toEqual(["Go"]);
+    });
+
     it("stops highlighting a demonstrating Bullet once its text is edited", async () => {
       const edited = { ...backend, bullets: ["Built Go microservices", "Mentored new hires"] };
 
       const { demonstrates } = await highlightsIn({ ...scored, experience: [edited, marketing] });
 
       expect(demonstrates(0, 1)).toBe(false);
+    });
+  });
+
+  describe("Education and Skills Listings", () => {
+    function school(bullets: string[], institution = "York University") {
+      return { institution, location: "", degree: "BS", dates: "2018 - 2022", bullets };
+    }
+
+    it("rates a skill named as coursework in an Education Bullet at Familiarity, at Skills Listing weight", async () => {
+      const resume = resumeWith({
+        education: [school(["Built a React to-do app in a web development course"])],
+      });
+      const answers = byEntry({ "York University": { score: FAMILIARITY - 1 } }, ratedAt(APPLIED));
+
+      const score = await scoreWithJev([keyword("React")], answers, resume);
+
+      expect(score.results[0].level).toBe(FAMILIARITY);
+      expect(score.results[0].weight).toBeCloseTo((0.4 * 2) / 3);
+    });
+
+    it.each([
+      ["Professional Summary", { summary: "Led the go-to-market launch of a payments product" }],
+      ["Education", { education: [school(["President of the go-to-market strategy club"])] }],
+      ["Honors", { honors: [{ title: "Go-to-market Award", issuer: "Acme", date: "2024", description: "" }] }],
+    ])("treats a literal match in the %s that fails its sense check as Absent", async (_, sections) => {
+      const resume = resumeWith(sections);
+
+      const score = await scoreWithJev([keyword("Go")], { ...ratedAt(APPLIED), noul: 0.05 }, resume);
+
+      expect(score.results[0]).toMatchObject({ level: 0, weight: 0, matched: false });
+      expect(score.results[0].evidence).toMatchObject({ explicit: false });
+    });
+
+    it("highlights a match where its sense check passed or was skipped, and nowhere it failed", async () => {
+      const resume = resumeWith({
+        summary: "Led the go-to-market launch of a payments product",
+        education: [school(["President of the go-to-market strategy club"])],
+        honors: [{ title: "Go-to-market Award", issuer: "Acme", date: "2024", description: "" }],
+        skills: [{ category: "Languages", items: "Go" }],
+      });
+
+      const { results } = await scoreWithJev([keyword("Go")], { noul: 0.05 }, resume);
+
+      const terms = (source: Parameters<typeof highlightedKeywords>[1]) =>
+        highlightedKeywords(results, source).map((k) => k.term);
+      expect(results[0].matched).toBe(true);
+      expect(terms({ section: "summary" })).toEqual([]);
+      expect(terms({ section: "education", entry: 0 })).toEqual([]);
+      expect(terms({ section: "honors" })).toEqual([]);
+      expect(terms({ section: "skills" })).toEqual(["Go"]);
     });
   });
 

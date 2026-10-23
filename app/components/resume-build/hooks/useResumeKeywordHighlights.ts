@@ -3,13 +3,15 @@
 import { useLayoutEffect, type RefObject } from "react";
 
 import { resumeHighlights, type ResumeHighlights } from "@/lib/resume/highlights";
-import { findKeywordSpans, type KeywordMatchResult, type WorkHistoryEntryRef } from "@/lib/resume/keywordMatch";
-import type { JdKeyword, ResumeContent } from "@/lib/resume/schema";
+import { findKeywordSpans, type KeywordMatchResult } from "@/lib/resume/keywordMatch";
+import type { JdKeyword, PlacementSource, ResumeContent } from "@/lib/resume/schema";
 
 const KEYWORD_HIGHLIGHT = "resume-keyword";
 const BULLET_HIGHLIGHT = "resume-demonstrating-bullet";
-const ENTRY_SELECTOR = "[data-entry-section][data-entry-index]";
+const PLACEMENT_SELECTOR = "[data-placement-section]";
 const BULLET_SELECTOR = "[data-bullet-index]";
+const ENTRY_SECTIONS = new Set(["experience", "projects", "education"]);
+const WHOLE_SECTIONS = new Set(["summary", "skills", "honors"]);
 
 type HighlightRegistry = {
   set: (name: string, highlight: Highlight) => void;
@@ -22,9 +24,11 @@ function highlightRegistry(): HighlightRegistry | null {
   return registry ?? null;
 }
 
-/** Marks an element as one Work History Entry, so its text is highlighted with that Entry's keywords. */
-export function workHistoryEntryProps({ section, entry }: WorkHistoryEntryRef) {
-  return { "data-entry-section": section, "data-entry-index": entry };
+/** Marks an element as one Placement, so its text is highlighted with that Placement's keywords. */
+export function placementProps(source: PlacementSource) {
+  return "entry" in source
+    ? { "data-placement-section": source.section, "data-placement-entry": source.entry }
+    : { "data-placement-section": source.section };
 }
 
 /** Marks an element as one Bullet of the Entry it sits in, so it can be highlighted as a Soft Skill example. */
@@ -32,24 +36,25 @@ export function bulletProps(bullet: number) {
   return { "data-bullet-index": bullet };
 }
 
-function workHistoryEntryOf(node: Node): WorkHistoryEntryRef | null {
-  const element = node.parentElement?.closest<HTMLElement>(ENTRY_SELECTOR);
+function placementOf(node: Node): PlacementSource | null {
+  const element = node.parentElement?.closest<HTMLElement>(PLACEMENT_SELECTOR);
   if (!element) return null;
-  const section = element.dataset.entrySection;
-  const entry = Number(element.dataset.entryIndex);
-  if ((section !== "experience" && section !== "projects") || !Number.isInteger(entry)) return null;
-  return { section, entry };
+  const section = element.dataset.placementSection ?? "";
+  if (WHOLE_SECTIONS.has(section)) return { section } as PlacementSource;
+  const entry = Number(element.dataset.placementEntry);
+  if (!ENTRY_SECTIONS.has(section) || !Number.isInteger(entry)) return null;
+  return { section, entry } as PlacementSource;
 }
 
 function collectKeywordRanges(root: HTMLElement, highlights: ResumeHighlights): Range[] {
   const ranges: Range[] = [];
-  const keywordsByEntry = new Map<string, JdKeyword[]>();
-  const keywordsFor = (entry: WorkHistoryEntryRef | null) => {
-    const key = entry ? `${entry.section}:${entry.entry}` : "";
-    let keywords = keywordsByEntry.get(key);
+  const keywordsByPlacement = new Map<string, JdKeyword[]>();
+  const keywordsFor = (source: PlacementSource | null) => {
+    const key = JSON.stringify(source);
+    let keywords = keywordsByPlacement.get(key);
     if (!keywords) {
-      keywords = highlights.keywordsIn(entry);
-      keywordsByEntry.set(key, keywords);
+      keywords = highlights.keywordsIn(source);
+      keywordsByPlacement.set(key, keywords);
     }
     return keywords;
   };
@@ -65,7 +70,7 @@ function collectKeywordRanges(root: HTMLElement, highlights: ResumeHighlights): 
   while (node) {
     const text = node.textContent ?? "";
     if (text) {
-      for (const span of findKeywordSpans(text, keywordsFor(workHistoryEntryOf(node)))) {
+      for (const span of findKeywordSpans(text, keywordsFor(placementOf(node)))) {
         if (span.end > text.length) continue;
         const range = document.createRange();
         range.setStart(node, span.start);
@@ -81,12 +86,13 @@ function collectKeywordRanges(root: HTMLElement, highlights: ResumeHighlights): 
 
 function collectBulletRanges(root: HTMLElement, highlights: ResumeHighlights): Range[] {
   const ranges: Range[] = [];
-  for (const element of root.querySelectorAll<HTMLElement>(`${ENTRY_SELECTOR} ${BULLET_SELECTOR}`)) {
-    const entry = workHistoryEntryOf(element);
+  for (const element of root.querySelectorAll<HTMLElement>(`${PLACEMENT_SELECTOR} ${BULLET_SELECTOR}`)) {
+    const placement = placementOf(element);
     const bullet = Number(element.dataset.bulletIndex);
     const editable = element.querySelector("[contenteditable]");
-    if (!entry || !editable || !Number.isInteger(bullet)) continue;
-    if (!highlights.isDemonstratingBullet({ ...entry, bullet })) continue;
+    if (!placement || !editable || !Number.isInteger(bullet)) continue;
+    if (placement.section !== "experience" && placement.section !== "projects") continue;
+    if (!highlights.isDemonstratingBullet({ section: placement.section, entry: placement.entry, bullet })) continue;
     const range = document.createRange();
     range.selectNodeContents(editable);
     ranges.push(range);
