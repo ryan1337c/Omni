@@ -20,7 +20,7 @@ type ResumeResultsProps = {
   onError: (message: string) => void;
 };
 
-const NO_HIGHLIGHTS: KeywordMatchResult[] = [];
+const NO_RESULTS: KeywordMatchResult[] = [];
 
 /**
  * Results step: keyword analysis on the left, the editable resume on the right.
@@ -34,7 +34,7 @@ export default function ResumeResults({ tailored, jobTitle, onStartOver, onError
     onError,
   );
   const { download, isDownloading } = useResumeDownload(onError);
-  const [highlightKeywords, setHighlightKeywords] = useState(false);
+  const [isHighlighting, setIsHighlighting] = useState(false);
 
   return (
     // Below xl the panels stack and the whole view scrolls; from xl up each panel scrolls on its own.
@@ -74,8 +74,8 @@ export default function ResumeResults({ tailored, jobTitle, onStartOver, onError
                   <AnalysisPanel
                     analysis={analysis}
                     jobTitle={jobTitle}
-                    highlightKeywords={highlightKeywords}
-                    onHighlightKeywordsChange={setHighlightKeywords}
+                    isHighlighting={isHighlighting}
+                    onHighlightingChange={setIsHighlighting}
                     isStale={isStale}
                     isScoring={isScoring}
                     scoredBy={scoredBy}
@@ -95,7 +95,7 @@ export default function ResumeResults({ tailored, jobTitle, onStartOver, onError
               <JakeResumePaper
                 resume={resume}
                 actions={actions}
-                highlightKeywords={highlightKeywords ? analysis.results : NO_HIGHLIGHTS}
+                highlightResults={isHighlighting ? analysis.results : NO_RESULTS}
                 scoredResume={scoredResume}
               />
             </div>

@@ -8,7 +8,7 @@ import {
   coverageSummary,
   depthBand,
   depthBandName,
-  depthLevelGuide,
+  DEPTH_LEVEL_GUIDE,
   keywordChip,
   keywordLevelHint,
   KEYWORD_GUIDE,
@@ -152,24 +152,21 @@ describe("guide text", () => {
   });
 });
 
-describe("depthLevelGuide", () => {
+describe("DEPTH_LEVEL_GUIDE", () => {
   it("lists Hard Skills, Soft Skills, and Other Keywords in order, each state with its sample chip look, meaning, and tip", () => {
-    const guide = depthLevelGuide();
-
-    expect(guide.groups.map((group) => [group.title, group.states.map((state) => [state.name, state.band])])).toEqual([
+    expect(DEPTH_LEVEL_GUIDE.groups.map((group) => [group.title, group.states.map((state) => [state.name, state.band])])).toEqual([
       ["Hard Skills", [["Absent", 0], ["Mentioned", 1], ["Familiarity", 2], ["Applied / Production", 3]]],
       ["Soft Skills", [["Absent", 0], ["Mentioned", 1], ["Applied / Production", 3]]],
       ["Other Keywords", [["Not shown", 0], ["Partly shown", 2], ["Shown", 3]]],
     ]);
-    for (const state of guide.groups.flatMap((group) => group.states)) {
+    for (const state of DEPTH_LEVEL_GUIDE.groups.flatMap((group) => group.states)) {
       expect(state.meaning.trim(), `${state.name} meaning`).not.toBe("");
       expect(state.tip.trim(), `${state.name} tip`).not.toBe("");
     }
   });
 
   it("uses the same text as the chip popover", () => {
-    const guide = depthLevelGuide();
-    const hard = guide.groups.find((group) => group.title === "Hard Skills");
+    const hard = DEPTH_LEVEL_GUIDE.groups.find((group) => group.title === "Hard Skills");
     const chip = keywordChip(
       {
         keyword: keyword("hard"),
@@ -185,7 +182,8 @@ describe("depthLevelGuide", () => {
   });
 
   it("explains the not named marker once, on a Depth Level chip, with a generic tip for Hard and an optional one for Soft Skills", () => {
-    expect(depthLevelGuide().notNamed).toEqual({
+    expect(DEPTH_LEVEL_GUIDE.notNamed).toEqual({
+      label: "not named",
       band: 3,
       meaning: NOT_NAMED_GUIDE.meaning,
       hardTip: "Add the skill's exact name to that Bullet.",
@@ -215,7 +213,7 @@ describe("keywordChip", () => {
       srLabel: "Shown",
       hint: "Required - Shown (95%)",
       meaning: guideMeaning("other", "Shown"),
-      notNamed: false,
+      implied: false,
       shownIn: [],
       tip: null,
     });
@@ -234,7 +232,7 @@ describe("keywordChip", () => {
       { keyword: keyword(category), level, weight: 0, matched: level > 0, evidence: namedSkill(level) },
       resume,
     );
-    expect(chip).toMatchObject({ meaning: guideMeaning(category, name), notNamed: false, shownIn: [], tip: null });
+    expect(chip).toMatchObject({ meaning: guideMeaning(category, name), implied: false, shownIn: [], tip: null });
   });
 
   it.each([
@@ -247,7 +245,7 @@ describe("keywordChip", () => {
       { keyword: keyword("other"), level: probability, weight: 0, matched: name !== "Not shown", evidence },
       resume,
     );
-    expect(chip).toMatchObject({ meaning: guideMeaning("other", name), notNamed: false, tip: null });
+    expect(chip).toMatchObject({ meaning: guideMeaning("other", name), implied: false, tip: null });
   });
 
   it("reads a Hard Skill's level as a Depth Level", () => {
@@ -262,7 +260,7 @@ describe("keywordChip", () => {
       srLabel: "Familiarity, 2 of 3",
       hint: "Required - Familiarity (2/3)",
       meaning: guideMeaning("hard", "Familiarity"),
-      notNamed: false,
+      implied: false,
       shownIn: [],
       tip: null,
     });
@@ -285,7 +283,7 @@ describe("keywordChip", () => {
       srLabel: "Applied / Production, 3 of 3, not named",
       hint: "Required - Applied / Production (3/3)",
       meaning: guideMeaning("hard", "Applied / Production"),
-      notNamed: true,
+      implied: true,
       shownIn: ["Staff Engineer, Acme", "Tracker"],
       tip: 'Add "Skill" to that Bullet.',
     });
@@ -301,7 +299,7 @@ describe("keywordChip", () => {
 
     expect(keywordChip({ keyword: keyword("soft"), level: 3, weight: 0.8, matched: true, evidence }, resume)).toMatchObject({
       band: 3,
-      notNamed: true,
+      implied: true,
       shownIn: ["Developer, Initech"],
       tip: expect.stringMatching(/^Optional:.*"Skill"/),
     });

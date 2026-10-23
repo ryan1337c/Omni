@@ -69,7 +69,7 @@ export default function KeywordChipPopover({ label, chip }: KeywordChipPopoverPr
         }}
         className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-1 dark:focus-visible:ring-offset-slate-800"
       >
-        <KeywordTag label={label} band={chip.band} srLabel={chip.srLabel} notNamed={chip.notNamed} />
+        <KeywordTag label={label} band={chip.band} srLabel={chip.srLabel} implied={chip.implied} />
       </button>
       <span
         ref={popoverRef}
@@ -86,7 +86,7 @@ export default function KeywordChipPopover({ label, chip }: KeywordChipPopoverPr
           <>
             <span className="block font-semibold text-slate-900 dark:text-white">{chip.hint}</span>
             <span className="mt-1 block">{chip.meaning}</span>
-            {chip.notNamed && chip.shownIn.length > 0 && (
+            {chip.implied && chip.shownIn.length > 0 && (
               <span className="mt-2 block">
                 <span className="font-medium text-slate-900 dark:text-white">Not named.</span> Shown in:{' '}
                 {chip.shownIn.join('; ')}

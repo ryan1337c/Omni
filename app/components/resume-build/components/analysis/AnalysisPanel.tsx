@@ -14,8 +14,8 @@ import ScoreRing from './ScoreRing';
 type AnalysisPanelProps = {
   analysis: ResumeScore;
   jobTitle: string;
-  highlightKeywords: boolean;
-  onHighlightKeywordsChange: (enabled: boolean) => void;
+  isHighlighting: boolean;
+  onHighlightingChange: (enabled: boolean) => void;
   /** True once the editor's resume is not the one this analysis describes. */
   isStale: boolean;
   isScoring: boolean;
@@ -36,8 +36,8 @@ function groupByCategory(results: KeywordMatchResult[]): Record<KeywordCategory,
 export default function AnalysisPanel({
   analysis,
   jobTitle,
-  highlightKeywords,
-  onHighlightKeywordsChange,
+  isHighlighting,
+  onHighlightingChange,
   isStale,
   isScoring,
   scoredBy,
@@ -117,16 +117,16 @@ export default function AnalysisPanel({
         <button
           type="button"
           role="switch"
-          aria-checked={highlightKeywords}
+          aria-checked={isHighlighting}
           aria-label="Highlight keywords"
-          onClick={() => onHighlightKeywordsChange(!highlightKeywords)}
+          onClick={() => onHighlightingChange(!isHighlighting)}
           className={`relative h-6 w-11 flex-shrink-0 rounded-full transition-colors focus:outline-none hover:ring-1 hover:ring-sky-500 hover:ring-offset-2 dark:hover:ring-offset-slate-800 ${
-            highlightKeywords ? 'bg-sky-600 dark:bg-sky-500' : 'bg-slate-300 dark:bg-slate-600'
+            isHighlighting ? 'bg-sky-600 dark:bg-sky-500' : 'bg-slate-300 dark:bg-slate-600'
           }`}
         >
           <span
             className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
-              highlightKeywords ? 'translate-x-5' : 'translate-x-0'
+              isHighlighting ? 'translate-x-5' : 'translate-x-0'
             }`}
           />
         </button>

@@ -307,7 +307,7 @@ export function getMatchLabel(score: number): MatchLabel {
 /**
  * Scoring is split so each piece can change independently (SRP):
  * - `isMatched` / `findKeywordSpans` — literal text for the highlighter.
- * - `explicitSkillEvidence` — the Placements that name a skill literally.
+ * - `findLiteralPlacements` — the Placements that name a Keyword literally.
  * - `estimateKeywordEvidence` — fallback evidence (Explicit → Mentioned, literal Other → 1, else 0).
  * - `scoreKeywordEvidence` — best Placement by Depth Level, Recency, and Duration, plus
  *   Dual Placement, and Match Probability → credit for Other Keywords, from any source (DIP).
@@ -576,20 +576,12 @@ export function highlightedKeywords(
     .map(({ keyword }) => keyword);
 }
 
-export function isExplicitSkill(keyword: JdKeyword, resume: ResumeContent): boolean {
-  return findLiteralPlacements(keyword, resume).length > 0;
-}
-
-/** Every Placement that names the skill literally, each at `depthLevel`. */
-export function explicitSkillEvidence(
-  keyword: JdKeyword,
-  resume: ResumeContent,
-  depthLevel: number,
-): SkillEvidence {
+/** Every Placement that names the skill literally, each at Mentioned, with no sense check. */
+function explicitSkillEvidence(keyword: JdKeyword, resume: ResumeContent): SkillEvidence {
   const placements = findLiteralPlacements(keyword, resume).map((source) => ({
     source,
     presence: 1,
-    depthLevel,
+    depthLevel: MENTIONED_LEVEL,
   }));
   return { kind: "skill", explicit: placements.length > 0, placements, demonstratingBullets: [] };
 }
@@ -604,8 +596,8 @@ export function estimateKeywordEvidence(
   content: ResumeContent,
 ): KeywordEvidence[] {
   return keywords.map((keyword) => {
-    if (!isSemanticKeyword(keyword)) return explicitSkillEvidence(keyword, content, MENTIONED_LEVEL);
-    return { kind: "other", matchProbability: isExplicitSkill(keyword, content) ? 1 : 0 };
+    if (!isSemanticKeyword(keyword)) return explicitSkillEvidence(keyword, content);
+    return { kind: "other", matchProbability: findLiteralPlacements(keyword, content).length > 0 ? 1 : 0 };
   });
 }
 

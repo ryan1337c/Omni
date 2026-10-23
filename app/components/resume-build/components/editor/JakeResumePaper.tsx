@@ -20,8 +20,8 @@ type JakeResumePaperProps = {
   resume: ResumeContent;
   actions: ResumeEditorActions;
   /** Scored keywords to paint where they count. An empty list leaves the page unmarked. */
-  highlightKeywords: KeywordMatchResult[];
-  /** The resume `highlightKeywords` were scored against; their Entry indexes point into it. */
+  highlightResults: KeywordMatchResult[];
+  /** The resume `highlightResults` were scored against; their Entry indexes point into it. */
   scoredResume: ResumeContent;
 };
 
@@ -29,14 +29,14 @@ type JakeResumePaperProps = {
  * Editable HTML copy of the Jake template on a US Letter page (0.5in margins, 11pt Computer Modern).
  * The page keeps its true size and is scaled down with a transform to fit narrower panels.
  */
-export default function JakeResumePaper({ resume, actions, highlightKeywords, scoredResume }: JakeResumePaperProps) {
+export default function JakeResumePaper({ resume, actions, highlightResults, scoredResume }: JakeResumePaperProps) {
   const frameRef = useRef<HTMLDivElement>(null);
   const paperRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   const [paperHeight, setPaperHeight] = useState(PAPER_HEIGHT_PX);
   const [summaryOpen, setSummaryOpen] = useState(resume.summary !== '');
 
-  useResumeKeywordHighlights(paperRef, highlightKeywords, scoredResume, resume);
+  useResumeKeywordHighlights(paperRef, highlightResults, scoredResume, resume);
 
   const visibleOrder = useMemo(() => {
     const visible: Record<SectionId, boolean> = {

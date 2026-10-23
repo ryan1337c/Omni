@@ -547,7 +547,7 @@ describe("Keyword credit", () => {
     it.each([
       ["Professional Summary", { summary: "Led the go-to-market launch of a payments product" }],
       ["Education", { education: [school(["President of the go-to-market strategy club"])] }],
-      ["Honors", { honors: [{ title: "Go-to-market Award", issuer: "Acme", date: "2024", description: "" }] }],
+      ["Licenses, Certifications, and Awards", { honors: [{ title: "Go-to-market Award", issuer: "Acme", date: "2024", description: "" }] }],
     ])("treats a literal match in the %s that fails its sense check as Absent", async (_, sections) => {
       const resume = resumeWith(sections);
 

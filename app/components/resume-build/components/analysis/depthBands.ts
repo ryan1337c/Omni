@@ -164,6 +164,8 @@ export const KEYWORD_GUIDE: readonly GuideGroup[] = [
 
 /** Without a term, tips name the skill generically, for the legend. */
 export const NOT_NAMED_GUIDE = {
+  /** The marker's name, lowercase so it reads inside a sentence. */
+  label: "not named",
   meaning:
     "Your Work History shows this skill but the resume never names it, so it earns less credit: applicant tracking systems and recruiters search by name.",
   hardTip: (term?: string) => `Add ${term ? `"${term}"` : "the skill's exact name"} to that Bullet.`,
@@ -174,6 +176,7 @@ export const NOT_NAMED_GUIDE = {
 export type DepthLevelGuide = {
   groups: readonly GuideGroup[];
   notNamed: {
+    label: string;
     /** Sample chip look; any Depth Level can carry the marker. */
     band: DepthBand;
     meaning: string;
@@ -183,17 +186,16 @@ export type DepthLevelGuide = {
 };
 
 /** The legend's full guide: every chip state, plus one entry for the "not named" marker. */
-export function depthLevelGuide(): DepthLevelGuide {
-  return {
-    groups: KEYWORD_GUIDE,
-    notNamed: {
-      band: HANDS_ON_BAND,
-      meaning: NOT_NAMED_GUIDE.meaning,
-      hardTip: NOT_NAMED_GUIDE.hardTip(),
-      softTip: NOT_NAMED_GUIDE.softTip(),
-    },
-  };
-}
+export const DEPTH_LEVEL_GUIDE: DepthLevelGuide = {
+  groups: KEYWORD_GUIDE,
+  notNamed: {
+    label: NOT_NAMED_GUIDE.label,
+    band: HANDS_ON_BAND,
+    meaning: NOT_NAMED_GUIDE.meaning,
+    hardTip: NOT_NAMED_GUIDE.hardTip(),
+    softTip: NOT_NAMED_GUIDE.softTip(),
+  },
+};
 
 function importanceLabel(importance: JdKeyword["importance"]): string {
   return importance === "required" ? "Required" : "Preferred";
@@ -221,15 +223,13 @@ export type KeywordChip = {
   hint: string;
   /** The state's one-line meaning from `KEYWORD_GUIDE`. */
   meaning: string;
-  /** An Implied Skill: shown in Work History but never named on the resume. */
-  notNamed: boolean;
+  /** An Implied Skill: shown in Work History but never named on the resume in that sense. */
+  implied: boolean;
   /** Entries that showed an Implied Skill, e.g. "Staff Engineer, Acme". Empty otherwise. */
   shownIn: string[];
   /** How to name an Implied Skill; null for every other chip. */
   tip: string | null;
 };
-
-const NOT_NAMED = "not named";
 
 /** A Hard or Soft Skill's chip band. Soft Skills skip Familiarity, so a rounded 2 shows as Mentioned. */
 function skillBand(keyword: JdKeyword, level: number): DepthBand {
@@ -261,7 +261,7 @@ function skillSentence(skills: KeywordMatchResult[]): string {
   ];
   const coverage = `${clauses.filter(Boolean).join(", ")}.`;
   if (implied === 0) return coverage;
-  return `${coverage} ${implied} ${plural(implied, "is", "are")} shown but ${NOT_NAMED}.`;
+  return `${coverage} ${implied} ${plural(implied, "is", "are")} shown but ${NOT_NAMED_GUIDE.label}.`;
 }
 
 /** "2 of 3 other requirements shown." Counts any credit, like the Other group's count. */
@@ -294,7 +294,7 @@ export function keywordChip(result: KeywordMatchResult, resume: ResumeContent): 
       srLabel: name,
       hint: keywordMatchHint(keyword.importance, level),
       meaning: guideMeaning("other", name),
-      notNamed: false,
+      implied: false,
       shownIn: [],
       tip: null,
     };
@@ -306,17 +306,17 @@ export function keywordChip(result: KeywordMatchResult, resume: ResumeContent): 
   const hint = keywordLevelHint(keyword.importance, band);
   const meaning = guideMeaning(isSoft ? "soft" : "hard", name);
   if (!isImplied(result) || evidence.kind !== "skill") {
-    return { band, srLabel, hint, meaning, notNamed: false, shownIn: [], tip: null };
+    return { band, srLabel, hint, meaning, implied: false, shownIn: [], tip: null };
   }
   const shownIn = countingPlacements(evidence)
     .map(({ source }) => ("entry" in source ? entryLabel(resume, source) : ""))
     .filter(Boolean);
   return {
     band,
-    srLabel: `${srLabel}, ${NOT_NAMED}`,
+    srLabel: `${srLabel}, ${NOT_NAMED_GUIDE.label}`,
     hint,
     meaning,
-    notNamed: true,
+    implied: true,
     shownIn,
     tip: isSoft ? NOT_NAMED_GUIDE.softTip(keyword.term) : NOT_NAMED_GUIDE.hardTip(keyword.term),
   };
