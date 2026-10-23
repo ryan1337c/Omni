@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { byEntry, fakeJev, type FakeJevAnswers } from "./fakeJev";
+import { resumeHighlights } from "./highlights";
 import { scoreKeywords } from "./jevScore";
 import { highlightedKeywords, scoreKeywordEvidence, type ResumeScore } from "./keywordMatch";
 import { parseResumeContent } from "./parseResumeJson";
@@ -387,6 +388,16 @@ describe("Keyword credit", () => {
       expect(score.results[0]).toMatchObject({ level: 0, weight: 0, matched: false });
     });
 
+    it("highlights the demonstrating Bullet and no other", async () => {
+      const resume = resumeWith({ experience: [job("Jan 2022 - Present", [BUILT_API, LED_MIGRATION])] });
+
+      const { results } = await scoreWithJev([soft("Leadership")], { bullets: { [BUILT_API]: 0.1, [LED_MIGRATION]: 0.9 } }, resume);
+      const highlights = resumeHighlights(results, resume, resume);
+
+      expect(highlights.isDemonstratingBullet({ section: "experience", entry: 0, bullet: 1 })).toBe(true);
+      expect(highlights.isDemonstratingBullet({ section: "experience", entry: 0, bullet: 0 })).toBe(false);
+    });
+
     it("weights the demonstrating Entry by Recency and Duration", async () => {
       const resume = resumeWith({
         experience: [
@@ -400,6 +411,64 @@ describe("Keyword credit", () => {
 
       expect(score.results[0].level).toBe(APPLIED);
       expect(score.results[0].weight).toBeCloseTo(0.7 + 0.1);
+    });
+  });
+
+  describe("highlights after Entries change, before Re-analyze", () => {
+    const backend = job("Jan 2022 - Present", ["Built Go microservices", "Mentored 3 new hires through onboarding"], "Backend Engineer");
+    const marketing = job("2018 - 2021", ["Led the go-to-market launch"], "Marketing Lead");
+    const added = job("2016 - 2018", ["Wrote Go tooling"], "Intern");
+    const scored = resumeWith({ experience: [backend, marketing], skills: [{ category: "Languages", items: "Go" }] });
+    const answers = byEntry(
+      { "Marketing Lead": { noul: 0.05 } },
+      { ...ratedAt(APPLIED), bullets: { "Built Go microservices": 0.1, "Mentored 3 new hires through onboarding": 0.9 } },
+    );
+
+    async function highlightsIn(live: ResumeContent) {
+      const { results } = await scoreWithJev([keyword("Go"), soft("Mentorship")], answers, scored);
+      const highlights = resumeHighlights(results, scored, live);
+      return {
+        terms: (entry: number) => highlights.keywordsIn({ section: "experience", entry }).map((k) => k.term),
+        demonstrates: (entry: number, bullet: number) =>
+          highlights.isDemonstratingBullet({ section: "experience", entry, bullet }),
+      };
+    }
+
+    it("follows each Entry when Entries are reordered", async () => {
+      const live = { ...scored, experience: [marketing, backend] };
+
+      const { terms, demonstrates } = await highlightsIn(live);
+
+      expect(terms(0)).toEqual([]);
+      expect(terms(1)).toEqual(["Go"]);
+      expect(demonstrates(0, 0)).toBe(false);
+      expect(demonstrates(1, 1)).toBe(true);
+    });
+
+    it("follows each Entry when one is added or removed before it", async () => {
+      const withAdded = await highlightsIn({ ...scored, experience: [added, backend, marketing] });
+      const withRemoved = await highlightsIn({ ...scored, experience: [marketing] });
+
+      expect(withAdded.terms(1)).toEqual(["Go"]);
+      expect(withAdded.terms(2)).toEqual([]);
+      expect(withAdded.demonstrates(1, 1)).toBe(true);
+      expect(withRemoved.terms(0)).toEqual([]);
+      expect(withRemoved.demonstrates(0, 0)).toBe(false);
+    });
+
+    it("highlights no skill in an Entry that was not scored", async () => {
+      const { terms, demonstrates } = await highlightsIn({ ...scored, experience: [added, backend, marketing] });
+
+      expect(terms(0)).toEqual([]);
+      expect(demonstrates(0, 0)).toBe(false);
+    });
+
+    it("stops highlighting a demonstrating Bullet once its text is edited", async () => {
+      const edited = { ...backend, bullets: ["Built Go microservices", "Mentored new hires"] };
+
+      const { demonstrates } = await highlightsIn({ ...scored, experience: [edited, marketing] });
+
+      expect(demonstrates(0, 1)).toBe(false);
     });
   });
 

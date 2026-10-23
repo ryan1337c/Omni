@@ -5,6 +5,7 @@ import { FiX } from 'react-icons/fi';
 import { MAX_BULLETS_PER_ENTRY } from '@/lib/resume/parseResumeJson';
 
 import type { BulletSection, ResumeEditorActions } from '../../hooks/useResumeEditor';
+import { bulletProps } from '../../hooks/useResumeKeywordHighlights';
 import ControlButton from './ControlButton';
 import EditableText, { focusAtEnd } from './EditableText';
 
@@ -46,7 +47,7 @@ export default function BulletList({ section, entryIndex, bullets, actions }: Bu
     <ul ref={listRef} className="ml-[0.15in] mt-[1pt] space-y-[2pt] text-[10pt]">
       {bullets.map((bullet, bulletIndex) => (
         // Index keys are safe here: EditableText re-syncs its DOM whenever its value prop changes.
-        <li key={bulletIndex} className="group/bullet relative">
+        <li key={bulletIndex} className="group/bullet relative" {...bulletProps(bulletIndex)}>
           <span aria-hidden className="absolute -left-[0.1in] top-[4.5pt] h-[3pt] w-[3pt] rounded-full bg-black" />
           <EditableText
             value={bullet}
