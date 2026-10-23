@@ -10,7 +10,8 @@ import type { PlacementSource } from "./schema";
 /**
  * Sends every fixture to the real Jev API (one request per Experience and Projects Entry, plus the
  * whole-resume request) and prints each Keyword's Depth Level (Hard, Soft) or Match Probability
- * (Other), credit, whether it is Implied, and where it counts, plus request count and wall time.
+ * (Other), credit, whether it is Implied, where it counts, and which Bullets demonstrate a Soft
+ * Skill, plus request count and wall time.
  * Run with `npm run jev:probe`; needs TYPESAFE_API_KEY in the environment or `.env.local`.
  * Not part of `npm test`: it costs API calls and its output is for a human to judge.
  */
@@ -56,6 +57,10 @@ describe.skipIf(!process.env.TYPESAFE_API_KEY)("Jev probe", () => {
             ? countingPlacements(evidence)
                 .map((p) => `${sourceLabel(p.source)}@${p.depthLevel.toFixed(1)}`)
                 .join(" ")
+            : "",
+        demonstratedBy:
+          evidence.kind === "skill"
+            ? evidence.demonstratingBullets.map((b) => `${b.section}[${b.entry}].bullets[${b.bullet}]`).join(" ")
             : "",
       })),
     );
