@@ -19,6 +19,7 @@ import {
     isSemanticKeyword,
     isWorkHistory,
     MAX_DEPTH_LEVEL,
+    MENTIONED_LEVEL,
     PRESENCE_CUTOFF,
 } from "./keywordMatch";
 
@@ -208,26 +209,21 @@ function answerField(answer: unknown, field: "score" | "noul"): number {
     return value;
 }
 
-/** Hard Skills named literally outside every Entry; their Depth Level there comes from the whole resume. */
-function hasLiteralSkillsListing(keyword: JdKeyword, resume: ResumeContent): boolean {
-    return findLiteralPlacements(keyword, resume).some((source) => !isWorkHistory(source) && source.section !== "education");
-}
-
 /**
  * Whole resume: Match Probability for every Other Keyword, Depth Level for every Explicit Soft Skill,
- * and Depth Level for every Hard Skill named outside every Entry.
+ * and a sense check for every Hard Skill named in the Professional Summary, Education, or Honors.
  */
 function buildResumeQuestions(keywords: JdKeyword[], resume: ResumeContent): JevQuestions {
     const questions: JevQuestions = {};
     keywords.forEach((keyword, index) => {
         if (isSemanticKeyword(keyword)) {
             questions[questionKey(index)] = buildMatchQuestion(keyword);
-        } else if (isHardSkill(keyword) ? hasLiteralSkillsListing(keyword, resume) : isExplicitSkill(keyword, resume)) {
+        } else if (isHardSkill(keyword)) {
+            for (const source of senseCheckedPlacements(keyword, resume)) {
+                questions[senseKey(index, source)] = buildSenseQuestion(keyword, source, resume);
+            }
+        } else if (isExplicitSkill(keyword, resume)) {
             questions[questionKey(index)] = buildDepthQuestion(keyword, "the resume text");
-        }
-        if (!isHardSkill(keyword)) return;
-        for (const source of senseCheckedPlacements(keyword, resume)) {
-            questions[senseKey(index, source)] = buildSenseQuestion(keyword, source, resume);
         }
     });
     return questions;
@@ -298,10 +294,10 @@ async function askIfAny(state: object, questions: JevQuestions, options: ScoreKe
 type EntryAnswers = { source: EntrySource; answers: JevAnswers };
 
 /**
- * One Placement per Work History Entry with its presence and Depth Level, plus each literal
- * Education Placement at that Entry's Depth Level and each other literal Skills Listing at the
- * whole-resume Depth Level (presence 1).
- * Explicit when a literal Placement counts: outside Work History, or an Entry where Jev confirmed the sense.
+ * One Placement per Work History Entry with its presence and Depth Level, plus each literal Skills
+ * Listing: an Education Entry at its own Depth Level, a Professional Summary, Technical Skills, or
+ * Honors match at Mentioned. Outside Work History, presence is the sense check, or 1 in Technical Skills.
+ * Explicit when a literal Placement counts.
  */
 function hardSkillEvidence(
     keyword: JdKeyword,
@@ -320,7 +316,7 @@ function hardSkillEvidence(
         }));
     const depthAt = (source: PlacementSource): number => {
         const entry = entryAnswers.find((answered) => isSamePlacementSource(answered.source, source));
-        return scoreToLevel(answerField((entry?.answers ?? resumeAnswers)[entry ? entryDepthKey(index) : questionKey(index)], "score"));
+        return entry ? scoreToLevel(answerField(entry.answers[entryDepthKey(index)], "score")) : MENTIONED_LEVEL;
     };
     const presenceAt = (source: PlacementSource): number =>
         source.section === "skills" ? 1 : answerField(resumeAnswers[senseKey(index, source)], "noul");

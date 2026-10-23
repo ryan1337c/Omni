@@ -76,7 +76,7 @@ describe("scoreKeywords", () => {
         explicit: true,
         placements: [
           { source: { section: "experience", entry: 0 }, presence: 0.93, depthLevel: 2 },
-          { source: { section: "skills" }, presence: 1, depthLevel: 2 },
+          { source: { section: "skills" }, presence: 1, depthLevel: 1 },
         ],
         demonstratingBullets: [],
       },

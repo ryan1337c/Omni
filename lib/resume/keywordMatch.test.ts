@@ -69,11 +69,16 @@ describe("Keyword credit", () => {
     expect(score.results[0].evidence).toMatchObject({ explicit: false });
   });
 
-  it("scores a skill found only in the Technical Skills section as a Skills Listing (0.4)", async () => {
+  it("trusts a Technical Skills match without asking Jev, as a Skills Listing at Mentioned", async () => {
     const resume = resumeWith({ skills: [{ category: "Languages", items: "Python, Go" }] });
+    const jev = fakeJev({ ...ratedAt(APPLIED), noul: 0.05 });
 
-    expect(await creditFor(keyword("Python"), ratedAt(MENTIONED), resume)).toBeCloseTo(0.4 / 3);
-    expect(await creditFor(keyword("Python"), ratedAt(APPLIED), resume)).toBeCloseTo(0.4);
+    const scoring = await scoreKeywords([keyword("Go")], resume, { apiKey: "test", fetch: jev.fetch });
+    const score = scoreKeywordEvidence([keyword("Go")], scoring.evidence, resume, { now: NOW });
+
+    expect(jev.requests).toHaveLength(0);
+    expect(score.results[0].level).toBe(MENTIONED);
+    expect(score.results[0].weight).toBeCloseTo(0.4 / 3);
   });
 
   it("scores a skill named only in an Education Entry as a Skills Listing (0.4)", async () => {

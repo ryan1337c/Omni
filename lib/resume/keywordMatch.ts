@@ -319,7 +319,7 @@ export const DEPTH_LEVEL_NAMES = [
   "Familiarity",
   "Applied / Production",
 ] as const;
-const MENTIONED_LEVEL = 1;
+export const MENTIONED_LEVEL = 1;
 const MIN_DEPTH_LEVEL = MENTIONED_LEVEL;
 export const MAX_DEPTH_LEVEL = DEPTH_LEVEL_NAMES.length;
 /** A Placement counts only when Jev's presence answer is at least this. */
