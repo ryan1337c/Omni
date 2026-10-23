@@ -47,7 +47,7 @@ A Hard or Soft Skill whose term or one of its aliases literally appears in a Pla
 _Avoid_: Matched skill, hit
 
 **Implied Skill**:
-A Hard or Soft Skill that Work History shows in use while its term and aliases appear nowhere on the resume, such as "orchestrated containers on EKS" for Kubernetes with no mention of Kubernetes. It earns less credit than the same skill named, because applicant tracking systems and recruiters search for the name. An Implied Hard Skill loses more than an Implied Soft Skill, since tools are searched by name and traits are better shown than claimed. A Skills Listing never implies a skill.
+A Hard or Soft Skill that Work History shows in use while it is never named on the resume in that sense, such as "orchestrated containers on EKS" for Kubernetes with no mention of Kubernetes. "Go" in "go-to-market" does not name the Go language. It earns less credit than the same skill named, because applicant tracking systems and recruiters search for the name. An Implied Hard Skill loses more than an Implied Soft Skill, since tools are searched by name and traits are better shown than claimed. A Skills Listing never implies a skill.
 _Avoid_: Inferred skill, implicit match, Semantic Match (that is for Other Keywords)
 
 **Semantic Match**:
