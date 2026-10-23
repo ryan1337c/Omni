@@ -1,13 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { byEntry, fakeJev, type FakeJevAnswers } from "./fakeJev";
+import { byEntry, scoreWithJev, withQuietConsole, type FakeJevAnswers } from "./fakeJev";
 import { resumeHighlights } from "./highlights";
-import { scoreKeywords } from "./jevScore";
-import { highlightedKeywords, scoreKeywordEvidence, type ResumeScore } from "./keywordMatch";
+import { highlightedKeywords } from "./keywordMatch";
 import { parseResumeContent } from "./parseResumeJson";
 import type { JdKeyword, ResumeContent } from "./schema";
-
-const NOW = new Date("2026-10-01T00:00:00Z");
 
 const MENTIONED = 1;
 const FAMILIARITY = 2;
@@ -46,16 +43,6 @@ function job(dates: string, bullets: string[], title = "Software Engineer") {
   return { title, company: "Acme", location: "Remote", dates, bullets };
 }
 
-async function scoreWithJev(
-  keywords: JdKeyword[],
-  answers: Parameters<typeof fakeJev>[0],
-  resume: ResumeContent,
-): Promise<ResumeScore> {
-  const jev = fakeJev(answers);
-  const scoring = await scoreKeywords(keywords, resume, { apiKey: "test", fetch: jev.fetch });
-  return scoreKeywordEvidence(keywords, scoring.evidence, resume, { now: NOW });
-}
-
 async function creditFor(term: JdKeyword, answers: FakeJevAnswers, resume: ResumeContent) {
   return (await scoreWithJev([term], answers, resume)).results[0].weight;
 }
@@ -76,12 +63,10 @@ describe("Keyword credit", () => {
 
   it("trusts a Technical Skills match without asking Jev, as a Skills Listing at Mentioned", async () => {
     const resume = resumeWith({ skills: [{ category: "Languages", items: "Python, Go" }] });
-    const jev = fakeJev({ ...ratedAt(APPLIED), noul: 0.05 });
 
-    const scoring = await scoreKeywords([keyword("Go")], resume, { apiKey: "test", fetch: jev.fetch });
-    const score = scoreKeywordEvidence([keyword("Go")], scoring.evidence, resume, { now: NOW });
+    const score = await scoreWithJev([keyword("Go")], { ...ratedAt(APPLIED), noul: 0.05 }, resume);
 
-    expect(jev.requests).toHaveLength(0);
+    expect(score.requests).toHaveLength(0);
     expect(score.results[0].level).toBe(MENTIONED);
     expect(score.results[0].weight).toBeCloseTo(0.4 / 3);
   });
@@ -321,17 +306,12 @@ describe("Keyword credit", () => {
           job("2018 - 2021", ["Ran services on EKS"], "Developer"),
         ],
       });
-      const jev = fakeJev(byEntry({ Developer: { fail: true } }, ratedAt(APPLIED)));
+      const answers = byEntry({ Developer: { fail: true } }, ratedAt(APPLIED));
       const keywords = [keyword("Python"), keyword("Kubernetes")];
 
-      const quiet = console.error;
-      console.error = () => {};
-      const scoring = await scoreKeywords(keywords, resume, { apiKey: "test", fetch: jev.fetch }).finally(() => {
-        console.error = quiet;
-      });
-      const score = scoreKeywordEvidence(keywords, scoring.evidence, resume, { now: NOW });
+      const score = await withQuietConsole(() => scoreWithJev(keywords, answers, resume));
 
-      expect(scoring.scoredBy).toBe("keyword");
+      expect(score.scoredBy).toBe("keyword");
       expect(score.results.map((r) => [r.level, r.weight])).toEqual([
         [MENTIONED, 1 / 3],
         [0, 0],
