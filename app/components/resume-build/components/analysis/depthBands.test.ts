@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
 
+import type { KeywordMatchResult } from "@/lib/resume/keywordMatch";
 import { parseResumeContent } from "@/lib/resume/parseResumeJson";
 import type { JdKeyword, SkillEvidence } from "@/lib/resume/schema";
 
 import {
-  countKeywordCoverage,
+  coverageSummary,
   depthBand,
   depthBandName,
   depthLevelGuide,
@@ -51,14 +52,54 @@ describe("depthBand", () => {
   });
 });
 
-describe("countKeywordCoverage", () => {
-  it("splits keywords into hands-on, familiarity, and mentioned, leaving Absent out", () => {
-    expect(countKeywordCoverage([0, 1, 1, 2, 3, 3])).toEqual({
-      handsOn: 2,
-      familiar: 1,
-      mentioned: 2,
-      total: 6,
-    });
+describe("coverageSummary", () => {
+  function skill(category: "hard" | "soft", level: number, { implied = false } = {}): KeywordMatchResult {
+    return {
+      keyword: keyword(category),
+      level,
+      weight: 0,
+      matched: level > 0,
+      evidence: {
+        kind: "skill",
+        explicit: !implied,
+        placements: level > 0 ? [{ source: { section: "experience", entry: 0 }, presence: 1, depthLevel: level }] : [],
+        demonstratingBullets: [],
+      },
+    };
+  }
+
+  function requirement(matchProbability: number): KeywordMatchResult {
+    const shown = matchProbability >= 0.5;
+    return { keyword: keyword("other"), level: matchProbability, weight: shown ? 1 : 0, matched: shown, evidence: { kind: "other", matchProbability } };
+  }
+
+  it("splits skills into hands-on, familiarity, and mentioned, leaving Absent out, then counts other requirements", () => {
+    const results = [skill("hard", 3), skill("hard", 2), skill("hard", 1), skill("soft", 3), skill("soft", 0), requirement(0.95), requirement(0.2)];
+
+    expect(coverageSummary(results)).toBe(
+      "2 of 5 skills show hands-on use, 1 shows familiarity, 1 is only mentioned. 1 of 2 other requirements shown.",
+    );
+  });
+
+  it("counts a Soft Skill that rounds to Familiarity as only mentioned, like its chip", () => {
+    expect(coverageSummary([skill("hard", 3), skill("soft", 2)])).toBe(
+      "1 of 2 skills shows hands-on use, 0 show familiarity, 1 is only mentioned.",
+    );
+  });
+
+  it("leaves familiarity out when only Soft Skills are scored", () => {
+    expect(coverageSummary([skill("soft", 3), skill("soft", 1)])).toBe("1 of 2 skills shows hands-on use, 1 is only mentioned.");
+  });
+
+  it("says how many skills are shown but not named", () => {
+    const results = [skill("hard", 3, { implied: true }), skill("soft", 3, { implied: true }), skill("hard", 1)];
+
+    expect(coverageSummary(results)).toBe(
+      "2 of 3 skills show hands-on use, 0 show familiarity, 1 is only mentioned. 2 are shown but not named.",
+    );
+    expect(coverageSummary([skill("hard", 2, { implied: true })])).toBe(
+      "0 of 1 skill show hands-on use, 1 shows familiarity, 0 are only mentioned. 1 is shown but not named.",
+    );
   });
 });
 

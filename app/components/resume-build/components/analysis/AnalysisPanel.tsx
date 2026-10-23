@@ -2,13 +2,13 @@
 
 import { useMemo } from 'react';
 import { FiLoader, FiRefreshCw } from 'react-icons/fi';
-import type { KeywordMatchResult, ResumeScore } from '@/lib/resume/keywordMatch';
+import { resolveCategory, type KeywordMatchResult, type ResumeScore } from '@/lib/resume/keywordMatch';
 import type { KeywordCategory, KeywordScoring, ResumeContent } from '@/lib/resume/schema';
 
 import { KEYWORD_GROUPS, SCORE_RING_COLORS } from '../../constants';
 import KeywordGroup from './KeywordGroup';
 import Legend from './Legend';
-import { countKeywordCoverage } from './depthBands';
+import { coverageSummary } from './depthBands';
 import ScoreRing from './ScoreRing';
 
 type AnalysisPanelProps = {
@@ -28,39 +28,9 @@ type AnalysisPanelProps = {
 function groupByCategory(results: KeywordMatchResult[]): Record<KeywordCategory, KeywordMatchResult[]> {
   const groups: Record<KeywordCategory, KeywordMatchResult[]> = { hard: [], soft: [], other: [] };
   for (const result of results) {
-    // Mirrors scoreKeywordEvidence, which counts unknown categories as "other".
-    (groups[result.keyword.category] ?? groups.other).push(result);
+    groups[resolveCategory(result.keyword.category)].push(result);
   }
   return groups;
-}
-
-/** "3 of 12 skills show hands-on use, 1 shows familiarity, 4 are only mentioned." */
-function depthSentence(results: KeywordMatchResult[]): string {
-  const { handsOn, familiar, mentioned, total } = countKeywordCoverage(
-    results.map((result) => result.level),
-  );
-  const skill = total === 1 ? 'skill' : 'skills';
-  const show = handsOn === 1 ? 'shows' : 'show';
-  const familiarVerb = familiar === 1 ? 'shows' : 'show';
-  const mentionedVerb = mentioned === 1 ? 'is' : 'are';
-  return `${handsOn} of ${total} ${skill} ${show} hands-on use, ${familiar} ${familiarVerb} familiarity, ${mentioned} ${mentionedVerb} only mentioned.`;
-}
-
-/** "2 of 3 other requirements shown." Counts any credit, like the Other group's count. */
-function otherSentence(results: KeywordMatchResult[]): string {
-  const shown = results.filter((result) => result.matched).length;
-  const requirement = results.length === 1 ? 'requirement' : 'requirements';
-  return `${shown} of ${results.length} other ${requirement} shown.`;
-}
-
-function coverageSentence(groups: Record<KeywordCategory, KeywordMatchResult[]>): string {
-  const skills = [...groups.hard, ...groups.soft];
-  return [
-    skills.length > 0 ? depthSentence(skills) : '',
-    groups.other.length > 0 ? otherSentence(groups.other) : '',
-  ]
-    .filter(Boolean)
-    .join(' ');
 }
 
 export default function AnalysisPanel({
@@ -76,7 +46,7 @@ export default function AnalysisPanel({
 }: AnalysisPanelProps) {
   const { score, label, results } = analysis;
   const groups = useMemo(() => groupByCategory(results), [results]);
-  const summary = useMemo(() => coverageSentence(groups), [groups]);
+  const summary = useMemo(() => coverageSummary(results), [results]);
   const canReanalyze = isStale && !isScoring;
 
   return (

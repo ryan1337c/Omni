@@ -469,7 +469,8 @@ function emptyCategoryScores(): Record<KeywordCategory, CategoryScore> {
   };
 }
 
-function resolveCategory(category: JdKeyword["category"]): KeywordCategory {
+/** Unknown categories count as "other" everywhere. */
+export function resolveCategory(category: JdKeyword["category"]): KeywordCategory {
   return KEYWORD_CATEGORIES.includes(category) ? category : "other";
 }
 
