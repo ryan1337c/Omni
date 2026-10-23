@@ -329,6 +329,24 @@ describe("Keyword credit", () => {
     });
   });
 
+  describe("Education and Skills Listings", () => {
+    function school(bullets: string[], institution = "York University") {
+      return { institution, location: "", degree: "BS", dates: "2018 - 2022", bullets };
+    }
+
+    it("rates a skill named as coursework in an Education Bullet at Familiarity, at Skills Listing weight", async () => {
+      const resume = resumeWith({
+        education: [school(["Built a React to-do app in a web development course"])],
+      });
+      const answers = byEntry({ "York University": { score: FAMILIARITY - 1 } }, ratedAt(APPLIED));
+
+      const score = await scoreWithJev([keyword("React")], answers, resume);
+
+      expect(score.results[0].level).toBe(FAMILIARITY);
+      expect(score.results[0].weight).toBeCloseTo((0.4 * 2) / 3);
+    });
+  });
+
   describe("Other Keywords", () => {
     const degree = resumeWith({
       education: [

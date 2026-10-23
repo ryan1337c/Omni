@@ -35,16 +35,21 @@ export function fakeJev(answers: FakeJevAnswers | AnswerFor = {}) {
   return { fetch, requests };
 }
 
-/** The title or project name of the one Entry in a request's state; undefined for the whole-resume request. */
+/**
+ * The job title, project name, or institution of the one Entry in a request's state;
+ * undefined for the whole-resume request.
+ */
 export function entryName(request: FakeJevRequest): string | undefined {
-  const { title, name } = request.state;
-  if (typeof title === "string") return title;
-  return typeof name === "string" ? name : undefined;
+  const { title, name, institution } = request.state;
+  for (const label of [title, name, institution]) {
+    if (typeof label === "string") return label;
+  }
+  return undefined;
 }
 
 /**
- * Answers each Entry request by its title or project name. Entries not listed, and the
- * whole-resume request, get `rest`.
+ * Answers each Entry request by its job title, project name, or institution. Entries not listed,
+ * and the whole-resume request, get `rest`.
  */
 export function byEntry(entries: Record<string, FakeJevAnswers>, rest: FakeJevAnswers = {}): AnswerFor {
   return (request) => {

@@ -2,7 +2,9 @@ import type {
     JdKeyword,
     KeywordEvidence,
     KeywordScoring,
+    PlacementEntrySection,
     PlacementEvidence,
+    PlacementSource,
     ResumeContent,
     SkillEvidence,
 } from "./schema";
@@ -53,7 +55,7 @@ export type ScoreKeywordsOptions = {
     timeoutMs?: number;
 };
 
-type WorkHistorySource = { section: "experience" | "projects"; entry: number };
+type EntrySource = { section: PlacementEntrySection; entry: number };
 
 function keywordLabel(keyword: JdKeyword): string {
     if (keyword.aliases.length === 0) return keyword.term;
@@ -112,20 +114,32 @@ function resumeState(resume: ResumeContent) {
 }
 
 /** Only this Entry, so Jev can't credit it for another Entry's content. */
-function entryState(resume: ResumeContent, source: WorkHistorySource) {
+function entryState(resume: ResumeContent, source: EntrySource) {
     if (source.section === "experience") {
         const { title, company, dates, bullets } = resume.experience[source.entry];
         return { title, company, dates, bullets };
+    }
+    if (source.section === "education") {
+        const { institution, degree, dates, bullets } = resume.education[source.entry];
+        return { institution, degree, dates, bullets };
     }
     const { name, technologies, dates, bullets } = resume.projects[source.entry];
     return { name, technologies, dates, bullets };
 }
 
-function workHistorySources(resume: ResumeContent): WorkHistorySource[] {
+function workHistorySources(resume: ResumeContent): EntrySource[] {
     return [
         ...resume.experience.map((_, entry) => ({ section: "experience" as const, entry })),
         ...resume.projects.map((_, entry) => ({ section: "projects" as const, entry })),
     ];
+}
+
+function educationSources(resume: ResumeContent): EntrySource[] {
+    return resume.education.map((_, entry) => ({ section: "education" as const, entry }));
+}
+
+function namesLiterally(keyword: JdKeyword, resume: ResumeContent, source: EntrySource): boolean {
+    return findLiteralPlacements(keyword, resume).some((literal) => isSamePlacementSource(literal, source));
 }
 
 function questionKey(index: number): string {
@@ -159,14 +173,14 @@ function answerField(answer: unknown, field: "score" | "noul"): number {
     return value;
 }
 
-/** Hard Skills named literally outside Work History; their Depth Level there comes from the whole resume. */
+/** Hard Skills named literally outside every Entry; their Depth Level there comes from the whole resume. */
 function hasLiteralSkillsListing(keyword: JdKeyword, resume: ResumeContent): boolean {
-    return findLiteralPlacements(keyword, resume).some((source) => !isWorkHistory(source));
+    return findLiteralPlacements(keyword, resume).some((source) => !isWorkHistory(source) && source.section !== "education");
 }
 
 /**
  * Whole resume: Match Probability for every Other Keyword, Depth Level for every Explicit Soft Skill,
- * and Depth Level for every Hard Skill named outside Work History.
+ * and Depth Level for every Hard Skill named outside every Entry.
  */
 function buildResumeQuestions(keywords: JdKeyword[], resume: ResumeContent): JevQuestions {
     const questions: JevQuestions = {};
@@ -186,6 +200,16 @@ function buildEntryQuestions(keywords: JdKeyword[]): JevQuestions {
     keywords.forEach((keyword, index) => {
         if (!isHardSkill(keyword)) return;
         questions[presenceKey(index)] = buildPresenceQuestion(keyword);
+        questions[entryDepthKey(index)] = buildDepthQuestion(keyword, "this Entry");
+    });
+    return questions;
+}
+
+/** Depth Level only for the Hard Skills this Education Entry names: Education never implies a skill. */
+function buildEducationQuestions(keywords: JdKeyword[], resume: ResumeContent, source: EntrySource): JevQuestions {
+    const questions: JevQuestions = {};
+    keywords.forEach((keyword, index) => {
+        if (!isHardSkill(keyword) || !namesLiterally(keyword, resume, source)) return;
         questions[entryDepthKey(index)] = buildDepthQuestion(keyword, "this Entry");
     });
     return questions;
@@ -232,11 +256,12 @@ async function askIfAny(state: object, questions: JevQuestions, options: ScoreKe
     return Object.keys(questions).length === 0 ? {} : askJev(state, questions, options);
 }
 
-type EntryAnswers = { source: WorkHistorySource; answers: JevAnswers };
+type EntryAnswers = { source: EntrySource; answers: JevAnswers };
 
 /**
  * One Placement per Work History Entry with its presence and Depth Level, plus each literal
- * Skills Listing or Education Placement at the whole-resume Depth Level (presence 1).
+ * Education Placement at that Entry's Depth Level and each other literal Skills Listing at the
+ * whole-resume Depth Level (presence 1).
  * Explicit when a literal Placement counts: outside Work History, or an Entry where Jev confirmed the sense.
  */
 function hardSkillEvidence(
@@ -247,15 +272,20 @@ function hardSkillEvidence(
     entryAnswers: EntryAnswers[],
 ): SkillEvidence {
     const literal = findLiteralPlacements(keyword, resume);
-    const workHistory: PlacementEvidence[] = entryAnswers.map(({ source, answers }) => ({
-        source,
-        presence: answerField(answers[presenceKey(index)], "noul"),
-        depthLevel: scoreToLevel(answerField(answers[entryDepthKey(index)], "score")),
-    }));
-    const listed = literal.filter((source) => !isWorkHistory(source));
-    const listingDepth =
-        listed.length === 0 ? 0 : scoreToLevel(answerField(resumeAnswers[questionKey(index)], "score"));
-    const listings: PlacementEvidence[] = listed.map((source) => ({ source, presence: 1, depthLevel: listingDepth }));
+    const workHistory: PlacementEvidence[] = entryAnswers
+        .filter(({ source }) => isWorkHistory(source))
+        .map(({ source, answers }) => ({
+            source,
+            presence: answerField(answers[presenceKey(index)], "noul"),
+            depthLevel: scoreToLevel(answerField(answers[entryDepthKey(index)], "score")),
+        }));
+    const depthAt = (source: PlacementSource): number => {
+        const entry = entryAnswers.find((answered) => isSamePlacementSource(answered.source, source));
+        return scoreToLevel(answerField((entry?.answers ?? resumeAnswers)[entry ? entryDepthKey(index) : questionKey(index)], "score"));
+    };
+    const listings: PlacementEvidence[] = literal
+        .filter((source) => !isWorkHistory(source))
+        .map((source) => ({ source, presence: 1, depthLevel: depthAt(source) }));
     const explicit =
         listings.length > 0 ||
         workHistory.some(
@@ -293,10 +323,20 @@ async function scoreKeywordsWithJev(
     options: ScoreKeywordsOptions,
 ): Promise<KeywordEvidence[]> {
     const entryQuestions = buildEntryQuestions(keywords);
-    const sources = Object.keys(entryQuestions).length === 0 ? [] : workHistorySources(resume);
+    const requests = [
+        ...(Object.keys(entryQuestions).length === 0 ? [] : workHistorySources(resume)).map((source) => ({
+            source,
+            questions: entryQuestions,
+        })),
+        ...educationSources(resume).map((source) => ({
+            source,
+            questions: buildEducationQuestions(keywords, resume, source),
+        })),
+    ];
+    const sources = requests.map(({ source }) => source);
     const [resumeAnswers, ...answersPerEntry] = await Promise.all([
         askIfAny(resumeState(resume), buildResumeQuestions(keywords, resume), options),
-        ...sources.map((source) => askJev(entryState(resume, source), entryQuestions, options)),
+        ...requests.map(({ source, questions }) => askIfAny(entryState(resume, source), questions, options)),
     ]);
     const entryAnswers = sources.map((source, i) => ({ source, answers: answersPerEntry[i] }));
     return evidenceFromAnswers(keywords, resume, resumeAnswers, entryAnswers);
