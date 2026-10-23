@@ -16,7 +16,7 @@ type AnalysisPanelProps = {
   jobTitle: string;
   highlightKeywords: boolean;
   onHighlightKeywordsChange: (enabled: boolean) => void;
-  /** True once the editor's resume is not the one these levels describe. */
+  /** True once the editor's resume is not the one this analysis describes. */
   isStale: boolean;
   isScoring: boolean;
   scoredBy: KeywordScoring['scoredBy'];
@@ -28,7 +28,7 @@ const LEGEND = DEPTH_BANDS.map((band) => ({ band, label: depthBandName(band) }))
 function groupByCategory(results: KeywordMatchResult[]): Record<KeywordCategory, KeywordMatchResult[]> {
   const groups: Record<KeywordCategory, KeywordMatchResult[]> = { hard: [], soft: [], other: [] };
   for (const result of results) {
-    // Mirrors scoreKeywordLevels, which counts unknown categories as "other".
+    // Mirrors scoreKeywordEvidence, which counts unknown categories as "other".
     (groups[result.keyword.category] ?? groups.other).push(result);
   }
   return groups;

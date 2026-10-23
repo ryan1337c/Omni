@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { JdKeyword } from "@/lib/resume/schema";
+import type { JdKeyword, SkillEvidence } from "@/lib/resume/schema";
 
 import {
   countKeywordCoverage,
@@ -77,7 +77,8 @@ describe("keywordMatchHint", () => {
 
 describe("keywordChip", () => {
   it("uses the top look with no depth fraction for a shown Other Keyword", () => {
-    expect(keywordChip({ keyword: keyword("other"), level: 0.95, weight: 1, matched: true })).toEqual({
+    const evidence = { kind: "other", matchProbability: 0.95 } as const;
+    expect(keywordChip({ keyword: keyword("other"), level: 0.95, weight: 1, matched: true, evidence })).toEqual({
       band: 3,
       srLabel: "Shown",
       hint: "Required - Shown (95%)",
@@ -85,7 +86,13 @@ describe("keywordChip", () => {
   });
 
   it("reads a Hard Skill's level as a Depth Level", () => {
-    expect(keywordChip({ keyword: keyword("hard"), level: 2, weight: 0.5, matched: true })).toEqual({
+    const evidence: SkillEvidence = {
+      kind: "skill",
+      explicit: true,
+      placements: [{ source: { section: "skillsListing" }, presence: 1, depthLevel: 2 }],
+      demonstratingBullets: [],
+    };
+    expect(keywordChip({ keyword: keyword("hard"), level: 2, weight: 0.5, matched: true, evidence })).toEqual({
       band: 2,
       srLabel: "Familiarity, 2 of 3",
       hint: "Required - Familiarity (2/3)",

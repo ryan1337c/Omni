@@ -1,8 +1,8 @@
-import type { JdKeyword, KeywordScoring, ResumeContent } from "./schema";
+import type { JdKeyword, KeywordEvidence, KeywordScoring, ResumeContent } from "./schema";
 import {
-    ABSENT_LEVEL,
     DEPTH_LEVEL_NAMES,
-    estimateKeywordLevels,
+    estimateKeywordEvidence,
+    explicitSkillEvidence,
     isExplicitSkill,
     isSemanticKeyword,
     MAX_DEPTH_LEVEL,
@@ -153,29 +153,38 @@ async function askJev(
     }
 }
 
+/** The whole-resume Depth Level is given to every Placement that names the skill. */
+function evidenceFromAnswers(
+    keywords: JdKeyword[],
+    resume: ResumeContent,
+    answers: Record<string, unknown>,
+): KeywordEvidence[] {
+    return keywords.map((keyword, index): KeywordEvidence => {
+        const answer = answers[questionKey(index)];
+        if (isSemanticKeyword(keyword)) {
+            return { kind: "other", matchProbability: answerField(answer, "noul") };
+        }
+        if (!isExplicitSkill(keyword, resume)) {
+            return { kind: "skill", explicit: false, placements: [], demonstratingBullets: [] };
+        }
+        return explicitSkillEvidence(keyword, resume, scoreToLevel(answerField(answer, "score")));
+    });
+}
+
 async function scoreKeywordsWithJev(
     keywords: JdKeyword[],
     resume: ResumeContent,
     options: ScoreKeywordsOptions,
-): Promise<number[]> {
+): Promise<KeywordEvidence[]> {
     const questions = buildQuestions(keywords, resume);
-    if (Object.keys(questions).length === 0) {
-        return keywords.map(() => ABSENT_LEVEL);
-    }
-    const answers = await askJev(questions, resume, options);
-    return keywords.map((keyword, index) => {
-        const key = questionKey(index);
-        if (!(key in questions)) return ABSENT_LEVEL;
-        return isSemanticKeyword(keyword)
-            ? answerField(answers[key], "noul")
-            : scoreToLevel(answerField(answers[key], "score"));
-    });
+    const answers = Object.keys(questions).length === 0 ? {} : await askJev(questions, resume, options);
+    return evidenceFromAnswers(keywords, resume, answers);
 }
 
 /**
  * One Jev request per resume: the Depth Level of every Explicit Skill, and the
  * Match Probability of every Other Keyword. Implied Skills are never sent and come back Absent.
- * Never throws: missing key / timeout / API failure → `estimateKeywordLevels`.
+ * Never throws: missing key / timeout / API failure → `estimateKeywordEvidence`.
  */
 export async function scoreKeywords(
     keywords: JdKeyword[],
@@ -183,14 +192,14 @@ export async function scoreKeywords(
     options: ScoreKeywordsOptions = {},
 ): Promise<KeywordScoring> {
     if (keywords.length === 0) {
-        return { levels: [], scoredBy: "keyword" };
+        return { evidence: [], scoredBy: "keyword" };
     }
     try {
-        return { levels: await scoreKeywordsWithJev(keywords, resume, options), scoredBy: "jev" };
+        return { evidence: await scoreKeywordsWithJev(keywords, resume, options), scoredBy: "jev" };
     } catch (error) {
         console.error("Jev keyword scoring failed, using string-match fallback:", error);
         return {
-            levels: estimateKeywordLevels(keywords, resume),
+            evidence: estimateKeywordEvidence(keywords, resume),
             scoredBy: "keyword",
         };
     }

@@ -1,4 +1,13 @@
-import type { JdKeyword, KeywordCategory, ResumeContent } from "./schema";
+import type {
+  JdKeyword,
+  KeywordCategory,
+  KeywordEvidence,
+  OtherKeywordEvidence,
+  PlacementEvidence,
+  PlacementSource,
+  ResumeContent,
+  SkillEvidence,
+} from "./schema";
 
 export type CategoryScore = {
   matched: number;
@@ -7,16 +16,17 @@ export type CategoryScore = {
 
 /**
  * One keyword after scoring.
- * `level` is 0 (Absent) or the 1–3 Depth Level for a Hard or Soft Skill, and the
- * 0–1 Match Probability for an Other Keyword.
+ * `level` is 0 (Absent) or the 1–3 Depth Level of the best Placement for a Hard or Soft Skill,
+ * and the 0–1 Match Probability for an Other Keyword.
  * `weight` is the 0–1 credit (importance is applied later).
- * `matched` is true for Explicit Skills and for Other Keywords that earn credit.
+ * `matched` is true for Hard and Soft Skills with a Placement and for Other Keywords that earn credit.
  */
 export type KeywordMatchResult = {
   keyword: JdKeyword;
   level: number;
   weight: number;
   matched: boolean;
+  evidence: KeywordEvidence;
 };
 
 export type MatchLabel = "Strong match" | "Good match" | "Fair match";
@@ -295,9 +305,10 @@ export function getMatchLabel(score: number): MatchLabel {
 /**
  * Scoring is split so each piece can change independently (SRP):
  * - `isMatched` / `findKeywordSpans` — literal text for the highlighter.
- * - `estimateKeywordLevels` — fallback levels (Explicit → Mentioned, literal Other → 1, else 0).
- * - `scoreKeywordLevels` — Placement, Recency, Duration, and Dual Placement over
- *   Depth Levels, and Match Probability → credit for Other Keywords, from any source (DIP).
+ * - `explicitSkillEvidence` — the Placements that name a skill literally.
+ * - `estimateKeywordEvidence` — fallback evidence (Explicit → Mentioned, literal Other → 1, else 0).
+ * - `scoreKeywordEvidence` — best Placement by Depth Level, Recency, and Duration, plus
+ *   Dual Placement, and Match Probability → credit for Other Keywords, from any source (DIP).
  */
 
 /** Level reported for a Keyword that is not an Explicit Skill. */
@@ -319,40 +330,42 @@ const MIN_WORK_HISTORY_WEIGHT = 0.5;
 const PROJECT_MAX_WEIGHT = 0.8;
 const CURRENT_END = /^(present|current|now|ongoing|today)$/i;
 
-/** One Experience or Projects Entry the Keyword appears in. */
-type WorkHistoryPlacement = { dates: string; maxWeight: number };
-
-type Placements = {
-  workHistory: WorkHistoryPlacement[];
-  skillsListing: boolean;
-};
-
 function anyMatch(keyword: JdKeyword, texts: string[]): boolean {
   return isMatched(keyword, normalize(texts.filter(Boolean).join(" \n ")));
 }
 
-function findPlacements(keyword: JdKeyword, resume: ResumeContent): Placements {
+/** Every Entry, and the Skills Listing, that names the Keyword literally. */
+function findLiteralPlacements(keyword: JdKeyword, resume: ResumeContent): PlacementSource[] {
   const { summary, education, experience, projects, skills, honors } = resume;
-  return {
-    workHistory: [
-      ...experience
-        .filter((entry) => anyMatch(keyword, [entry.title, ...entry.bullets]))
-        .map((entry) => ({ dates: entry.dates, maxWeight: CURRENT_ROLE_WEIGHT })),
-      ...projects
-        .filter((entry) => anyMatch(keyword, [entry.name, entry.technologies, ...entry.bullets]))
-        .map((entry) => ({ dates: entry.dates, maxWeight: PROJECT_MAX_WEIGHT })),
-    ],
-    skillsListing: anyMatch(keyword, [
-      summary,
-      ...skills.flatMap((entry) => [entry.category, entry.items]),
-      ...education.flatMap((entry) => [entry.degree, ...entry.bullets]),
-      ...honors.flatMap((entry) => [entry.title, entry.issuer, entry.description]),
-    ]),
-  };
+  const sources: PlacementSource[] = [];
+  experience.forEach((entry, index) => {
+    if (anyMatch(keyword, [entry.title, ...entry.bullets])) {
+      sources.push({ section: "experience", entry: index });
+    }
+  });
+  projects.forEach((entry, index) => {
+    if (anyMatch(keyword, [entry.name, entry.technologies, ...entry.bullets])) {
+      sources.push({ section: "projects", entry: index });
+    }
+  });
+  education.forEach((entry, index) => {
+    if (anyMatch(keyword, [entry.degree, ...entry.bullets])) {
+      sources.push({ section: "education", entry: index });
+    }
+  });
+  const skillsListing = [
+    summary,
+    ...skills.flatMap((entry) => [entry.category, entry.items]),
+    ...honors.flatMap((entry) => [entry.title, entry.issuer, entry.description]),
+  ];
+  if (anyMatch(keyword, skillsListing)) {
+    sources.push({ section: "skillsListing" });
+  }
+  return sources;
 }
 
-function hasAnyPlacement(placements: Placements): boolean {
-  return placements.workHistory.length > 0 || placements.skillsListing;
+function isWorkHistory(source: PlacementSource): boolean {
+  return source.section === "experience" || source.section === "projects";
 }
 
 const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
@@ -407,8 +420,17 @@ function durationFactor(years: number): number {
   return SHORT_DURATION_FACTOR + (1 - SHORT_DURATION_FACTOR) * Math.min(1, Math.max(0, progress));
 }
 
-function workHistoryWeight({ dates, maxWeight }: WorkHistoryPlacement, now: Date): number {
-  return Math.min(maxWeight, datedWeight(dates, now));
+/** Education is a Skills Listing, so its dates add no Recency or Duration. */
+function placementWeight(source: PlacementSource, resume: ResumeContent, now: Date): number {
+  switch (source.section) {
+    case "experience":
+      return Math.min(CURRENT_ROLE_WEIGHT, datedWeight(resume.experience[source.entry]?.dates ?? "", now));
+    case "projects":
+      return Math.min(PROJECT_MAX_WEIGHT, datedWeight(resume.projects[source.entry]?.dates ?? "", now));
+    case "education":
+    case "skillsListing":
+      return SKILLS_LISTING_WEIGHT;
+  }
 }
 
 /** Unreadable dates get the minimum, so a Bullet always outweighs a Skills Listing. */
@@ -469,82 +491,94 @@ export function matchProbabilityToCredit(probability: number): number {
   return (p - MATCH_PROBABILITY_FLOOR) / (MATCH_PROBABILITY_FULL - MATCH_PROBABILITY_FLOOR);
 }
 
-function toSemanticMatchResult(keyword: JdKeyword, probability: number): KeywordMatchResult {
-  const p = clampProbability(probability);
+function toSemanticMatchResult(keyword: JdKeyword, evidence: OtherKeywordEvidence): KeywordMatchResult {
+  const p = clampProbability(evidence.matchProbability);
   const weight = matchProbabilityToCredit(p);
-  return { keyword, level: p, weight, matched: weight > 0 };
+  return { keyword, level: p, weight, matched: weight > 0, evidence };
 }
 
-function placementWeight(placements: Placements, now: Date): number {
-  return Math.max(
-    placements.skillsListing ? SKILLS_LISTING_WEIGHT : 0,
-    ...placements.workHistory.map((placement) => workHistoryWeight(placement, now)),
-  );
+function placementCredit(placement: PlacementEvidence, resume: ResumeContent, now: Date): number {
+  return depthLevelToWeight(placement.depthLevel) * placementWeight(placement.source, resume, now);
 }
 
-function toKeywordMatchResult(
+function toSkillMatchResult(
   keyword: JdKeyword,
-  level: number,
+  evidence: SkillEvidence,
   resume: ResumeContent,
   now: Date,
 ): KeywordMatchResult {
-  const placements = findPlacements(keyword, resume);
-  if (!hasAnyPlacement(placements)) {
-    return { keyword, level: ABSENT_LEVEL, weight: 0, matched: false };
+  const { placements } = evidence;
+  if (placements.length === 0) {
+    return { keyword, level: ABSENT_LEVEL, weight: 0, matched: false, evidence };
   }
-  const depth = clampDepthLevel(level);
-  const isDualPlacement = placements.workHistory.length > 0 && placements.skillsListing;
-  const credit =
-    depthLevelToWeight(depth) * placementWeight(placements, now) +
-    (isDualPlacement ? DUAL_PLACEMENT_BONUS : 0);
+  const credits = placements.map((placement) => placementCredit(placement, resume, now));
+  const best = credits.indexOf(Math.max(...credits));
+  const isDualPlacement =
+    placements.some((placement) => isWorkHistory(placement.source)) &&
+    placements.some((placement) => !isWorkHistory(placement.source));
   return {
     keyword,
-    level: depth,
-    weight: Math.min(1, credit),
+    level: clampDepthLevel(placements[best].depthLevel),
+    weight: Math.min(1, credits[best] + (isDualPlacement ? DUAL_PLACEMENT_BONUS : 0)),
     matched: true,
+    evidence,
   };
 }
 
 export function isExplicitSkill(keyword: JdKeyword, resume: ResumeContent): boolean {
-  return hasAnyPlacement(findPlacements(keyword, resume));
+  return findLiteralPlacements(keyword, resume).length > 0;
+}
+
+/** Every Placement that names the skill literally, each at `depthLevel`. */
+export function explicitSkillEvidence(
+  keyword: JdKeyword,
+  resume: ResumeContent,
+  depthLevel: number,
+): SkillEvidence {
+  const placements = findLiteralPlacements(keyword, resume).map((source) => ({
+    source,
+    presence: 1,
+    depthLevel,
+  }));
+  return { kind: "skill", explicit: placements.length > 0, placements, demonstratingBullets: [] };
 }
 
 /**
- * Fallback when Jev is unavailable: every Explicit Skill is Mentioned, and an Other Keyword
- * whose term or alias appears literally has Match Probability 1. Everything else is 0.
- * Placement, Recency, and Duration still apply to Hard and Soft Skills in `scoreKeywordLevels`.
+ * Fallback when Jev is unavailable: every Explicit Skill is Mentioned at each literal Placement,
+ * and an Other Keyword whose term or alias appears literally has Match Probability 1.
+ * Everything else is 0. Placement, Recency, and Duration still apply in `scoreKeywordEvidence`.
  */
-export function estimateKeywordLevels(
+export function estimateKeywordEvidence(
   keywords: JdKeyword[],
   content: ResumeContent,
-): number[] {
+): KeywordEvidence[] {
   return keywords.map((keyword) => {
-    if (!isExplicitSkill(keyword, content)) return ABSENT_LEVEL;
-    return isSemanticKeyword(keyword) ? 1 : MENTIONED_LEVEL;
+    if (!isSemanticKeyword(keyword)) return explicitSkillEvidence(keyword, content, MENTIONED_LEVEL);
+    return { kind: "other", matchProbability: isExplicitSkill(keyword, content) ? 1 : 0 };
   });
 }
 
-export type ScoreKeywordLevelsOptions = {
+export type ScoreKeywordEvidenceOptions = {
   /** Reference date for Recency and for "Present" end dates. */
   now?: Date;
 };
 
 /**
- * Weighted resume score from levels aligned with `keywords` by index.
- * Hard and Soft Skills: depth weight × best Placement weight, + Dual Placement bonus, capped at 1.
- * Other Keywords: `matchProbabilityToCredit` of the Match Probability.
- * Open for new scorers (Jev, fallback, tests): pass levels in, do not change this function.
+ * Weighted resume score from evidence aligned with `keywords` by index.
+ * Hard and Soft Skills: the best Placement's depth weight × Placement weight, + Dual Placement
+ * bonus, capped at 1. Other Keywords: `matchProbabilityToCredit` of the Match Probability.
+ * Open for new scorers (Jev, fallback): pass evidence in, do not change this function.
  */
-export function scoreKeywordLevels(
+export function scoreKeywordEvidence(
   keywords: JdKeyword[],
-  levels: number[],
+  evidence: KeywordEvidence[],
   resume: ResumeContent,
-  options: ScoreKeywordLevelsOptions = {},
+  options: ScoreKeywordEvidenceOptions = {},
 ): ResumeScore {
   const now = options.now ?? new Date();
-  if (keywords.length !== levels.length) {
+  if (keywords.length !== evidence.length) {
     throw new Error(
-      `scoreKeywordLevels: expected ${keywords.length} levels, received ${levels.length}`,
+      `scoreKeywordEvidence: expected evidence for ${keywords.length} keywords, received ${evidence.length}`,
     );
   }
 
@@ -552,9 +586,11 @@ export function scoreKeywordLevels(
   const weighted = emptyCategoryScores();
 
   const results = keywords.map((keyword, index) => {
-    const result = isSemanticKeyword(keyword)
-      ? toSemanticMatchResult(keyword, levels[index])
-      : toKeywordMatchResult(keyword, levels[index], resume, now);
+    const keywordEvidence = evidence[index];
+    const result =
+      keywordEvidence.kind === "other"
+        ? toSemanticMatchResult(keyword, keywordEvidence)
+        : toSkillMatchResult(keyword, keywordEvidence, resume, now);
     const importance = IMPORTANCE_WEIGHTS[keyword.importance] ?? IMPORTANCE_WEIGHTS.preferred;
     const bucket = resolveCategory(keyword.category);
 
@@ -589,7 +625,7 @@ export function scoreKeywordLevels(
   };
 }
 
-/** Jev-free convenience: fallback Depth Levels through the shared aggregator. */
+/** Jev-free convenience: fallback evidence through the shared aggregator. */
 export function scoreResume(keywords: JdKeyword[], content: ResumeContent): ResumeScore {
-  return scoreKeywordLevels(keywords, estimateKeywordLevels(keywords, content), content);
+  return scoreKeywordEvidence(keywords, estimateKeywordEvidence(keywords, content), content);
 }

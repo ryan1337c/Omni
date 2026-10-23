@@ -1,10 +1,17 @@
+import { isSemanticKeyword } from "./keywordMatch";
 import {
   DEFAULT_SECTION_ORDER,
+  type BulletRef,
   type EducationEntry,
   type ExperienceEntry,
   type HonorEntry,
   type JdKeyword,
   type KeywordCategory,
+  type KeywordEvidence,
+  type KeywordScoring,
+  type PlacementEntrySection,
+  type PlacementEvidence,
+  type PlacementSource,
   type ProjectEntry,
   type ResumeContent,
   type ResumeHeader,
@@ -274,6 +281,92 @@ export function parseKeywords(value: unknown): JdKeyword[] {
     }
   }
   return keywords;
+}
+
+const PLACEMENT_ENTRY_SECTIONS = new Set<PlacementEntrySection>(["experience", "projects", "education"]);
+const BULLET_SECTIONS = new Set<BulletRef["section"]>(["experience", "projects"]);
+
+function asFiniteNumber(value: unknown, label: string): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    throw new InvalidResumeJsonError(`Expected ${label} to be a number`);
+  }
+  return value;
+}
+
+function asIndex(value: unknown, label: string): number {
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 0) {
+    throw new InvalidResumeJsonError(`Expected ${label} to be an index`);
+  }
+  return value;
+}
+
+function parsePlacementSource(value: unknown): PlacementSource {
+  const obj = asObject(value, "placement source");
+  if (obj.section === "skillsListing") return { section: "skillsListing" };
+  if (!PLACEMENT_ENTRY_SECTIONS.has(obj.section as PlacementEntrySection)) {
+    throw new InvalidResumeJsonError("Unknown placement section");
+  }
+  return { section: obj.section as PlacementEntrySection, entry: asIndex(obj.entry, "placement entry") };
+}
+
+function parsePlacement(value: unknown): PlacementEvidence {
+  const obj = asObject(value, "placement");
+  return {
+    source: parsePlacementSource(obj.source),
+    presence: asFiniteNumber(obj.presence, "presence"),
+    depthLevel: asFiniteNumber(obj.depthLevel, "Depth Level"),
+  };
+}
+
+function parseBulletRef(value: unknown): BulletRef {
+  const obj = asObject(value, "bullet");
+  if (!BULLET_SECTIONS.has(obj.section as BulletRef["section"])) {
+    throw new InvalidResumeJsonError("Unknown bullet section");
+  }
+  return {
+    section: obj.section as BulletRef["section"],
+    entry: asIndex(obj.entry, "bullet entry"),
+    bullet: asIndex(obj.bullet, "bullet index"),
+  };
+}
+
+function parseKeywordEvidence(value: unknown, keyword: JdKeyword): KeywordEvidence {
+  const obj = asObject(value, "keyword evidence");
+  if (isSemanticKeyword(keyword)) {
+    if (obj.kind !== "other") throw new InvalidResumeJsonError("Expected Other Keyword evidence");
+    return { kind: "other", matchProbability: asFiniteNumber(obj.matchProbability, "Match Probability") };
+  }
+  if (obj.kind !== "skill") throw new InvalidResumeJsonError("Expected skill evidence");
+  if (typeof obj.explicit !== "boolean") throw new InvalidResumeJsonError("Expected explicit to be a boolean");
+  if (!Array.isArray(obj.placements) || !Array.isArray(obj.demonstratingBullets)) {
+    throw new InvalidResumeJsonError("Expected placements and demonstrating Bullets to be arrays");
+  }
+  return {
+    kind: "skill",
+    explicit: obj.explicit,
+    placements: obj.placements.map(parsePlacement),
+    demonstratingBullets: obj.demonstratingBullets.map(parseBulletRef),
+  };
+}
+
+/**
+ * Validate a scoring pass from `/api/scoreResume` or a stored tailoring result.
+ * Evidence must line up with `keywords` by index and by Keyword Category, or the
+ * credit computation would misread it. Throws `InvalidResumeJsonError` on any mismatch.
+ */
+export function parseKeywordScoring(value: unknown, keywords: JdKeyword[]): KeywordScoring {
+  const obj = asObject(value, "keyword scoring");
+  if (obj.scoredBy !== "jev" && obj.scoredBy !== "keyword") {
+    throw new InvalidResumeJsonError("Unknown scoring source");
+  }
+  if (!Array.isArray(obj.evidence) || obj.evidence.length !== keywords.length) {
+    throw new InvalidResumeJsonError("Expected evidence for every keyword");
+  }
+  const evidence = obj.evidence;
+  return {
+    evidence: keywords.map((keyword, index) => parseKeywordEvidence(evidence[index], keyword)),
+    scoredBy: obj.scoredBy,
+  };
 }
 
 /**

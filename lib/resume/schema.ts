@@ -89,21 +89,57 @@ export type ResumeHeader = {
     keywords: JdKeyword[];
   };
 
+  /** Sections whose Entries are each their own Placement. `entry` indexes that section's array. */
+  export type PlacementEntrySection = "experience" | "projects" | "education";
+
+  /** Where a Placement is: one Entry, or the Skills Listing (Professional Summary, Technical Skills, Honors). */
+  export type PlacementSource =
+    | { section: PlacementEntrySection; entry: number }
+    | { section: "skillsListing" };
+
+  export type PlacementEvidence = {
+    source: PlacementSource;
+    /** 0–1 likelihood that the Placement shows the skill in that sense. A literal match is 1. */
+    presence: number;
+    /** 1–3 Depth Level at this Placement, fractions kept. */
+    depthLevel: number;
+  };
+
+  /** One Bullet: `experience[entry].bullets[bullet]` or `projects[entry].bullets[bullet]`. */
+  export type BulletRef = { section: "experience" | "projects"; entry: number; bullet: number };
+
   /**
-   * One scoring pass over a keyword list.
-   * `levels[i]` is 0 (Absent) or the 1–3 Depth Level for a Hard or Soft `keywords[i]`
-   * (fractions kept), and the 0–1 Match Probability for an Other `keywords[i]`.
+   * A Hard or Soft Skill. `explicit` is true when its term or an alias is named anywhere on the resume.
+   * With no `placements` it is Absent; with placements and `explicit` false it is Implied.
+   */
+  export type SkillEvidence = {
+    kind: "skill";
+    explicit: boolean;
+    placements: PlacementEvidence[];
+    /** Bullets that are a specific example of a Soft Skill. Always empty for Hard Skills. */
+    demonstratingBullets: BulletRef[];
+  };
+
+  export type OtherKeywordEvidence = {
+    kind: "other";
+    /** 0–1. */
+    matchProbability: number;
+  };
+
+  export type KeywordEvidence = SkillEvidence | OtherKeywordEvidence;
+
+  /**
+   * One scoring pass over a keyword list. `evidence[i]` describes `keywords[i]`.
    * `scoredBy` records the source so callers can tell a Jev pass from the
    * fallback (every Explicit Skill Mentioned, Other only on a literal match)
-   * without inspecting the numbers.
+   * without inspecting the evidence.
    *
-   * Produced by `jevScore.ts`; aggregated by `keywordMatch.ts` on the server and again in
-   * the browser by `useKeywordScoring.ts`; validated by `parseKeywordScoring` in
-   * `resume-build/api.ts`; shown by `depthBands.ts`, `KeywordTag.tsx`, and `AnalysisPanel.tsx`.
-   * A change to the level scale touches all of them.
+   * Produced by `jevScore.ts`; validated by `parseKeywordScoring`; turned into credit by
+   * `scoreKeywordEvidence` on the server and again in the browser by `useKeywordScoring.ts`;
+   * shown by `depthBands.ts`, `KeywordTag.tsx`, and `AnalysisPanel.tsx`.
    */
   export type KeywordScoring = {
-    levels: number[];
+    evidence: KeywordEvidence[];
     scoredBy: "jev" | "keyword";
   };
 
