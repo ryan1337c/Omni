@@ -1,3 +1,7 @@
+---
+status: accepted for Other Keywords; the Hard and Soft Skill part is superseded by ADR-0003
+---
+
 # Other Keywords are scored by meaning; Hard and Soft Skills stay literal
 
 ADR 0001 made every Keyword earn credit only as an Explicit Skill. That fits tools and traits, but fails for Other Keywords: "Bachelor of Science in Computer Science, Honours" scored 0 against "BS in Computer Science", and even an exact match in Education was capped by the Skills Listing weight. Other Keywords are now Semantic Matches: Jev answers one yes/no question per Keyword against the whole resume, and its Match Probability is the only source of credit (0 below 0.5, full at 0.9 or above, linear between), times importance. Placement, Recency, Duration, and Depth Level do not apply to them. Hard and Soft Skills keep ADR 0001 unchanged, except that Depth Level now has three levels and Applied / Production earns full credit.

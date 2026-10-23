@@ -4,8 +4,9 @@ import { useEffect, useRef, type ReactNode } from 'react';
 import { GripVertical, ListPlus } from 'lucide-react';
 import { FiArrowDown, FiArrowUp, FiPlus, FiTrash2 } from 'react-icons/fi';
 import { MAX_SECTION_ENTRIES } from '@/lib/resume/parseResumeJson';
-import { SECTION_TITLES, type SectionId } from '@/lib/resume/schema';
+import { SECTION_TITLES, type PlacementSource, type SectionId } from '@/lib/resume/schema';
 
+import { placementProps } from '../../hooks/useResumeKeywordHighlights';
 import ControlButton from './ControlButton';
 import { focusAtEnd } from './EditableText';
 import { useSectionReorder } from './SectionReorder';
@@ -127,13 +128,15 @@ type ResumeEntryProps = {
   onRemove: () => void;
   /** Omit to hide the add-bullet control (e.g. sections without bullets, or at the bullet cap). */
   onAddBullet?: () => void;
+  /** Set when Jev can reject a literal match here, so keywords are highlighted per Placement. */
+  placement?: PlacementSource;
   children: ReactNode;
 };
 
 /** One entry in a section. Its controls sit in the left page margin, clear of the bullet controls on the right. */
-export function ResumeEntry({ removeLabel, onRemove, onAddBullet, children }: ResumeEntryProps) {
+export function ResumeEntry({ removeLabel, onRemove, onAddBullet, placement, children }: ResumeEntryProps) {
   return (
-    <div className="group/entry relative">
+    <div className="group/entry relative" {...(placement && placementProps(placement))}>
       {children}
       <div className="absolute right-full top-0 mr-[calc(0.15in+0.25rem)] flex flex-col gap-0.5 opacity-0 transition-opacity group-hover/entry:opacity-100 group-focus-within/entry:opacity-100">
         <ControlButton label={removeLabel} icon={FiTrash2} tone="danger" onClick={onRemove} />

@@ -1,16 +1,19 @@
 import type { KeywordMatchResult } from '@/lib/resume/keywordMatch';
+import type { ResumeContent } from '@/lib/resume/schema';
 
-import KeywordTag from './KeywordTag';
+import KeywordChipPopover from './KeywordChipPopover';
 import { keywordChip } from './depthBands';
 
 type KeywordGroupProps = {
   title: string;
   subtitle: string;
   results: KeywordMatchResult[];
+  /** The resume `results` were scored against, for naming the Entries that showed an Implied Skill. */
+  scoredResume: ResumeContent;
 };
 
-export default function KeywordGroup({ title, subtitle, results }: KeywordGroupProps) {
-  // `matched` is true for Explicit Skills and for Other Keywords that earn credit.
+export default function KeywordGroup({ title, subtitle, results, scoredResume }: KeywordGroupProps) {
+  // `matched` is true for Explicit and Implied Skills and for Other Keywords that earn credit.
   const presentCount = results.filter((result) => result.matched).length;
 
   return (
@@ -26,18 +29,13 @@ export default function KeywordGroup({ title, subtitle, results }: KeywordGroupP
       </div>
 
       <div className="flex flex-wrap gap-1.5">
-        {results.map((result, index) => {
-          const { band, srLabel, hint } = keywordChip(result);
-          return (
-            <KeywordTag
-              key={`${result.keyword.term}-${index}`}
-              label={result.keyword.term}
-              band={band}
-              srLabel={srLabel}
-              hint={hint}
-            />
-          );
-        })}
+        {results.map((result, index) => (
+          <KeywordChipPopover
+            key={`${result.keyword.term}-${index}`}
+            label={result.keyword.term}
+            chip={keywordChip(result, scoredResume)}
+          />
+        ))}
       </div>
     </section>
   );

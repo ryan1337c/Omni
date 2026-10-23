@@ -39,15 +39,16 @@ A hint shown in an empty field in the scoring UI. It is never part of the resume
 A skill or term extracted from a job description, with its aliases, that a Tailored Resume is scored against.
 
 **Keyword Category**:
-The kind of Keyword: Hard Skill (tools, technologies, methods), Soft Skill (interpersonal and work-style traits), or Other (degrees, certifications, years of experience, languages, domains). Hard and Soft Skills earn credit only as Explicit Skills; Other Keywords earn credit only as Semantic Matches.
+The kind of Keyword: Hard Skill (tools, technologies, methods), Soft Skill (interpersonal and work-style traits), or Other (degrees, certifications, years of experience, languages, domains). Hard and Soft Skills earn credit as Explicit Skills, or as Implied Skills for less; Other Keywords earn credit only as Semantic Matches.
+_Avoid_: Section (a Section is a block of the resume)
 
 **Explicit Skill**:
-A Hard or Soft Skill whose term or one of its aliases literally appears in a Placement. A term that appears only in a company name, location, school name, or the header does not count. Among Hard and Soft Skills, only Explicit Skills earn credit.
+A Hard or Soft Skill whose term or one of its aliases literally appears in a Placement, in that sense. Once named anywhere, every Placement of the skill counts in full, including Work History that shows it without naming it. "Go" in "go-to-market" is not the Go language. A term that appears only in a company name, location, school name, or the header does not count.
 _Avoid_: Matched skill, hit
 
 **Implied Skill**:
-A Hard or Soft Skill the resume suggests but never names by its term or an alias. It earns no credit.
-_Avoid_: Inferred skill, implicit match
+A Hard or Soft Skill that Work History shows in use while it is never named on the resume in that sense, such as "orchestrated containers on EKS" for Kubernetes with no mention of Kubernetes. "Go" in "go-to-market" does not name the Go language. It earns less credit than the same skill named, because applicant tracking systems and recruiters search for the name. An Implied Hard Skill loses more than an Implied Soft Skill, since tools are searched by name and traits are better shown than claimed. A Skills Listing never implies a skill.
+_Avoid_: Inferred skill, implicit match, Semantic Match (that is for Other Keywords)
 
 **Semantic Match**:
 An Other Keyword the resume satisfies in meaning, whatever the wording. "Bachelor of Science in Computer Science, Honours" is a Semantic Match for "BS in Computer Science". Placement, Recency, Duration, and Depth Level do not apply.
@@ -57,7 +58,7 @@ How likely it is, from 0 to 1, that the resume satisfies an Other Keyword. It de
 _Avoid_: Confidence (Jev uses that word for how certain it is about its own answer)
 
 **Placement**:
-Where an Explicit Skill appears in the resume. There are two kinds: Work History and Skills Listing. One Keyword can have several Placements.
+Where an Explicit or Implied Skill appears in the resume. There are two kinds: Work History and Skills Listing. One Keyword can have several Placements.
 
 **Work History**:
 A Placement in an Experience Entry's title or Bullets, or in a Projects Entry. It carries dates, so it has Recency and Duration.
@@ -82,5 +83,5 @@ How long the Entry behind a Work History Placement lasted.
 An Explicit Skill that appears both in Work History and in a Skills Listing.
 
 **Depth Level**:
-How much practical use of an Explicit Skill the resume shows. In order: Mentioned, Familiarity, Applied / Production. Applied / Production earns full credit. It is judged from what the work shows, never from job title, Duration, or a list of technologies alone.
+How much practical use of an Explicit or Implied Skill the resume shows, judged separately for each Experience, Projects, or Education Entry it appears in. In order: Mentioned, Familiarity, Applied / Production. Applied / Production earns full credit. It is judged from what the work shows, never from job title, Duration, or a list of technologies alone. Soft Skills skip Familiarity: a Soft Skill is Applied / Production when a Bullet is a specific example of the trait, and Mentioned when it is only named or claimed, as in "strong communicator".
 _Avoid_: Proficiency, rubric level, seniority

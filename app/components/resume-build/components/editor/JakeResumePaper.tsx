@@ -1,7 +1,8 @@
 "use client";
 
 import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { DEFAULT_SECTION_ORDER, type JdKeyword, type ResumeContent, type SectionId } from '@/lib/resume/schema';
+import type { KeywordMatchResult } from '@/lib/resume/keywordMatch';
+import { DEFAULT_SECTION_ORDER, type ResumeContent, type SectionId } from '@/lib/resume/schema';
 
 import { PAPER_HEIGHT_PX, PAPER_WIDTH_PX } from '../../constants';
 import type { ResumeEditorActions } from '../../hooks/useResumeEditor';
@@ -18,22 +19,24 @@ import SummarySection from './SummarySection';
 type JakeResumePaperProps = {
   resume: ResumeContent;
   actions: ResumeEditorActions;
-  /** Matched keywords to paint. An empty list leaves the page unmarked. */
-  highlightKeywords: JdKeyword[];
+  /** Scored keywords to paint where they count. An empty list leaves the page unmarked. */
+  highlightResults: KeywordMatchResult[];
+  /** The resume `highlightResults` were scored against; their Entry indexes point into it. */
+  scoredResume: ResumeContent;
 };
 
 /**
  * Editable HTML copy of the Jake template on a US Letter page (0.5in margins, 11pt Computer Modern).
  * The page keeps its true size and is scaled down with a transform to fit narrower panels.
  */
-export default function JakeResumePaper({ resume, actions, highlightKeywords }: JakeResumePaperProps) {
+export default function JakeResumePaper({ resume, actions, highlightResults, scoredResume }: JakeResumePaperProps) {
   const frameRef = useRef<HTMLDivElement>(null);
   const paperRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   const [paperHeight, setPaperHeight] = useState(PAPER_HEIGHT_PX);
   const [summaryOpen, setSummaryOpen] = useState(resume.summary !== '');
 
-  useResumeKeywordHighlights(paperRef, highlightKeywords, resume);
+  useResumeKeywordHighlights(paperRef, highlightResults, scoredResume, resume);
 
   const visibleOrder = useMemo(() => {
     const visible: Record<SectionId, boolean> = {

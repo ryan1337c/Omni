@@ -28,6 +28,7 @@ export default function ExperienceSection({ entries, actions }: ExperienceSectio
           <ResumeEntry
             key={index}
             removeLabel="Remove experience"
+            placement={{ section: 'experience', entry: index }}
             onRemove={() => actions.removeEntry('experience', index)}
             onAddBullet={
               entry.bullets.length < MAX_BULLETS_PER_ENTRY ? () => actions.addBullet('experience', index) : undefined

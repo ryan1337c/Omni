@@ -1,3 +1,7 @@
+---
+status: superseded by ADR-0003
+---
+
 # Score only Explicit Skills; Jev judges depth, not presence
 
 Jev used to decide both whether a Keyword was on the resume and how deeply it was used. That let it credit Implied Skills, which produced false positives whenever it misread the resume. Now a deterministic literal match on the term or an alias decides whether a Keyword is an Explicit Skill. Implied Skills earn 0. Jev rates only the Depth Level of Explicit Skills. Placement, Recency, Duration, and the Dual Placement bonus are computed from the resume itself, so the score still works when Jev is unavailable.

@@ -96,8 +96,8 @@ export default async function handler(
         });
 
         // Scoring is its own step (SRP): this handler only attaches the result.
-        // Credits are already spent, and `scoreKeywords` falls back to Mentioned
-        // levels when Jev is unavailable, so the paid resume is always delivered.
+        // Credits are already spent, and `scoreKeywords` falls back to literal
+        // matching when Jev is unavailable, so the paid resume is always delivered.
         const scoring = await scoreKeywords(tailored.keywords, tailored.resume);
 
         return res.status(200).json({ ...tailored, scoring });

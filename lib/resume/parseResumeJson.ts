@@ -1,16 +1,27 @@
+import { isSemanticKeyword, KEYWORD_CATEGORIES } from "./keywordMatch";
 import {
   DEFAULT_SECTION_ORDER,
+  PLACEMENT_ENTRY_SECTIONS,
+  WHOLE_SECTION_PLACEMENTS,
+  WORK_HISTORY_SECTIONS,
+  type BulletRef,
   type EducationEntry,
   type ExperienceEntry,
   type HonorEntry,
   type JdKeyword,
   type KeywordCategory,
+  type KeywordEvidence,
+  type KeywordScoring,
+  type PlacementEntrySection,
+  type PlacementEvidence,
+  type PlacementSource,
   type ProjectEntry,
   type ResumeContent,
   type ResumeHeader,
   type SectionId,
   type SkillEntry,
   type TailoredResumeResponse,
+  type WholeSectionPlacement,
 } from "./schema";
 
 // Caps so a huge or malformed model payload cannot explode later LaTeX/PDF work.
@@ -26,7 +37,7 @@ const MAX_ALIASES_PER_KEYWORD = 8;
 export const MAX_SECTION_ENTRIES = 20;
 const MAX_KEYWORDS = 40;
 
-const KEYWORD_CATEGORIES = new Set<KeywordCategory>(["hard", "soft", "other"]);
+const KEYWORD_CATEGORY_SET = new Set<string>(KEYWORD_CATEGORIES);
 const KEYWORD_IMPORTANCE = new Set<JdKeyword["importance"]>([
   "required",
   "preferred",
@@ -192,10 +203,7 @@ function parseKeyword(value: unknown): JdKeyword | null {
 
   // Enums are strict: a wrong category/importance is a bad payload, not a skip.
   const category = entry.category;
-  if (
-    typeof category !== "string" ||
-    !KEYWORD_CATEGORIES.has(category as KeywordCategory)
-  ) {
+  if (typeof category !== "string" || !KEYWORD_CATEGORY_SET.has(category)) {
     throw new InvalidResumeJsonError(
       `Expected keyword category to be "hard", "soft", or "other"`,
     );
@@ -274,6 +282,95 @@ export function parseKeywords(value: unknown): JdKeyword[] {
     }
   }
   return keywords;
+}
+
+const ENTRY_SECTION_SET = new Set<string>(PLACEMENT_ENTRY_SECTIONS);
+const WHOLE_SECTION_SET = new Set<string>(WHOLE_SECTION_PLACEMENTS);
+const BULLET_SECTION_SET = new Set<string>(WORK_HISTORY_SECTIONS);
+
+function asFiniteNumber(value: unknown, label: string): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    throw new InvalidResumeJsonError(`Expected ${label} to be a number`);
+  }
+  return value;
+}
+
+function asIndex(value: unknown, label: string): number {
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 0) {
+    throw new InvalidResumeJsonError(`Expected ${label} to be an index`);
+  }
+  return value;
+}
+
+function parsePlacementSource(value: unknown): PlacementSource {
+  const obj = asObject(value, "placement source");
+  if (WHOLE_SECTION_SET.has(obj.section as string)) {
+    return { section: obj.section as WholeSectionPlacement };
+  }
+  if (!ENTRY_SECTION_SET.has(obj.section as string)) {
+    throw new InvalidResumeJsonError("Unknown placement section");
+  }
+  return { section: obj.section as PlacementEntrySection, entry: asIndex(obj.entry, "placement entry") };
+}
+
+function parsePlacement(value: unknown): PlacementEvidence {
+  const obj = asObject(value, "placement");
+  return {
+    source: parsePlacementSource(obj.source),
+    presence: asFiniteNumber(obj.presence, "presence"),
+    depthLevel: asFiniteNumber(obj.depthLevel, "Depth Level"),
+  };
+}
+
+function parseBulletRef(value: unknown): BulletRef {
+  const obj = asObject(value, "bullet");
+  if (!BULLET_SECTION_SET.has(obj.section as string)) {
+    throw new InvalidResumeJsonError("Unknown bullet section");
+  }
+  return {
+    section: obj.section as BulletRef["section"],
+    entry: asIndex(obj.entry, "bullet entry"),
+    bullet: asIndex(obj.bullet, "bullet index"),
+  };
+}
+
+function parseKeywordEvidence(value: unknown, keyword: JdKeyword): KeywordEvidence {
+  const obj = asObject(value, "keyword evidence");
+  if (isSemanticKeyword(keyword)) {
+    if (obj.kind !== "other") throw new InvalidResumeJsonError("Expected Other Keyword evidence");
+    return { kind: "other", matchProbability: asFiniteNumber(obj.matchProbability, "Match Probability") };
+  }
+  if (obj.kind !== "skill") throw new InvalidResumeJsonError("Expected skill evidence");
+  if (typeof obj.explicit !== "boolean") throw new InvalidResumeJsonError("Expected explicit to be a boolean");
+  if (!Array.isArray(obj.placements) || !Array.isArray(obj.demonstratingBullets)) {
+    throw new InvalidResumeJsonError("Expected placements and demonstrating Bullets to be arrays");
+  }
+  return {
+    kind: "skill",
+    explicit: obj.explicit,
+    placements: obj.placements.map(parsePlacement),
+    demonstratingBullets: obj.demonstratingBullets.map(parseBulletRef),
+  };
+}
+
+/**
+ * Validate a scoring pass from `/api/scoreResume` or a stored tailoring result.
+ * Evidence must line up with `keywords` by index and by Keyword Category, or the
+ * credit computation would misread it. Throws `InvalidResumeJsonError` on any mismatch.
+ */
+export function parseKeywordScoring(value: unknown, keywords: JdKeyword[]): KeywordScoring {
+  const obj = asObject(value, "keyword scoring");
+  if (obj.scoredBy !== "jev" && obj.scoredBy !== "keyword") {
+    throw new InvalidResumeJsonError("Unknown scoring source");
+  }
+  if (!Array.isArray(obj.evidence) || obj.evidence.length !== keywords.length) {
+    throw new InvalidResumeJsonError("Expected evidence for every keyword");
+  }
+  const evidence = obj.evidence;
+  return {
+    evidence: keywords.map((keyword, index) => parseKeywordEvidence(evidence[index], keyword)),
+    scoredBy: obj.scoredBy,
+  };
 }
 
 /**

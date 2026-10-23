@@ -3,51 +3,59 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 
 import {
-  estimateKeywordLevels,
-  scoreKeywordLevels,
+  estimateKeywordEvidence,
+  scoreKeywordEvidence,
   type ResumeScore,
 } from "@/lib/resume/keywordMatch";
-import type { JdKeyword, KeywordScoring, ResumeContent, TailoredResumeResult } from "@/lib/resume/schema";
+import { parseKeywordScoring } from "@/lib/resume/parseResumeJson";
+import type {
+  JdKeyword,
+  KeywordEvidence,
+  KeywordScoring,
+  ResumeContent,
+  TailoredResumeResult,
+} from "@/lib/resume/schema";
 
 import { scoreResumeRequest, type ScoreResume } from "../api";
 
 export type KeywordScoringView = {
   analysis: ResumeScore;
-  /** True when `resume` is not the object the current levels were scored against. */
+  /** True when `resume` is not the object the current evidence was scored against. */
   isStale: boolean;
   isScoring: boolean;
   scoredBy: KeywordScoring["scoredBy"];
+  /** The resume `analysis` describes; Placement Entry indexes point into it. */
+  scoredResume: ResumeContent;
   reanalyze: () => Promise<void>;
 };
 
 /**
- * Seed from the generate pass. A missing or mis-sized payload falls back to
+ * Seed from the generate pass. A missing or malformed payload falls back to
  * Mentioned / Absent so the panel can still render.
  */
 function initialScoring(tailored: TailoredResumeResult): KeywordScoring {
   const { scoring, keywords, resume } = tailored;
-  const usable =
-    scoring != null &&
-    (scoring.scoredBy === "jev" || scoring.scoredBy === "keyword") &&
-    Array.isArray(scoring.levels) &&
-    scoring.levels.length === keywords.length &&
-    scoring.levels.every((level) => typeof level === "number" && Number.isFinite(level));
-
-  if (usable) return scoring;
-
-  return {
-    levels: estimateKeywordLevels(keywords, resume),
-    scoredBy: "keyword",
-  };
+  try {
+    return parseKeywordScoring(scoring, keywords);
+  } catch {
+    return {
+      evidence: estimateKeywordEvidence(keywords, resume),
+      scoredBy: "keyword",
+    };
+  }
 }
 
 /**
- * Levels that `scoreKeywordLevels` can aggregate. A bad pass falls back to
+ * Evidence that `scoreKeywordEvidence` can aggregate. A bad pass falls back to
  * Mentioned / Absent rather than throwing into the results view.
  */
-function levelsForKeywords(keywords: JdKeyword[], levels: number[], resume: ResumeContent): number[] {
-  if (levels.length === keywords.length) return levels;
-  return estimateKeywordLevels(keywords, resume);
+function evidenceForKeywords(
+  keywords: JdKeyword[],
+  evidence: KeywordEvidence[],
+  resume: ResumeContent,
+): KeywordEvidence[] {
+  if (evidence.length === keywords.length) return evidence;
+  return estimateKeywordEvidence(keywords, resume);
 }
 
 /**
@@ -56,7 +64,7 @@ function levelsForKeywords(keywords: JdKeyword[], levels: number[], resume: Resu
  * Each piece changes on its own (SRP):
  * - this hook stores one pass and whether it still describes `resume`
  * - `requestScore` is the only network call (DIP: the default is `scoreResumeRequest`)
- * - `scoreKeywordLevels` turns levels into the score the panel renders
+ * - `scoreKeywordEvidence` turns evidence into the score the panel renders
  *
  * Edits do not re-score. `isStale` compares object identity because the editor
  * returns a new resume on every change and keeps the same object otherwise.
@@ -67,7 +75,7 @@ export function useKeywordScoring(
   onError: (message: string) => void,
   requestScore: ScoreResume = scoreResumeRequest,
 ): KeywordScoringView {
-  // One object so `levels` and `scoredBy` always come from the same pass.
+  // One object so `evidence` and `scoredBy` always come from the same pass.
   const [scoring, setScoring] = useState(() => initialScoring(tailored));
   // Generate scored `tailored.resume`. The editor starts from that same object.
   const [scoredResume, setScoredResume] = useState<ResumeContent>(tailored.resume);
@@ -96,15 +104,15 @@ export function useKeywordScoring(
     }
   }, [onError, requestScore, resume, tailored.keywords]);
 
-  const levels = useMemo(
-    () => levelsForKeywords(tailored.keywords, scoring.levels, scoredResume),
-    [scoredResume, scoring.levels, tailored.keywords],
+  const evidence = useMemo(
+    () => evidenceForKeywords(tailored.keywords, scoring.evidence, scoredResume),
+    [scoredResume, scoring.evidence, tailored.keywords],
   );
 
-  // Placement is read from the scored resume, so edits change nothing until Re-analyze.
+  // Placement dates are read from the scored resume, so edits change nothing until Re-analyze.
   const analysis = useMemo(
-    () => scoreKeywordLevels(tailored.keywords, levels, scoredResume),
-    [levels, scoredResume, tailored.keywords],
+    () => scoreKeywordEvidence(tailored.keywords, evidence, scoredResume),
+    [evidence, scoredResume, tailored.keywords],
   );
 
   return {
@@ -112,6 +120,7 @@ export function useKeywordScoring(
     isStale: resume !== scoredResume,
     isScoring,
     scoredBy: scoring.scoredBy,
+    scoredResume,
     reanalyze,
   };
 }
