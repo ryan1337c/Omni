@@ -90,15 +90,28 @@ export type ResumeHeader = {
   };
 
   /** Sections whose Entries are each their own Placement. `entry` indexes that section's array. */
-  export type PlacementEntrySection = "experience" | "projects" | "education";
+  export const PLACEMENT_ENTRY_SECTIONS = ["experience", "projects", "education"] as const;
+  export type PlacementEntrySection = (typeof PLACEMENT_ENTRY_SECTIONS)[number];
+
+  /** The Entry sections that are Work History. */
+  export const WORK_HISTORY_SECTIONS = ["experience", "projects"] as const;
+  export type WorkHistorySection = (typeof WORK_HISTORY_SECTIONS)[number];
 
   /** Skills Listing Sections that are one Placement as a whole. */
-  export type WholeSectionPlacement = "summary" | "skills" | "honors";
+  export const WHOLE_SECTION_PLACEMENTS = ["summary", "skills", "honors"] as const;
+  export type WholeSectionPlacement = (typeof WHOLE_SECTION_PLACEMENTS)[number];
 
-  /** Where a Placement is: one Entry, or a whole Professional Summary, Technical Skills, or Honors Section. */
-  export type PlacementSource =
-    | { section: PlacementEntrySection; entry: number }
-    | { section: WholeSectionPlacement };
+  /** One Entry as a Placement. */
+  export type EntrySource = { section: PlacementEntrySection; entry: number };
+
+  /** One Experience or Projects Entry. */
+  export type WorkHistorySource = { section: WorkHistorySection; entry: number };
+
+  /**
+   * Where a Placement is: one Entry, or a whole Professional Summary, Technical Skills, or Licenses,
+   * Certifications, and Awards Section.
+   */
+  export type PlacementSource = EntrySource | { section: WholeSectionPlacement };
 
   export type PlacementEvidence = {
     source: PlacementSource;
@@ -109,11 +122,12 @@ export type ResumeHeader = {
   };
 
   /** One Bullet: `experience[entry].bullets[bullet]` or `projects[entry].bullets[bullet]`. */
-  export type BulletRef = { section: "experience" | "projects"; entry: number; bullet: number };
+  export type BulletRef = WorkHistorySource & { bullet: number };
 
   /**
-   * A Hard or Soft Skill. `explicit` is true when its term or an alias is named anywhere on the resume.
-   * With no `placements` it is Absent; with placements and `explicit` false it is Implied.
+   * A Hard or Soft Skill. `explicit` is true when its term or an alias is named on the resume in that
+   * sense: some literal match's Placement counts. With no `placements` it is Absent; with placements
+   * and `explicit` false it is Implied.
    */
   export type SkillEvidence = {
     kind: "skill";

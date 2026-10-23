@@ -7,7 +7,9 @@ import type {
   PlacementSource,
   ResumeContent,
   SkillEvidence,
+  WorkHistorySource,
 } from "./schema";
+import { WORK_HISTORY_SECTIONS } from "./schema";
 
 export type CategoryScore = {
   matched: number;
@@ -371,8 +373,8 @@ export function findLiteralPlacements(keyword: JdKeyword, resume: ResumeContent)
   return sources;
 }
 
-export function isWorkHistory(source: PlacementSource): boolean {
-  return source.section === "experience" || source.section === "projects";
+export function isWorkHistory(source: PlacementSource): source is WorkHistorySource {
+  return (WORK_HISTORY_SECTIONS as readonly string[]).includes(source.section);
 }
 
 export function isSamePlacementSource(a: PlacementSource, b: PlacementSource): boolean {

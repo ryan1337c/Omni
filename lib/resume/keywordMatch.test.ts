@@ -403,6 +403,43 @@ describe("Keyword credit", () => {
       expect(highlights.isDemonstratingBullet({ section: "experience", entry: 0, bullet: 0 })).toBe(false);
     });
 
+    it.each([
+      ["Professional Summary", { summary: "Communication Studies graduate moving into data analysis" }, { section: "summary" }],
+      [
+        "Education",
+        { education: [{ institution: "York University", location: "", degree: "BA, Communication Studies", dates: "", bullets: [] }] },
+        { section: "education", entry: 0 },
+      ],
+      [
+        "Licenses, Certifications, and Awards",
+        { honors: [{ title: "Communication Studies Dean's List", issuer: "York University", date: "2022", description: "" }] },
+        { section: "honors" },
+      ],
+    ] as const)("treats a Soft Skill named in the %s that fails its sense check as Absent and unhighlighted", async (_, sections, source) => {
+      const resume = resumeWith(sections);
+
+      const { results } = await scoreWithJev([soft("Communication")], { noul: 0.05 }, resume);
+
+      expect(results[0]).toMatchObject({ level: 0, weight: 0, matched: false });
+      expect(results[0].evidence).toMatchObject({ explicit: false });
+      expect(highlightedKeywords(results, source)).toEqual([]);
+    });
+
+    it("keeps a Soft Skill Implied when its only literal match fails its sense check", async () => {
+      const NEGOTIATED = "Negotiated scope between design and sales to unblock a launch";
+      const resume = resumeWith({
+        summary: "Communication Studies graduate moving into product engineering",
+        experience: [job("Jan 2022 - Present", [NEGOTIATED])],
+      });
+      const answers = byEntry({ "Software Engineer": { bullets: { [NEGOTIATED]: 0.9 } } }, { noul: 0.05 });
+
+      const score = await scoreWithJev([soft("Communication")], answers, resume);
+
+      expect(score.results[0]).toMatchObject({ level: APPLIED, matched: true });
+      expect(score.results[0].evidence).toMatchObject({ explicit: false });
+      expect(score.results[0].weight).toBeCloseTo(0.8);
+    });
+
     it("weights the demonstrating Entry by Recency and Duration", async () => {
       const resume = resumeWith({
         experience: [
