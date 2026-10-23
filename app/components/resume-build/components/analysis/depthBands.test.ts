@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { parseResumeContent } from "@/lib/resume/parseResumeJson";
 import type { JdKeyword, SkillEvidence } from "@/lib/resume/schema";
 
 import {
@@ -15,6 +16,15 @@ import {
 function keyword(category: JdKeyword["category"]): JdKeyword {
   return { term: "Skill", aliases: [], category, importance: "required" };
 }
+
+const resume = parseResumeContent({
+  header: { name: "Jake Ryan", phone: "", email: "", linkedin: "", github: "" },
+  experience: [
+    { title: "Staff Engineer", company: "Acme", location: "", dates: "2022 - Present", bullets: [] },
+    { title: "Developer", company: "Initech", location: "", dates: "2018 - 2021", bullets: [] },
+  ],
+  projects: [{ name: "Tracker", technologies: "", dates: "", bullets: [] }],
+});
 
 describe("depthBand", () => {
   it.each([
@@ -78,10 +88,11 @@ describe("keywordMatchHint", () => {
 describe("keywordChip", () => {
   it("uses the top look with no depth fraction for a shown Other Keyword", () => {
     const evidence = { kind: "other", matchProbability: 0.95 } as const;
-    expect(keywordChip({ keyword: keyword("other"), level: 0.95, weight: 1, matched: true, evidence })).toEqual({
+    expect(keywordChip({ keyword: keyword("other"), level: 0.95, weight: 1, matched: true, evidence }, resume)).toEqual({
       band: 3,
       srLabel: "Shown",
       hint: "Required - Shown (95%)",
+      notNamed: false,
     });
   });
 
@@ -92,10 +103,31 @@ describe("keywordChip", () => {
       placements: [{ source: { section: "skillsListing" }, presence: 1, depthLevel: 2 }],
       demonstratingBullets: [],
     };
-    expect(keywordChip({ keyword: keyword("hard"), level: 2, weight: 0.5, matched: true, evidence })).toEqual({
+    expect(keywordChip({ keyword: keyword("hard"), level: 2, weight: 0.5, matched: true, evidence }, resume)).toEqual({
       band: 2,
       srLabel: "Familiarity, 2 of 3",
       hint: "Required - Familiarity (2/3)",
+      notNamed: false,
+    });
+  });
+
+  it("marks an Implied Skill as not named, keeps its Depth Level look, and lists the Entries that showed it", () => {
+    const evidence: SkillEvidence = {
+      kind: "skill",
+      explicit: false,
+      placements: [
+        { source: { section: "experience", entry: 0 }, presence: 0.9, depthLevel: 3 },
+        { source: { section: "experience", entry: 1 }, presence: 0.2, depthLevel: 1 },
+        { source: { section: "projects", entry: 0 }, presence: 0.8, depthLevel: 2 },
+      ],
+      demonstratingBullets: [],
+    };
+
+    expect(keywordChip({ keyword: keyword("hard"), level: 3, weight: 0.5, matched: true, evidence }, resume)).toEqual({
+      band: 3,
+      srLabel: "Applied / Production, 3 of 3, not named",
+      hint: "Required - Applied / Production (3/3), not named. Shown in: Staff Engineer, Acme; Tracker",
+      notNamed: true,
     });
   });
 });

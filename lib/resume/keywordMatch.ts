@@ -311,7 +311,7 @@ export function getMatchLabel(score: number): MatchLabel {
  *   Dual Placement, and Match Probability → credit for Other Keywords, from any source (DIP).
  */
 
-/** Level reported for a Keyword that is not an Explicit Skill. */
+/** Level reported for a Hard or Soft Skill with no Placement that counts. */
 export const ABSENT_LEVEL = 0;
 /** Depth Level `n` is `DEPTH_LEVEL_NAMES[n - 1]`. */
 export const DEPTH_LEVEL_NAMES = [
@@ -612,8 +612,9 @@ export type ScoreKeywordEvidenceOptions = {
 
 /**
  * Weighted resume score from evidence aligned with `keywords` by index.
- * Hard and Soft Skills: the best Placement's depth weight × Placement weight, + Dual Placement
- * bonus, capped at 1. Other Keywords: `matchProbabilityToCredit` of the Match Probability.
+ * Hard and Soft Skills: among Placements with presence ≥ `PRESENCE_CUTOFF`, the best one's depth
+ * weight × Placement weight, + Dual Placement bonus, capped at 1, then × `IMPLIED_HARD_SKILL_MULTIPLIER`
+ * for an Implied Hard Skill. Other Keywords: `matchProbabilityToCredit` of the Match Probability.
  * Open for new scorers (Jev, fallback): pass evidence in, do not change this function.
  */
 export function scoreKeywordEvidence(

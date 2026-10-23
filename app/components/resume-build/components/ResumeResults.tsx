@@ -28,7 +28,7 @@ const NO_HIGHLIGHTS: KeywordMatchResult[] = [];
  */
 export default function ResumeResults({ tailored, jobTitle, onStartOver, onError }: ResumeResultsProps) {
   const { resume, actions } = useResumeEditor(tailored.resume);
-  const { analysis, isStale, isScoring, scoredBy, reanalyze } = useKeywordScoring(
+  const { analysis, isStale, isScoring, scoredBy, scoredResume, reanalyze } = useKeywordScoring(
     tailored,
     resume,
     onError,
@@ -79,6 +79,7 @@ export default function ResumeResults({ tailored, jobTitle, onStartOver, onError
                     isStale={isStale}
                     isScoring={isScoring}
                     scoredBy={scoredBy}
+                    scoredResume={scoredResume}
                     onReanalyze={reanalyze}
                   />
                 ),
