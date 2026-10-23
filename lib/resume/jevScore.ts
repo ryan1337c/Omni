@@ -112,9 +112,10 @@ function placementName(source: PlacementSource, resume: ResumeContent): string {
 }
 
 function buildSenseQuestion(keyword: JdKeyword, source: PlacementSource, resume: ResumeContent) {
+    const label = keywordLabel(keyword);
     return {
         type: "noul" as const,
-        instructions: `In ${placementName(source, resume)}, is ${keywordLabel(keyword)} named in that sense, as the skill itself?`,
+        instructions: `Where ${placementName(source, resume)} mentions ${label}, does it mean ${label} the skill (a tool, technology, method, or practice), rather than a word with another meaning?`,
         criteria: SENSE_CRITERIA,
     };
 }
@@ -368,12 +369,11 @@ async function scoreKeywordsWithJev(
             questions: buildEducationQuestions(keywords, resume, source),
         })),
     ];
-    const sources = requests.map(({ source }) => source);
     const [resumeAnswers, ...answersPerEntry] = await Promise.all([
         askIfAny(resumeState(resume), buildResumeQuestions(keywords, resume), options),
         ...requests.map(({ source, questions }) => askIfAny(entryState(resume, source), questions, options)),
     ]);
-    const entryAnswers = sources.map((source, i) => ({ source, answers: answersPerEntry[i] }));
+    const entryAnswers = requests.map(({ source }, i) => ({ source, answers: answersPerEntry[i] }));
     return evidenceFromAnswers(keywords, resume, resumeAnswers, entryAnswers);
 }
 
@@ -381,8 +381,11 @@ async function scoreKeywordsWithJev(
  * Parallel Jev requests, all-or-nothing:
  * - one per Experience and Projects Entry, whose state is only that Entry: presence and Depth Level
  *   of every Hard Skill;
+ * - one per Education Entry, whose state is only that Entry: Depth Level of the Hard Skills it names;
  * - one with the whole resume: Match Probability of every Other Keyword, Depth Level of every
- *   Explicit Soft Skill, and Depth Level of Hard Skills named outside Work History.
+ *   Explicit Soft Skill, and a sense check for each Hard Skill named in the Professional Summary,
+ *   an Education Entry, or Honors. Technical Skills matches are trusted.
+ * Requests with no questions are not sent.
  * Never throws: missing key / timeout / any failed request → `estimateKeywordEvidence` for every Keyword.
  */
 export async function scoreKeywords(
