@@ -30,7 +30,7 @@ export default function ProjectsSection({ entries, actions }: ProjectsSectionPro
           <ResumeEntry
             key={index}
             removeLabel="Remove project"
-            workHistoryEntry={{ section: 'projects', entry: index }}
+            placement={{ section: 'projects', entry: index }}
             onRemove={() => actions.removeEntry('projects', index)}
             onAddBullet={
               entry.bullets.length < MAX_BULLETS_PER_ENTRY ? () => actions.addBullet('projects', index) : undefined

@@ -28,6 +28,7 @@ export default function SummarySection({ summary, open, onOpenChange, actions }:
             actions.updateField({ section: 'summary' }, '');
             onOpenChange(false);
           }}
+          placement={{ section: 'summary' }}
         >
           <p className="text-[10pt]">
             <EditableText

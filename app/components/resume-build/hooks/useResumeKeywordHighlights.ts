@@ -6,12 +6,13 @@ import {
   findKeywordSpans,
   highlightedKeywords,
   type KeywordMatchResult,
-  type WorkHistoryEntryRef,
 } from "@/lib/resume/keywordMatch";
-import type { JdKeyword, ResumeContent } from "@/lib/resume/schema";
+import type { JdKeyword, PlacementSource, ResumeContent } from "@/lib/resume/schema";
 
 const HIGHLIGHT_NAME = "resume-keyword";
-const ENTRY_SELECTOR = "[data-entry-section][data-entry-index]";
+const PLACEMENT_SELECTOR = "[data-placement-section]";
+const ENTRY_SECTIONS = new Set(["experience", "projects", "education"]);
+const WHOLE_SECTIONS = new Set(["summary", "skills", "honors"]);
 
 type HighlightRegistry = {
   set: (name: string, highlight: Highlight) => void;
@@ -24,29 +25,32 @@ function highlightRegistry(): HighlightRegistry | null {
   return registry ?? null;
 }
 
-/** Marks an element as one Work History Entry, so its text is highlighted with that Entry's keywords. */
-export function workHistoryEntryProps({ section, entry }: WorkHistoryEntryRef) {
-  return { "data-entry-section": section, "data-entry-index": entry };
+/** Marks an element as one Placement, so its text is highlighted with that Placement's keywords. */
+export function placementProps(source: PlacementSource) {
+  return "entry" in source
+    ? { "data-placement-section": source.section, "data-placement-entry": source.entry }
+    : { "data-placement-section": source.section };
 }
 
-function workHistoryEntryOf(node: Node): WorkHistoryEntryRef | null {
-  const element = node.parentElement?.closest<HTMLElement>(ENTRY_SELECTOR);
+function placementOf(node: Node): PlacementSource | null {
+  const element = node.parentElement?.closest<HTMLElement>(PLACEMENT_SELECTOR);
   if (!element) return null;
-  const section = element.dataset.entrySection;
-  const entry = Number(element.dataset.entryIndex);
-  if ((section !== "experience" && section !== "projects") || !Number.isInteger(entry)) return null;
-  return { section, entry };
+  const section = element.dataset.placementSection ?? "";
+  if (WHOLE_SECTIONS.has(section)) return { section } as PlacementSource;
+  const entry = Number(element.dataset.placementEntry);
+  if (!ENTRY_SECTIONS.has(section) || !Number.isInteger(entry)) return null;
+  return { section, entry } as PlacementSource;
 }
 
 function collectRanges(root: HTMLElement, results: KeywordMatchResult[]): Range[] {
   const ranges: Range[] = [];
-  const keywordsByEntry = new Map<string, JdKeyword[]>();
-  const keywordsFor = (entry: WorkHistoryEntryRef | null) => {
-    const key = entry ? `${entry.section}:${entry.entry}` : "";
-    let keywords = keywordsByEntry.get(key);
+  const keywordsByPlacement = new Map<string, JdKeyword[]>();
+  const keywordsFor = (source: PlacementSource | null) => {
+    const key = JSON.stringify(source);
+    let keywords = keywordsByPlacement.get(key);
     if (!keywords) {
-      keywords = highlightedKeywords(results, entry);
-      keywordsByEntry.set(key, keywords);
+      keywords = highlightedKeywords(results, source);
+      keywordsByPlacement.set(key, keywords);
     }
     return keywords;
   };
@@ -62,7 +66,7 @@ function collectRanges(root: HTMLElement, results: KeywordMatchResult[]): Range[
   while (node) {
     const text = node.textContent ?? "";
     if (text) {
-      for (const span of findKeywordSpans(text, keywordsFor(workHistoryEntryOf(node)))) {
+      for (const span of findKeywordSpans(text, keywordsFor(placementOf(node)))) {
         if (span.end > text.length) continue;
         const range = document.createRange();
         range.setStart(node, span.start);

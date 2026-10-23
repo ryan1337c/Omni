@@ -363,6 +363,25 @@ describe("Keyword credit", () => {
       expect(score.results[0]).toMatchObject({ level: 0, weight: 0, matched: false });
       expect(score.results[0].evidence).toMatchObject({ explicit: false });
     });
+
+    it("highlights a match where its sense check passed or was skipped, and nowhere it failed", async () => {
+      const resume = resumeWith({
+        summary: "Led the go-to-market launch of a payments product",
+        education: [school(["President of the go-to-market strategy club"])],
+        honors: [{ title: "Go-to-market Award", issuer: "Acme", date: "2024", description: "" }],
+        skills: [{ category: "Languages", items: "Go" }],
+      });
+
+      const { results } = await scoreWithJev([keyword("Go")], { noul: 0.05 }, resume);
+
+      const terms = (source: Parameters<typeof highlightedKeywords>[1]) =>
+        highlightedKeywords(results, source).map((k) => k.term);
+      expect(results[0].matched).toBe(true);
+      expect(terms({ section: "summary" })).toEqual([]);
+      expect(terms({ section: "education", entry: 0 })).toEqual([]);
+      expect(terms({ section: "honors" })).toEqual([]);
+      expect(terms({ section: "skills" })).toEqual(["Go"]);
+    });
   });
 
   describe("Other Keywords", () => {
