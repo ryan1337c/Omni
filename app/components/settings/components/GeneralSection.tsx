@@ -38,7 +38,7 @@ export default function GeneralSection({
           <button
             type="button"
             onClick={onUpgrade}
-            className="flex flex-shrink-0 items-center gap-2 rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-500 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-violet-500/20 transition hover:-translate-y-0.5"
+            className="flex flex-shrink-0 items-center gap-2 rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-500 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-violet-500/20 transition hover:-translate-y-0.5 dark:from-indigo-500 dark:to-blue-500 dark:shadow-indigo-500/20"
           >
             <Sparkles size={15} />
             Upgrade
@@ -70,9 +70,9 @@ export default function GeneralSection({
             role="switch"
             aria-checked={isDictationEnabled}
             onClick={onToggleDictation}
-            className={`relative h-6 w-11 flex-shrink-0 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 ${
+            className={`relative h-6 w-11 flex-shrink-0 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 dark:focus:ring-indigo-400 dark:focus:ring-offset-slate-900 ${
               isDictationEnabled
-                ? "bg-violet-600 dark:bg-purple-500"
+                ? "bg-violet-600 dark:bg-btnDark"
                 : "bg-slate-300 dark:bg-slate-600"
             }`}
           >

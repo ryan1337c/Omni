@@ -34,7 +34,7 @@ export default function PremiumPaywallModal({
           role="dialog"
           aria-modal="true"
           aria-labelledby="upgrade-title"
-          className="relative w-full max-w-sm overflow-hidden rounded-2xl border border-violet-200/80 bg-white shadow-2xl shadow-violet-950/20 dark:border-purple-400/20 dark:bg-slate-900 dark:shadow-black/50"
+          className="relative w-full max-w-sm overflow-hidden rounded-2xl border border-violet-200/80 bg-white shadow-2xl shadow-violet-950/20 dark:border-indigo-500/30 dark:bg-slate-900 dark:shadow-black/50"
         >
           <button
             type="button"
@@ -45,14 +45,14 @@ export default function PremiumPaywallModal({
             <X size={18} />
           </button>
 
-          <div className="h-1.5 w-full bg-gradient-to-r from-violet-600 via-fuchsia-500 to-pink-500" />
+          <div className="h-1.5 w-full bg-gradient-to-r from-violet-600 via-fuchsia-500 to-pink-500 dark:from-indigo-400 dark:via-indigo-500 dark:to-blue-500" />
 
           <div className="px-7 pb-7 pt-8 text-center">
-            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-fuchsia-500 text-white shadow-lg shadow-violet-500/25">
+            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-fuchsia-500 text-white shadow-lg shadow-violet-500/25 dark:from-indigo-500 dark:to-blue-500 dark:shadow-indigo-500/25">
               <LockKeyhole size={29} strokeWidth={2.2} />
             </div>
 
-            <p className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-violet-100 px-3 py-1 text-xs font-bold uppercase tracking-wider text-violet-700 dark:bg-purple-400/10 dark:text-purple-300">
+            <p className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-violet-100 px-3 py-1 text-xs font-bold uppercase tracking-wider text-violet-700 dark:bg-indigo-500/15 dark:text-indigo-300">
               <Sparkles size={13} />
               Pro feature
             </p>
@@ -67,7 +67,7 @@ export default function PremiumPaywallModal({
               and everything in between.
             </p>
 
-            <div className="mt-6 rounded-xl border border-violet-200 bg-violet-50/70 p-4 text-left dark:border-purple-400/20 dark:bg-purple-400/[0.06]">
+            <div className="mt-6 rounded-xl border border-violet-200 bg-violet-50/70 p-4 text-left dark:border-indigo-500/20 dark:bg-indigo-500/[0.08]">
               <p className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">
                 Everything in Pro
               </p>
@@ -79,7 +79,7 @@ export default function PremiumPaywallModal({
                   "4× higher usage limit than Free",
                 ].map((benefit) => (
                   <li key={benefit} className="flex items-center gap-2.5">
-                    <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-violet-600 text-white dark:bg-purple-500">
+                    <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-violet-600 text-white dark:bg-btnDark">
                       <Check size={12} strokeWidth={3} />
                     </span>
                     {benefit}
@@ -93,7 +93,7 @@ export default function PremiumPaywallModal({
                 type="button"
                 onClick={() => onPlanSelection("pro_monthly")}
                 disabled={isCheckoutLoading}
-                className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-500 px-4 py-3 font-semibold text-white shadow-lg shadow-violet-500/20 transition hover:-translate-y-0.5 hover:shadow-xl hover:shadow-violet-500/25 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 dark:focus:ring-offset-slate-900"
+                className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-500 px-4 py-3 font-semibold text-white shadow-lg shadow-violet-500/20 transition hover:-translate-y-0.5 hover:shadow-xl hover:shadow-violet-500/25 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 dark:from-indigo-500 dark:to-blue-500 dark:shadow-indigo-500/20 dark:hover:shadow-indigo-500/25 dark:focus:ring-indigo-400 dark:focus:ring-offset-slate-900"
               >
                 {isCheckoutLoading ? "Redirecting..." : "Subscribe monthly"}
                 {!isCheckoutLoading && <ArrowRight size={17} />}
@@ -103,7 +103,7 @@ export default function PremiumPaywallModal({
                 type="button"
                 onClick={() => onPlanSelection("pro_yearly")}
                 disabled={isCheckoutLoading}
-                className="flex items-center justify-center gap-2 rounded-xl border border-violet-300 bg-white px-4 py-3 font-semibold text-violet-700 transition hover:-translate-y-0.5 hover:border-violet-500 hover:bg-violet-50 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 dark:border-purple-400/40 dark:bg-slate-900 dark:text-purple-300 dark:hover:bg-purple-400/10 dark:focus:ring-offset-slate-900"
+                className="flex items-center justify-center gap-2 rounded-xl border border-violet-300 bg-white px-4 py-3 font-semibold text-violet-700 transition hover:-translate-y-0.5 hover:border-violet-500 hover:bg-violet-50 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 dark:border-indigo-400/40 dark:bg-slate-900 dark:text-indigo-300 dark:hover:border-indigo-400 dark:hover:bg-indigo-500/10 dark:focus:ring-indigo-400 dark:focus:ring-offset-slate-900"
               >
                 {isCheckoutLoading ? "Redirecting..." : "Subscribe yearly"}
                 {!isCheckoutLoading && <ArrowRight size={17} />}

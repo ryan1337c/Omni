@@ -51,7 +51,7 @@ export default function UsageCard({
               aria-label="Credit usage"
             >
               <div
-                className="h-full rounded-full bg-violet-600 dark:bg-purple-500"
+                className="h-full rounded-full bg-violet-600 dark:bg-btnDark"
                 style={{ width: `${getUsagePercent(usage)}%` }}
               />
             </div>

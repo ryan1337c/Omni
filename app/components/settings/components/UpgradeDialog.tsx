@@ -27,7 +27,7 @@ export default function UpgradeDialog({
         }
       }}
     >
-      <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-violet-200 bg-white shadow-2xl dark:border-purple-400/20 dark:bg-slate-900">
+      <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-violet-200 bg-white shadow-2xl dark:border-indigo-500/30 dark:bg-slate-900">
         <button
           type="button"
           onClick={onClose}
@@ -37,12 +37,12 @@ export default function UpgradeDialog({
           <X size={18} />
         </button>
 
-        <div className="h-1.5 bg-gradient-to-r from-violet-600 via-fuchsia-500 to-pink-500" />
+        <div className="h-1.5 bg-gradient-to-r from-violet-600 via-fuchsia-500 to-pink-500 dark:from-indigo-400 dark:via-indigo-500 dark:to-blue-500" />
         <div className="px-7 pb-7 pt-8 text-center">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-fuchsia-500 text-white shadow-lg shadow-violet-500/25">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-fuchsia-500 text-white shadow-lg shadow-violet-500/25 dark:from-indigo-500 dark:to-blue-500 dark:shadow-indigo-500/25">
             <Sparkles size={25} />
           </div>
-          <p className="mt-5 text-xs font-bold uppercase tracking-wider text-violet-700 dark:text-purple-300">
+          <p className="mt-5 text-xs font-bold uppercase tracking-wider text-violet-700 dark:text-indigo-300">
             Omni Pro
           </p>
           <h3 className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
@@ -58,7 +58,7 @@ export default function UpgradeDialog({
               type="button"
               onClick={() => onCheckout("pro_monthly")}
               disabled={isCheckoutLoading}
-              className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-violet-500/20 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-violet-500/20 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 dark:from-indigo-500 dark:to-blue-500 dark:shadow-indigo-500/20"
             >
               {isCheckoutLoading ? "Redirecting..." : "Subscribe monthly"}
               {!isCheckoutLoading && <ArrowRight size={16} />}
@@ -67,7 +67,7 @@ export default function UpgradeDialog({
               type="button"
               onClick={() => onCheckout("pro_yearly")}
               disabled={isCheckoutLoading}
-              className="flex items-center justify-center gap-2 rounded-xl border border-violet-300 bg-white px-4 py-3 text-sm font-semibold text-violet-700 transition hover:-translate-y-0.5 hover:border-violet-500 hover:bg-violet-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-purple-400/40 dark:bg-slate-900 dark:text-purple-300 dark:hover:bg-purple-400/10"
+              className="flex items-center justify-center gap-2 rounded-xl border border-violet-300 bg-white px-4 py-3 text-sm font-semibold text-violet-700 transition hover:-translate-y-0.5 hover:border-violet-500 hover:bg-violet-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-indigo-400/40 dark:bg-slate-900 dark:text-indigo-300 dark:hover:border-indigo-400 dark:hover:bg-indigo-500/10"
             >
               {isCheckoutLoading ? "Redirecting..." : "Subscribe yearly"}
               {!isCheckoutLoading && <ArrowRight size={16} />}

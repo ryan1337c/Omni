@@ -44,7 +44,7 @@ export default function BillingSection({
               <button
                 type="button"
                 onClick={onUpgrade}
-                className="flex-shrink-0 rounded-full border border-violet-300 px-4 py-2 text-sm font-semibold text-violet-700 transition-colors hover:border-violet-500 hover:bg-violet-50 dark:border-purple-400/40 dark:text-purple-300 dark:hover:bg-purple-400/10"
+                className="flex-shrink-0 rounded-full border border-violet-300 px-4 py-2 text-sm font-semibold text-violet-700 transition-colors hover:border-violet-500 hover:bg-violet-50 dark:border-indigo-400/40 dark:text-indigo-300 dark:hover:border-indigo-400 dark:hover:bg-indigo-500/10"
               >
                 Upgrade
               </button>
