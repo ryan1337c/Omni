@@ -1,4 +1,4 @@
-import { isSemanticKeyword, KEYWORD_CATEGORIES } from "./keywordMatch";
+import { alternativesKey, isSemanticKeyword, KEYWORD_CATEGORIES } from "./keywordMatch";
 import {
   DEFAULT_SECTION_ORDER,
   PLACEMENT_ENTRY_SECTIONS,
@@ -36,6 +36,7 @@ export const MAX_BULLETS_PER_ENTRY = 12;
 const MAX_ALIASES_PER_KEYWORD = 8;
 export const MAX_SECTION_ENTRIES = 20;
 const MAX_KEYWORDS = 40;
+const MAX_ALTERNATIVES_ID = 80;
 
 const KEYWORD_CATEGORY_SET = new Set<string>(KEYWORD_CATEGORIES);
 const KEYWORD_IMPORTANCE = new Set<JdKeyword["importance"]>([
@@ -228,7 +229,25 @@ function parseKeyword(value: unknown): JdKeyword | null {
     ),
     category: category as KeywordCategory,
     importance: importance as JdKeyword["importance"],
+    alternatives: asString(entry.alternatives, MAX_ALTERNATIVES_ID),
+    clause: category === "other" ? asString(entry.clause, MAX_BULLET_OR_ALIAS) : "",
   };
+}
+
+/** A Keyword in no set, or in a set with one option, stands alone. Every option takes the set's most important Importance. */
+function normalizeAlternatives(keywords: JdKeyword[]): JdKeyword[] {
+  const sets = new Map<string, JdKeyword[]>();
+  for (const keyword of keywords) {
+    const key = alternativesKey(keyword);
+    if (key !== null) sets.set(key, [...(sets.get(key) ?? []), keyword]);
+  }
+  return keywords.map((keyword) => {
+    const key = alternativesKey(keyword);
+    const options = key === null ? [] : (sets.get(key) ?? []);
+    if (options.length < 2) return keyword.alternatives ? { ...keyword, alternatives: "" } : keyword;
+    const required = options.some((option) => option.importance === "required");
+    return { ...keyword, importance: required ? "required" : keyword.importance };
+  });
 }
 
 // Walk a section list, skip junk items, and cap how many entries we keep.
@@ -272,6 +291,7 @@ export function parseResumeContent(input: unknown): ResumeContent {
  * keywords without re-parsing a resume (single responsibility).
  * Missing or non-array input becomes []. Empty-term items are dropped.
  * A bad category or importance throws `InvalidResumeJsonError`.
+ * A missing Alternatives id or Clause becomes "", so keywords saved before them stay standalone.
  */
 export function parseKeywords(value: unknown): JdKeyword[] {
   const keywords: JdKeyword[] = [];
@@ -281,7 +301,7 @@ export function parseKeywords(value: unknown): JdKeyword[] {
       keywords.push(keyword);
     }
   }
-  return keywords;
+  return normalizeAlternatives(keywords);
 }
 
 const ENTRY_SECTION_SET = new Set<string>(PLACEMENT_ENTRY_SECTIONS);

@@ -1,13 +1,17 @@
 "use client";
 
-import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 
 import KeywordTag from './KeywordTag';
 import type { KeywordChip } from './depthBands';
 
 type KeywordChipPopoverProps = {
-  label: string;
+  label: ReactNode;
   chip: KeywordChip;
+  /** Each option's state when the chip is a set of Alternatives; empty otherwise. */
+  alternatives?: { term: string; state: string }[];
+  /** An Other Keyword's Clause; "" when it has none. */
+  clause?: string;
 };
 
 /** Gap kept between the popover and the viewport edge, in px. */
@@ -18,7 +22,7 @@ const VIEWPORT_MARGIN = 8;
  * Opens on click, tap, or keyboard focus; closes on Escape, outside press, or focus leaving.
  * The `role="status"` region stays mounted so inserted content is announced.
  */
-export default function KeywordChipPopover({ label, chip }: KeywordChipPopoverProps) {
+export default function KeywordChipPopover({ label, chip, alternatives = [], clause = '' }: KeywordChipPopoverProps) {
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLSpanElement>(null);
   const popoverRef = useRef<HTMLSpanElement>(null);
@@ -86,6 +90,21 @@ export default function KeywordChipPopover({ label, chip }: KeywordChipPopoverPr
           <>
             <span className="block font-semibold text-slate-900 dark:text-white">{chip.hint}</span>
             <span className="mt-1 block">{chip.meaning}</span>
+            {alternatives.length > 0 && (
+              <span className="mt-2 block">
+                <span className="font-medium text-slate-900 dark:text-white">Any one counts.</span>
+                {alternatives.map(({ term, state }, index) => (
+                  <span key={`${term}-${index}`} className="block">
+                    {term}: {state}
+                  </span>
+                ))}
+              </span>
+            )}
+            {clause && (
+              <span className="mt-2 block">
+                <span className="font-medium text-slate-900 dark:text-white">Job description:</span> {clause}
+              </span>
+            )}
             {chip.implied && chip.shownIn.length > 0 && (
               <span className="mt-2 block">
                 <span className="font-medium text-slate-900 dark:text-white">Not named.</span> Shown in:{' '}

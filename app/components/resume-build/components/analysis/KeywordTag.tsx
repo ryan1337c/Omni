@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { FiAlertCircle, FiCheck } from 'react-icons/fi';
 
 import { MAX_DEPTH_LEVEL } from '@/lib/resume/keywordMatch';
@@ -5,7 +6,7 @@ import { MAX_DEPTH_LEVEL } from '@/lib/resume/keywordMatch';
 import type { DepthBand } from './depthBands';
 
 type KeywordTagProps = {
-  label: string;
+  label: ReactNode;
   band: DepthBand;
   /** Screen-reader text after the label, e.g. "Familiarity, 2 of 3". */
   srLabel?: string;

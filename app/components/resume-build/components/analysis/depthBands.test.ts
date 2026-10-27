@@ -18,7 +18,7 @@ import {
 } from "./depthBands";
 
 function keyword(category: JdKeyword["category"]): JdKeyword {
-  return { term: "Skill", aliases: [], category, importance: "required" };
+  return { term: "Skill", aliases: [], category, importance: "required", alternatives: "", clause: "" };
 }
 
 const resume = parseResumeContent({

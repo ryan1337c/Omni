@@ -50,8 +50,19 @@ _Avoid_: Matched skill, hit
 A Hard or Soft Skill that Work History shows in use while it is never named on the resume in that sense, such as "orchestrated containers on EKS" for Kubernetes with no mention of Kubernetes. "Go" in "go-to-market" does not name the Go language. It earns less credit than the same skill named, because applicant tracking systems and recruiters search for the name. An Implied Hard Skill loses more than an Implied Soft Skill, since tools are searched by name and traits are better shown than claimed. A Skills Listing never implies a skill.
 _Avoid_: Inferred skill, implicit match, Semantic Match (that is for Other Keywords)
 
+**Requirement**:
+One thing the job description asks for, scored as one unit: a standalone Keyword, or a set of Alternatives.
+
+**Alternatives**:
+Hard or Soft Skills from one job description requirement, any one of which satisfies it, as in "Expo or React Native". They share a Keyword Category and Importance, count as one Requirement with one Keyword Weight, and earn the Credit of the best one. An "or" between Other Keywords, or across Keyword Categories, is one Other Keyword instead.
+_Avoid_: Keyword group, OR group
+
+**Clause**:
+The job description's own wording of what an Other Keyword asks for, such as "+3 years of professional software development experience, including internships or co-op placements". A Semantic Match is judged against it, and the Keyword's term is its short label.
+_Avoid_: Requirement (that is what the Clause describes), source text
+
 **Semantic Match**:
-An Other Keyword the resume satisfies in meaning, whatever the wording. "Bachelor of Science in Computer Science, Honours" is a Semantic Match for "BS in Computer Science". Placement, Recency, Duration, and Depth Level do not apply.
+An Other Keyword the resume satisfies in meaning, whatever the wording, judged against its Clause when it has one. "Bachelor of Science in Computer Science, Honours" is a Semantic Match for "BS in Computer Science". Placement, Recency, Duration, and Depth Level do not apply.
 
 **Match Probability**:
 How likely it is, from 0 to 1, that the resume satisfies an Other Keyword. It decides how much credit a Semantic Match earns.
@@ -66,7 +77,7 @@ How well the resume shows one Keyword, from 0 to 1. Hard and Soft Skills earn it
 _Avoid_: Weight, score (when meaning one Keyword)
 
 **Keyword Weight**:
-How much one Keyword can add to the Match Score, set by its Keyword Category and Importance. It never depends on the resume or on the other Keywords.
+How much one Keyword, or one set of Alternatives, can add to the Match Score, set by its Keyword Category and Importance. It never depends on the resume or on the other Keywords.
 
 **Match Score**:
 The 0–100 result for a Tailored Resume: every Keyword's Credit, weighted by its Keyword Weight. A resume with full Credit on every Keyword scores 100. Its label is Strong, Good, or Fair match.

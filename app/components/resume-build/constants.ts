@@ -27,7 +27,7 @@ export const KEYWORD_GROUPS: readonly {
 }[] = [
   { category: "hard", title: "Hard skills", subtitle: "Tools, technologies, and methods" },
   { category: "soft", title: "Soft skills", subtitle: "Interpersonal and work-style traits" },
-  { category: "other", title: "Other", subtitle: "Certifications, degrees, and languages" },
+  { category: "other", title: "Other", subtitle: "Experience, certifications, degrees, and languages" },
 ];
 
 export const SCORE_RING_COLORS: Record<MatchLabel, string> = {

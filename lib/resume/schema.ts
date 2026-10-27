@@ -82,6 +82,10 @@ export type ResumeHeader = {
     aliases: string[]; // e.g. ["GA4"], ["A/B tests", "split testing"]
     category: KeywordCategory;
     importance: "required" | "preferred";
+    /** Id shared by the Hard or Soft Skills in one set of Alternatives; "" for a standalone Keyword. */
+    alternatives: string;
+    /** An Other Keyword's Clause, which Jev judges instead of the term; "" when it has none. */
+    clause: string;
   }
 
   export type TailoredResumeResponse = {

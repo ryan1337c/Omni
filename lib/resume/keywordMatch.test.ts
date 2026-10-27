@@ -11,15 +11,20 @@ const FAMILIARITY = 2;
 const APPLIED = 3;
 
 function keyword(term: string, aliases: string[] = []): JdKeyword {
-  return { term, aliases, category: "hard", importance: "required" };
+  return { term, aliases, category: "hard", importance: "required", alternatives: "", clause: "" };
 }
 
 function soft(term: string, aliases: string[] = []): JdKeyword {
-  return { term, aliases, category: "soft", importance: "required" };
+  return { term, aliases, category: "soft", importance: "required", alternatives: "", clause: "" };
 }
 
 function other(term: string, aliases: string[] = []): JdKeyword {
-  return { term, aliases, category: "other", importance: "required" };
+  return { term, aliases, category: "other", importance: "required", alternatives: "", clause: "" };
+}
+
+/** Hard Skills that are Alternatives of one another. */
+function anyOf(...terms: string[]): JdKeyword[] {
+  return terms.map((term) => ({ ...keyword(term), alternatives: "set-1" }));
 }
 
 /** Jev rates every Explicit Skill at this Depth Level. */
@@ -622,6 +627,27 @@ describe("Match Score", () => {
 
     expect(shownSoft.score).toBe(55);
     expect(shownHard.score).toBe(45);
+  });
+
+  describe("Alternatives", () => {
+    const REACT_NATIVE_BULLET = "Shipped a React Native app to 20k users";
+    const mobile = resumeWith({ experience: [job("Jan 2022 - Present", [REACT_NATIVE_BULLET])] });
+    const byNameOnly: FakeJevAnswers = { fail: true };
+
+    it("score as their best option alone, at one Keyword Weight", async () => {
+      const [alone, set] = await withQuietConsole(() =>
+        Promise.all([
+          scoreWithJev([keyword("React Native"), keyword("Kubernetes")], byNameOnly, mobile),
+          scoreWithJev([...anyOf("Expo", "React Native"), keyword("Kubernetes")], byNameOnly, mobile),
+        ]),
+      );
+
+      expect(alone.score).toBeGreaterThan(0);
+      expect(set.score).toBe(alone.score);
+      expect(set.matched).toBe(1);
+      expect(set.total).toBe(2);
+      expect(set.categories.hard).toEqual({ matched: 1, total: 2 });
+    });
   });
 
   it("is 100 when every Keyword has full Credit, whatever its Keyword Category and Importance", async () => {

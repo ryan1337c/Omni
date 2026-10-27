@@ -1,5 +1,5 @@
 ---
-status: accepted for Other Keywords; the Hard and Soft Skill part is superseded by ADR-0003; how importance applies is superseded by ADR-0004
+status: accepted for Other Keywords; the Hard and Soft Skill part is superseded by ADR-0003; how importance applies is superseded by ADR-0004; what Jev judges is refined by ADR-0006 (the Clause)
 ---
 
 # Other Keywords are scored by meaning; Hard and Soft Skills stay literal

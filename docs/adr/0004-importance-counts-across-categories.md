@@ -11,5 +11,6 @@ The Match Score gave each Keyword Category a fixed share (Hard 70%, Other 20%, S
 
 ## Consequences
 
+- A set of Alternatives counts one Keyword Weight, not one per option (ADR-0005).
 - Categories no longer have a fixed share: a job description that is mostly Hard Skills is scored mostly on Hard Skills.
 - A missing Required Keyword costs far more than before. Without Jev, a Required Other Keyword that is not written literally (such as years of experience) scores 0 and pulls the fallback score down.

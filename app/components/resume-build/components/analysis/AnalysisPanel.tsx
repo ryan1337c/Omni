@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { FiLoader, FiRefreshCw } from 'react-icons/fi';
-import { resolveCategory, type KeywordMatchResult, type ResumeScore } from '@/lib/resume/keywordMatch';
+import { resolveCategory, type RequirementResult, type ResumeScore } from '@/lib/resume/keywordMatch';
 import type { KeywordCategory, KeywordScoring, ResumeContent } from '@/lib/resume/schema';
 
 import { KEYWORD_GROUPS, SCORE_RING_COLORS } from '../../constants';
@@ -25,10 +25,10 @@ type AnalysisPanelProps = {
   onReanalyze: () => void;
 };
 
-function groupByCategory(results: KeywordMatchResult[]): Record<KeywordCategory, KeywordMatchResult[]> {
-  const groups: Record<KeywordCategory, KeywordMatchResult[]> = { hard: [], soft: [], other: [] };
-  for (const result of results) {
-    groups[resolveCategory(result.keyword.category)].push(result);
+function groupByCategory(requirements: RequirementResult[]): Record<KeywordCategory, RequirementResult[]> {
+  const groups: Record<KeywordCategory, RequirementResult[]> = { hard: [], soft: [], other: [] };
+  for (const requirement of requirements) {
+    groups[resolveCategory(requirement.best.keyword.category)].push(requirement);
   }
   return groups;
 }
@@ -44,9 +44,9 @@ export default function AnalysisPanel({
   scoredResume,
   onReanalyze,
 }: AnalysisPanelProps) {
-  const { score, label, results } = analysis;
-  const groups = useMemo(() => groupByCategory(results), [results]);
-  const summary = useMemo(() => coverageSummary(results), [results]);
+  const { score, label, requirements } = analysis;
+  const groups = useMemo(() => groupByCategory(requirements), [requirements]);
+  const summary = useMemo(() => coverageSummary(requirements.map(({ best }) => best)), [requirements]);
   const canReanalyze = isStale && !isScoring;
 
   return (
@@ -101,7 +101,7 @@ export default function AnalysisPanel({
             key={category}
             title={title}
             subtitle={subtitle}
-            results={groups[category]}
+            requirements={groups[category]}
             scoredResume={scoredResume}
           />
         ) : null,

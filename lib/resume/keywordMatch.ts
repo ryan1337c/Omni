@@ -31,8 +31,15 @@ export type KeywordMatchResult = {
   evidence: KeywordEvidence;
 };
 
+/** One job description requirement: a standalone Keyword, or a set of Alternatives. `best` earns its Credit. */
+export type RequirementResult = {
+  options: KeywordMatchResult[];
+  best: KeywordMatchResult;
+};
+
 export type MatchLabel = "Strong match" | "Good match" | "Fair match";
 
+/** `matched`, `total`, and `categories` count requirements; `results` has one entry per Keyword. */
 export type ResumeScore = {
   score: number;
   label: MatchLabel;
@@ -40,6 +47,7 @@ export type ResumeScore = {
   total: number;
   categories: Record<KeywordCategory, CategoryScore>;
   results: KeywordMatchResult[];
+  requirements: RequirementResult[];
 };
 
 export const KEYWORD_CATEGORIES: readonly KeywordCategory[] = ["hard", "soft", "other"];
@@ -632,40 +640,76 @@ export function scoreKeywordEvidence(
     );
   }
 
+  const results = keywords.map((keyword, index) => {
+    const keywordEvidence = evidence[index];
+    return keywordEvidence.kind === "other"
+      ? toSemanticMatchResult(keyword, keywordEvidence)
+      : toSkillMatchResult(keyword, keywordEvidence, resume, now);
+  });
+  const requirements = groupRequirements(results);
+
   const categories = emptyCategoryScores();
   let earned = 0;
   let possible = 0;
-
-  const results = keywords.map((keyword, index) => {
-    const keywordEvidence = evidence[index];
-    const result =
-      keywordEvidence.kind === "other"
-        ? toSemanticMatchResult(keyword, keywordEvidence)
-        : toSkillMatchResult(keyword, keywordEvidence, resume, now);
-    const importanceWeight = IMPORTANCE_WEIGHTS[keyword.importance] ?? IMPORTANCE_WEIGHTS.preferred;
-    const bucket = resolveCategory(keyword.category);
+  for (const { best } of requirements) {
+    const importanceWeight = IMPORTANCE_WEIGHTS[best.keyword.importance] ?? IMPORTANCE_WEIGHTS.preferred;
+    const bucket = resolveCategory(best.keyword.category);
     const keywordWeight = CATEGORY_WEIGHTS[bucket] * importanceWeight;
 
     categories[bucket].total += 1;
     possible += keywordWeight;
-    earned += keywordWeight * result.credit;
-    if (result.matched) {
+    earned += keywordWeight * best.credit;
+    if (best.matched) {
       categories[bucket].matched += 1;
     }
-    return result;
-  });
+  }
 
   const score = possible === 0 ? 0 : Math.round((earned / possible) * 100);
-  const matched = results.filter((result) => result.matched).length;
 
   return {
     score,
     label: getMatchLabel(score),
-    matched,
-    total: results.length,
+    matched: requirements.filter(({ best }) => best.matched).length,
+    total: requirements.length,
     categories,
     results,
+    requirements,
   };
+}
+
+/**
+ * Which set of Alternatives a Keyword is in, or null when it stands alone. Other Keywords never are,
+ * and Alternatives share a Keyword Category, so one id used across categories is one set per category.
+ */
+export function alternativesKey(keyword: JdKeyword): string | null {
+  if (!keyword.alternatives || isSemanticKeyword(keyword)) return null;
+  return `${resolveCategory(keyword.category)}:${keyword.alternatives}`;
+}
+
+/**
+ * Results grouped into requirements, in order of each requirement's first Keyword. `best` is the
+ * highest Credit, and a matched option wins a tie, so a set is matched when any option is.
+ * Every option is weighted by `best`'s Importance: `parseKeywords` gives a set one Importance.
+ */
+function groupRequirements(results: KeywordMatchResult[]): RequirementResult[] {
+  const requirements: RequirementResult[] = [];
+  const byKey = new Map<string, RequirementResult>();
+  for (const result of results) {
+    const key = alternativesKey(result.keyword);
+    const existing = key === null ? undefined : byKey.get(key);
+    if (existing) {
+      existing.options.push(result);
+      const { best } = existing;
+      if (result.credit > best.credit || (result.credit === best.credit && result.matched && !best.matched)) {
+        existing.best = result;
+      }
+      continue;
+    }
+    const requirement = { options: [result], best: result };
+    requirements.push(requirement);
+    if (key !== null) byKey.set(key, requirement);
+  }
+  return requirements;
 }
 
 /** Jev-free convenience: fallback evidence through the shared aggregator. */

@@ -5,7 +5,7 @@ import { parseResumeContent } from "./parseResumeJson";
 import type { JdKeyword } from "./schema";
 
 function keyword(term: string, category: JdKeyword["category"] = "hard"): JdKeyword {
-  return { term, aliases: [], category, importance: "required" };
+  return { term, aliases: [], category, importance: "required", alternatives: "", clause: "" };
 }
 
 const resume = parseResumeContent({
@@ -76,6 +76,17 @@ describe("scoreKeywords", () => {
     expect(question.instructions).toContain("BS in Computer Science");
     expect(results[0].level).toBe(0.93);
     expect(results[0].credit).toBe(1);
+  });
+
+  it("asks about an Other Keyword's Clause instead of its term", async () => {
+    const clause = "+3 years of professional software development experience, including internships or co-op placements.";
+    const years = { ...keyword("3+ years professional experience", "other"), clause };
+
+    const { requests } = await scoreWithJev([years], {}, resume);
+
+    const [question] = Object.values(requests[0].questions);
+    expect(question.instructions).toContain(clause);
+    expect(question.instructions).not.toContain("3+ years professional experience");
   });
 
   it("sends each Experience and Projects Entry as its own request, plus one whole-resume request", async () => {

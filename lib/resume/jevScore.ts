@@ -98,7 +98,7 @@ function buildDepthQuestion(keyword: JdKeyword, scope: "the resume text" | "this
 function buildMatchQuestion(keyword: JdKeyword) {
     return {
         type: "noul" as const,
-        instructions: `Does the resume show that the candidate meets this job requirement: ${keywordLabel(keyword)}?`,
+        instructions: `Does the resume show that the candidate meets this job requirement: ${keyword.clause || keywordLabel(keyword)}?`,
         criteria: MATCH_CRITERIA,
     };
 }
