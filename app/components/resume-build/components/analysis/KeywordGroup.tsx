@@ -36,9 +36,9 @@ export default function KeywordGroup({ title, subtitle, requirements, scoredResu
       <div className="mb-2 flex items-baseline justify-between gap-3">
         <div className="min-w-0">
           <h3 className="text-sm font-semibold text-slate-900 dark:text-white">{title}</h3>
-          <p className="text-xs text-slate-500 dark:text-gray-400">{subtitle}</p>
+          <p className="text-xs text-slate-600 dark:text-gray-400">{subtitle}</p>
         </div>
-        <span className="flex-shrink-0 text-xs font-medium tabular-nums text-slate-500 dark:text-gray-400">
+        <span className="flex-shrink-0 text-xs font-semibold tabular-nums text-slate-700 dark:font-medium dark:text-gray-400">
           {presentCount}/{requirements.length}
         </span>
       </div>

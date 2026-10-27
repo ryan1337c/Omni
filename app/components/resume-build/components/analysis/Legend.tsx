@@ -24,7 +24,7 @@ export default function Legend() {
   const guideId = useId();
 
   return (
-    <div className="border-t border-slate-200 pt-4 text-xs text-slate-500 dark:border-slate-700 dark:text-gray-400">
+    <div className="border-t border-slate-200 pt-4 text-xs text-slate-600 dark:border-slate-700 dark:text-gray-400">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         {LEGEND.map(({ band, label }) => (
           <span key={band} className="flex items-center gap-2">
