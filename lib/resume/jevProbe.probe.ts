@@ -46,12 +46,12 @@ describe.skipIf(!process.env.TYPESAFE_API_KEY)("Jev probe", () => {
       `\n${file}: score ${score.score} (${score.label}), ${requests} requests in ${seconds.toFixed(2)} s`,
     );
     console.table(
-      score.results.map(({ keyword, level, weight, evidence }) => ({
+      score.results.map(({ keyword, level, credit, evidence }) => ({
         keyword: keyword.term,
         category: keyword.category,
         depthLevelOrMatchProbability: Number(level.toFixed(2)),
-        credit: Number(weight.toFixed(2)),
-        implied: evidence.kind === "skill" && weight > 0 && !evidence.explicit,
+        credit: Number(credit.toFixed(2)),
+        implied: evidence.kind === "skill" && credit > 0 && !evidence.explicit,
         countsIn:
           evidence.kind === "skill"
             ? countingPlacements(evidence)

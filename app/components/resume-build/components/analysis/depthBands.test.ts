@@ -57,7 +57,7 @@ describe("coverageSummary", () => {
     return {
       keyword: keyword(category),
       level,
-      weight: 0,
+      credit: 0,
       matched: level > 0,
       evidence: {
         kind: "skill",
@@ -70,7 +70,7 @@ describe("coverageSummary", () => {
 
   function requirement(matchProbability: number): KeywordMatchResult {
     const shown = matchProbability >= 0.5;
-    return { keyword: keyword("other"), level: matchProbability, weight: shown ? 1 : 0, matched: shown, evidence: { kind: "other", matchProbability } };
+    return { keyword: keyword("other"), level: matchProbability, credit: shown ? 1 : 0, matched: shown, evidence: { kind: "other", matchProbability } };
   }
 
   it("splits skills into hands-on, familiarity, and mentioned, leaving Absent out, then counts other requirements", () => {
@@ -171,7 +171,7 @@ describe("DEPTH_LEVEL_GUIDE", () => {
       {
         keyword: keyword("hard"),
         level: 2,
-        weight: 0.5,
+        credit: 0.5,
         matched: true,
         evidence: { kind: "skill", explicit: true, placements: [{ source: { section: "skills" }, presence: 1, depthLevel: 2 }], demonstratingBullets: [] },
       },
@@ -208,7 +208,7 @@ describe("keywordChip", () => {
 
   it("uses the top look with no depth fraction for a shown Other Keyword", () => {
     const evidence = { kind: "other", matchProbability: 0.95 } as const;
-    expect(keywordChip({ keyword: keyword("other"), level: 0.95, weight: 1, matched: true, evidence }, resume)).toEqual({
+    expect(keywordChip({ keyword: keyword("other"), level: 0.95, credit: 1, matched: true, evidence }, resume)).toEqual({
       band: 3,
       srLabel: "Shown",
       hint: "Required - Shown (95%)",
@@ -229,7 +229,7 @@ describe("keywordChip", () => {
     ["soft", 3, "Applied / Production"],
   ] as const)("gives a named %s skill at level %d the %s meaning, with no tip or Entries", (category, level, name) => {
     const chip = keywordChip(
-      { keyword: keyword(category), level, weight: 0, matched: level > 0, evidence: namedSkill(level) },
+      { keyword: keyword(category), level, credit: 0, matched: level > 0, evidence: namedSkill(level) },
       resume,
     );
     expect(chip).toMatchObject({ meaning: guideMeaning(category, name), implied: false, shownIn: [], tip: null });
@@ -242,7 +242,7 @@ describe("keywordChip", () => {
   ])("gives an Other Keyword at Match Probability %d the %s meaning", (probability, name) => {
     const evidence = { kind: "other", matchProbability: probability } as const;
     const chip = keywordChip(
-      { keyword: keyword("other"), level: probability, weight: 0, matched: name !== "Not shown", evidence },
+      { keyword: keyword("other"), level: probability, credit: 0, matched: name !== "Not shown", evidence },
       resume,
     );
     expect(chip).toMatchObject({ meaning: guideMeaning("other", name), implied: false, tip: null });
@@ -255,7 +255,7 @@ describe("keywordChip", () => {
       placements: [{ source: { section: "skills" }, presence: 1, depthLevel: 2 }],
       demonstratingBullets: [],
     };
-    expect(keywordChip({ keyword: keyword("hard"), level: 2, weight: 0.5, matched: true, evidence }, resume)).toEqual({
+    expect(keywordChip({ keyword: keyword("hard"), level: 2, credit: 0.5, matched: true, evidence }, resume)).toEqual({
       band: 2,
       srLabel: "Familiarity, 2 of 3",
       hint: "Required - Familiarity (2/3)",
@@ -278,7 +278,7 @@ describe("keywordChip", () => {
       demonstratingBullets: [],
     };
 
-    expect(keywordChip({ keyword: keyword("hard"), level: 3, weight: 0.5, matched: true, evidence }, resume)).toEqual({
+    expect(keywordChip({ keyword: keyword("hard"), level: 3, credit: 0.5, matched: true, evidence }, resume)).toEqual({
       band: 3,
       srLabel: "Applied / Production, 3 of 3, not named",
       hint: "Required - Applied / Production (3/3)",
@@ -297,7 +297,7 @@ describe("keywordChip", () => {
       demonstratingBullets: [{ section: "experience", entry: 1, bullet: 0 }],
     };
 
-    expect(keywordChip({ keyword: keyword("soft"), level: 3, weight: 0.8, matched: true, evidence }, resume)).toMatchObject({
+    expect(keywordChip({ keyword: keyword("soft"), level: 3, credit: 0.8, matched: true, evidence }, resume)).toMatchObject({
       band: 3,
       implied: true,
       shownIn: ["Developer, Initech"],

@@ -57,6 +57,21 @@ An Other Keyword the resume satisfies in meaning, whatever the wording. "Bachelo
 How likely it is, from 0 to 1, that the resume satisfies an Other Keyword. It decides how much credit a Semantic Match earns.
 _Avoid_: Confidence (Jev uses that word for how certain it is about its own answer)
 
+**Importance**:
+Whether the job description lists a Keyword as Required or Preferred. A Required Keyword always counts for more than a Preferred one, whatever their Keyword Categories.
+_Avoid_: Priority, must-have
+
+**Credit**:
+How well the resume shows one Keyword, from 0 to 1. Hard and Soft Skills earn it from Depth Level and Placement; Other Keywords earn it from Match Probability.
+_Avoid_: Weight, score (when meaning one Keyword)
+
+**Keyword Weight**:
+How much one Keyword can add to the Match Score, set by its Keyword Category and Importance. It never depends on the resume or on the other Keywords.
+
+**Match Score**:
+The 0–100 result for a Tailored Resume: every Keyword's Credit, weighted by its Keyword Weight. A resume with full Credit on every Keyword scores 100. Its label is Strong, Good, or Fair match.
+_Avoid_: ATS score, resume score
+
 **Placement**:
 Where an Explicit or Implied Skill appears in the resume. There are two kinds: Work History and Skills Listing. One Keyword can have several Placements.
 

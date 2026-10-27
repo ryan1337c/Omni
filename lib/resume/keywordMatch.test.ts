@@ -44,7 +44,7 @@ function job(dates: string, bullets: string[], title = "Software Engineer") {
 }
 
 async function creditFor(term: JdKeyword, answers: FakeJevAnswers, resume: ResumeContent) {
-  return (await scoreWithJev([term], answers, resume)).results[0].weight;
+  return (await scoreWithJev([term], answers, resume)).results[0].credit;
 }
 
 describe("Keyword credit", () => {
@@ -55,7 +55,7 @@ describe("Keyword credit", () => {
 
     const score = await scoreWithJev([keyword("AWS")], ratedAt(APPLIED), resume);
 
-    expect(score.results[0].weight).toBeCloseTo(0.5);
+    expect(score.results[0].credit).toBeCloseTo(0.5);
     expect(score.results[0].level).toBe(APPLIED);
     expect(score.results[0].matched).toBe(true);
     expect(score.results[0].evidence).toMatchObject({ explicit: false });
@@ -68,7 +68,7 @@ describe("Keyword credit", () => {
 
     expect(score.requests).toHaveLength(0);
     expect(score.results[0].level).toBe(MENTIONED);
-    expect(score.results[0].weight).toBeCloseTo(0.4 / 3);
+    expect(score.results[0].credit).toBeCloseTo(0.4 / 3);
   });
 
   it("scores a skill named only in an Education Entry as a Skills Listing (0.4)", async () => {
@@ -138,9 +138,9 @@ describe("Keyword credit", () => {
     const notShown = await scoreWithJev([keyword("Salesforce")], { ...ratedAt(APPLIED), noul: 0.1 }, resume);
     const shownUnnamed = await scoreWithJev([keyword("Salesforce")], ratedAt(APPLIED), resume);
 
-    expect(notShown.results[0].weight).toBe(0);
+    expect(notShown.results[0].credit).toBe(0);
     expect(shownUnnamed.results[0].evidence).toMatchObject({ explicit: false });
-    expect(shownUnnamed.results[0].weight).toBeCloseTo(0.5);
+    expect(shownUnnamed.results[0].credit).toBeCloseTo(0.5);
   });
 
   it.each(["Summer internship", "2019", "Mar 2023", ""])(
@@ -236,7 +236,7 @@ describe("Keyword credit", () => {
       const score = await scoreWithJev([keyword("Kubernetes")], ratedAt(FAMILIARITY), resume);
 
       expect(score.results[0].evidence).toMatchObject({ explicit: true });
-      expect(score.results[0].weight).toBeCloseTo(2 / 3 + 0.1);
+      expect(score.results[0].credit).toBeCloseTo(2 / 3 + 0.1);
     });
 
     it("scores deep use in an old Entry and a mention in the Current Role by the best Placement", async () => {
@@ -251,7 +251,7 @@ describe("Keyword credit", () => {
       const score = await scoreWithJev([keyword("Python")], answers, resume);
 
       expect(score.results[0].level).toBe(APPLIED);
-      expect(score.results[0].weight).toBeCloseTo(0.5);
+      expect(score.results[0].credit).toBeCloseTo(0.5);
     });
 
     it("does not count a Placement whose presence is below 0.7", async () => {
@@ -266,7 +266,7 @@ describe("Keyword credit", () => {
 
       const score = await scoreWithJev([keyword("Go")], { ...ratedAt(APPLIED), noul: 0.05 }, resume);
 
-      expect(score.results[0]).toMatchObject({ level: 0, weight: 0, matched: false });
+      expect(score.results[0]).toMatchObject({ level: 0, credit: 0, matched: false });
       expect(score.results[0].evidence).toMatchObject({ explicit: false });
       expect(highlightedKeywords(score.results, { section: "experience", entry: 0 })).toEqual([]);
     });
@@ -312,7 +312,7 @@ describe("Keyword credit", () => {
       const score = await withQuietConsole(() => scoreWithJev(keywords, answers, resume));
 
       expect(score.scoredBy).toBe("keyword");
-      expect(score.results.map((r) => [r.level, r.weight])).toEqual([
+      expect(score.results.map((r) => [r.level, r.credit])).toEqual([
         [MENTIONED, 1 / 3],
         [0, 0],
       ]);
@@ -329,7 +329,7 @@ describe("Keyword credit", () => {
       const score = await scoreWithJev([soft("Leadership")], { bullets: { [BUILT_API]: 0.1, [LED_MIGRATION]: 0.9 } }, resume);
 
       expect(score.results[0]).toMatchObject({ level: APPLIED, matched: true });
-      expect(score.results[0].weight).toBeCloseTo(0.8);
+      expect(score.results[0].credit).toBeCloseTo(0.8);
       expect(score.results[0].evidence).toMatchObject({ explicit: false });
     });
 
@@ -348,9 +348,9 @@ describe("Keyword credit", () => {
       const fromBullet = await scoreWithJev([communication], { ...ratedAt(FAMILIARITY), ...notAnExample }, claimInBullet);
 
       expect(fromSummary.results[0]).toMatchObject({ level: MENTIONED, matched: true });
-      expect(fromSummary.results[0].weight).toBeCloseTo(0.4 / 3);
+      expect(fromSummary.results[0].credit).toBeCloseTo(0.4 / 3);
       expect(fromBullet.results[0]).toMatchObject({ level: MENTIONED, matched: true });
-      expect(fromBullet.results[0].weight).toBeCloseTo(1 / 3);
+      expect(fromBullet.results[0].credit).toBeCloseTo(1 / 3);
     });
 
     it("rates a named Soft Skill with a demonstrating Bullet Applied / Production, in full", async () => {
@@ -361,7 +361,7 @@ describe("Keyword credit", () => {
 
       const score = await scoreWithJev([soft("Leadership")], { bullets: { [BUILT_API]: 0.1, [LED_MIGRATION]: 0.9 } }, resume);
 
-      expect(score.results[0]).toMatchObject({ level: APPLIED, weight: 1 });
+      expect(score.results[0]).toMatchObject({ level: APPLIED, credit: 1 });
       expect(score.results[0].evidence).toMatchObject({ explicit: true });
     });
 
@@ -370,7 +370,7 @@ describe("Keyword credit", () => {
 
       const score = await scoreWithJev([soft("Leadership")], { bullets: { [LED_MIGRATION]: 0.69 } }, resume);
 
-      expect(score.results[0]).toMatchObject({ level: 0, weight: 0, matched: false });
+      expect(score.results[0]).toMatchObject({ level: 0, credit: 0, matched: false });
     });
 
     it("highlights the demonstrating Bullet and no other", async () => {
@@ -400,7 +400,7 @@ describe("Keyword credit", () => {
 
       const { results } = await scoreWithJev([soft("Communication")], { noul: 0.05 }, resume);
 
-      expect(results[0]).toMatchObject({ level: 0, weight: 0, matched: false });
+      expect(results[0]).toMatchObject({ level: 0, credit: 0, matched: false });
       expect(results[0].evidence).toMatchObject({ explicit: false });
       expect(highlightedKeywords(results, source)).toEqual([]);
     });
@@ -417,7 +417,7 @@ describe("Keyword credit", () => {
 
       expect(score.results[0]).toMatchObject({ level: APPLIED, matched: true });
       expect(score.results[0].evidence).toMatchObject({ explicit: false });
-      expect(score.results[0].weight).toBeCloseTo(0.8);
+      expect(score.results[0].credit).toBeCloseTo(0.8);
     });
 
     it("weights the demonstrating Entry by Recency and Duration", async () => {
@@ -432,7 +432,7 @@ describe("Keyword credit", () => {
       const score = await scoreWithJev([soft("Leadership")], { bullets: { [BUILT_API]: 0.1, [LED_MIGRATION]: 0.9 } }, resume);
 
       expect(score.results[0].level).toBe(APPLIED);
-      expect(score.results[0].weight).toBeCloseTo(0.7 + 0.1);
+      expect(score.results[0].credit).toBeCloseTo(0.7 + 0.1);
     });
   });
 
@@ -521,7 +521,7 @@ describe("Keyword credit", () => {
       const score = await scoreWithJev([keyword("React")], answers, resume);
 
       expect(score.results[0].level).toBe(FAMILIARITY);
-      expect(score.results[0].weight).toBeCloseTo((0.4 * 2) / 3);
+      expect(score.results[0].credit).toBeCloseTo((0.4 * 2) / 3);
     });
 
     it.each([
@@ -533,7 +533,7 @@ describe("Keyword credit", () => {
 
       const score = await scoreWithJev([keyword("Go")], { ...ratedAt(APPLIED), noul: 0.05 }, resume);
 
-      expect(score.results[0]).toMatchObject({ level: 0, weight: 0, matched: false });
+      expect(score.results[0]).toMatchObject({ level: 0, credit: 0, matched: false });
       expect(score.results[0].evidence).toMatchObject({ explicit: false });
     });
 
@@ -573,7 +573,7 @@ describe("Keyword credit", () => {
     it("gives full credit at a Match Probability of 0.9, ignoring Placement and literal wording", async () => {
       const score = await scoreWithJev([other("BS in Computer Science")], matchProbability(0.95), degree);
 
-      expect(score.results[0].weight).toBe(1);
+      expect(score.results[0].credit).toBe(1);
       expect(score.results[0].matched).toBe(true);
       expect(score.score).toBe(100);
     });
@@ -581,7 +581,7 @@ describe("Keyword credit", () => {
     it("gives no credit below a Match Probability of 0.5", async () => {
       const score = await scoreWithJev([other("MS in Computer Science")], matchProbability(0.45), degree);
 
-      expect(score.results[0].weight).toBe(0);
+      expect(score.results[0].credit).toBe(0);
       expect(score.results[0].matched).toBe(false);
     });
 
@@ -594,5 +594,43 @@ describe("Keyword credit", () => {
 
       expect(score.results[0].level).toBe(0.8);
     });
+  });
+});
+
+describe("Match Score", () => {
+  const requiredMentoring = soft("Mentoring", ["mentored"]);
+  const preferredKubernetes: JdKeyword = { ...keyword("Kubernetes"), importance: "preferred" };
+  const MENTORING_BULLET = "Mentored 4 engineers through their first on-call rotation";
+  const KUBERNETES_BULLET = "Ran 40 services on Kubernetes with Helm";
+
+  it("counts a Required Soft Skill for more than a Preferred Hard Skill", async () => {
+    const mentors = resumeWith({ experience: [job("Jan 2022 - Present", [MENTORING_BULLET])] });
+    const runsKubernetes = resumeWith({
+      experience: [job("Jan 2022 - Present", [KUBERNETES_BULLET])],
+    });
+
+    const shownSoft = await scoreWithJev(
+      [requiredMentoring, preferredKubernetes],
+      { noul: 0, bullets: { [MENTORING_BULLET]: 0.95 } },
+      mentors,
+    );
+    const shownHard = await scoreWithJev(
+      [requiredMentoring, preferredKubernetes],
+      { ...ratedAt(APPLIED), noul: 0.95, bullets: { [KUBERNETES_BULLET]: 0 } },
+      runsKubernetes,
+    );
+
+    expect(shownSoft.score).toBe(55);
+    expect(shownHard.score).toBe(45);
+  });
+
+  it("is 100 when every Keyword has full Credit, whatever its Keyword Category and Importance", async () => {
+    const resume = resumeWith({
+      experience: [job("Jan 2022 - Present", [MENTORING_BULLET, KUBERNETES_BULLET])],
+    });
+
+    const score = await scoreWithJev([requiredMentoring, preferredKubernetes], ratedAt(APPLIED), resume);
+
+    expect(score.score).toBe(100);
   });
 });

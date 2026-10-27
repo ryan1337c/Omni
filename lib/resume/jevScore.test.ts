@@ -75,7 +75,7 @@ describe("scoreKeywords", () => {
     expect(question.type).toBe("noul");
     expect(question.instructions).toContain("BS in Computer Science");
     expect(results[0].level).toBe(0.93);
-    expect(results[0].weight).toBe(1);
+    expect(results[0].credit).toBe(1);
   });
 
   it("sends each Experience and Projects Entry as its own request, plus one whole-resume request", async () => {

@@ -20,13 +20,13 @@ export type CategoryScore = {
  * One keyword after scoring.
  * `level` is 0 (Absent) or the 1–3 Depth Level of the best Placement for a Hard or Soft Skill,
  * and the 0–1 Match Probability for an Other Keyword.
- * `weight` is the 0–1 credit (importance is applied later).
+ * `credit` is the 0–1 Credit; the Keyword Weight is applied in the Match Score.
  * `matched` is true for Hard and Soft Skills with a Placement and for Other Keywords that earn credit.
  */
 export type KeywordMatchResult = {
   keyword: JdKeyword;
   level: number;
-  weight: number;
+  credit: number;
   matched: boolean;
   evidence: KeywordEvidence;
 };
@@ -44,14 +44,18 @@ export type ResumeScore = {
 
 export const KEYWORD_CATEGORIES: readonly KeywordCategory[] = ["hard", "soft", "other"];
 
+/**
+ * A Keyword Weight is its category weight × its importance weight. Every Required Keyword must
+ * outweigh every Preferred one: soft × required > hard × preferred.
+ */
 export const CATEGORY_WEIGHTS: Record<KeywordCategory, number> = {
-  hard: 0.7,
-  soft: 0.1,
-  other: 0.2,
+  hard: 0.5,
+  soft: 0.2,
+  other: 0.3,
 };
 
 export const IMPORTANCE_WEIGHTS: Record<JdKeyword["importance"], number> = {
-  required: 2,
+  required: 3,
   preferred: 1,
 };
 
@@ -510,8 +514,8 @@ export function matchProbabilityToCredit(probability: number): number {
 
 function toSemanticMatchResult(keyword: JdKeyword, evidence: OtherKeywordEvidence): KeywordMatchResult {
   const p = clampProbability(evidence.matchProbability);
-  const weight = matchProbabilityToCredit(p);
-  return { keyword, level: p, weight, matched: weight > 0, evidence };
+  const credit = matchProbabilityToCredit(p);
+  return { keyword, level: p, credit, matched: credit > 0, evidence };
 }
 
 function placementCredit(placement: PlacementEvidence, resume: ResumeContent, now: Date): number {
@@ -526,7 +530,7 @@ function toSkillMatchResult(
 ): KeywordMatchResult {
   const placements = countingPlacements(evidence);
   if (placements.length === 0) {
-    return { keyword, level: ABSENT_LEVEL, weight: 0, matched: false, evidence };
+    return { keyword, level: ABSENT_LEVEL, credit: 0, matched: false, evidence };
   }
   const credits = placements.map((placement) => placementCredit(placement, resume, now));
   const best = credits.indexOf(Math.max(...credits));
@@ -537,7 +541,7 @@ function toSkillMatchResult(
   return {
     keyword,
     level: clampDepthLevel(placements[best].depthLevel),
-    weight: evidence.explicit ? named : named * impliedMultiplier(keyword),
+    credit: evidence.explicit ? named : named * impliedMultiplier(keyword),
     matched: true,
     evidence,
   };
@@ -607,8 +611,9 @@ export type ScoreKeywordEvidenceOptions = {
 };
 
 /**
- * Weighted resume score from evidence aligned with `keywords` by index.
- * Hard and Soft Skills: among Placements with presence ≥ `PRESENCE_CUTOFF`, the best one's depth
+ * Match Score from evidence aligned with `keywords` by index: every Keyword's Credit weighted by its
+ * Keyword Weight, in one pool, so categories have no fixed share.
+ * Credit for Hard and Soft Skills: among Placements with presence ≥ `PRESENCE_CUTOFF`, the best one's depth
  * weight × Placement weight, + Dual Placement bonus, capped at 1, then × `IMPLIED_HARD_SKILL_MULTIPLIER`
  * or `IMPLIED_SOFT_SKILL_MULTIPLIER` for an Implied Skill. Other Keywords: `matchProbabilityToCredit`
  * of the Match Probability.
@@ -628,7 +633,8 @@ export function scoreKeywordEvidence(
   }
 
   const categories = emptyCategoryScores();
-  const weighted = emptyCategoryScores();
+  let earned = 0;
+  let possible = 0;
 
   const results = keywords.map((keyword, index) => {
     const keywordEvidence = evidence[index];
@@ -636,28 +642,20 @@ export function scoreKeywordEvidence(
       keywordEvidence.kind === "other"
         ? toSemanticMatchResult(keyword, keywordEvidence)
         : toSkillMatchResult(keyword, keywordEvidence, resume, now);
-    const importance = IMPORTANCE_WEIGHTS[keyword.importance] ?? IMPORTANCE_WEIGHTS.preferred;
+    const importanceWeight = IMPORTANCE_WEIGHTS[keyword.importance] ?? IMPORTANCE_WEIGHTS.preferred;
     const bucket = resolveCategory(keyword.category);
+    const keywordWeight = CATEGORY_WEIGHTS[bucket] * importanceWeight;
 
     categories[bucket].total += 1;
-    weighted[bucket].total += importance;
-    weighted[bucket].matched += importance * result.weight;
+    possible += keywordWeight;
+    earned += keywordWeight * result.credit;
     if (result.matched) {
       categories[bucket].matched += 1;
     }
     return result;
   });
 
-  let weightSum = 0;
-  let weightedRatio = 0;
-  for (const category of KEYWORD_CATEGORIES) {
-    const { matched, total } = weighted[category];
-    if (total === 0) continue;
-    weightSum += CATEGORY_WEIGHTS[category];
-    weightedRatio += CATEGORY_WEIGHTS[category] * (matched / total);
-  }
-
-  const score = weightSum === 0 ? 0 : Math.round((weightedRatio / weightSum) * 100);
+  const score = possible === 0 ? 0 : Math.round((earned / possible) * 100);
   const matched = results.filter((result) => result.matched).length;
 
   return {
