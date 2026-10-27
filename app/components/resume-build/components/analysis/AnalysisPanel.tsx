@@ -8,7 +8,8 @@ import type { KeywordCategory, KeywordScoring, ResumeContent } from '@/lib/resum
 import { KEYWORD_GROUPS, SCORE_RING_COLORS } from '../../constants';
 import KeywordGroup from './KeywordGroup';
 import Legend from './Legend';
-import { coverageSummary } from './depthBands';
+import { coverageSummary, requiredSummary } from './depthBands';
+import RequiredBadge from './RequiredBadge';
 import ScoreRing from './ScoreRing';
 
 type AnalysisPanelProps = {
@@ -47,6 +48,7 @@ export default function AnalysisPanel({
   const { score, label, requirements } = analysis;
   const groups = useMemo(() => groupByCategory(requirements), [requirements]);
   const summary = useMemo(() => coverageSummary(requirements.map(({ best }) => best)), [requirements]);
+  const requiredLine = useMemo(() => requiredSummary(requirements), [requirements]);
   const canReanalyze = isStale && !isScoring;
 
   return (
@@ -58,6 +60,12 @@ export default function AnalysisPanel({
             {label} for <em className="break-words">{jobTitle.trim() || 'this role'}</em>
           </h2>
           <p className="mt-1 text-sm text-slate-500 dark:text-gray-400">{summary}</p>
+          {requiredLine && (
+            <p className="mt-1 flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-gray-200">
+              <RequiredBadge />
+              {requiredLine}
+            </p>
+          )}
           {scoredBy === 'keyword' && (
             <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">
               Meaning-based scoring unavailable, so skills were matched by exact wording only:
@@ -95,6 +103,8 @@ export default function AnalysisPanel({
         </div>
       </div>
 
+      <Legend />
+
       {KEYWORD_GROUPS.map(({ category, title, subtitle }) =>
         groups[category].length > 0 ? (
           <KeywordGroup
@@ -131,8 +141,6 @@ export default function AnalysisPanel({
           />
         </button>
       </div>
-
-      <Legend />
     </div>
   );
 }

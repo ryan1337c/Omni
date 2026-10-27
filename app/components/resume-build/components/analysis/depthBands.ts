@@ -7,6 +7,7 @@ import {
   MAX_DEPTH_LEVEL,
   resolveCategory,
   type KeywordMatchResult,
+  type RequirementResult,
 } from "@/lib/resume/keywordMatch";
 import { entryLabel } from "@/lib/resume/entryFields";
 import type { JdKeyword, ResumeContent } from "@/lib/resume/schema";
@@ -175,6 +176,12 @@ export const NOT_NAMED_GUIDE = {
 
 export type DepthLevelGuide = {
   groups: readonly GuideGroup[];
+  required: {
+    label: string;
+    /** Sample chip look; any chip can carry the marker. */
+    band: DepthBand;
+    meaning: string;
+  };
   notNamed: {
     label: string;
     /** Sample chip look; any Depth Level can carry the marker. */
@@ -185,9 +192,15 @@ export type DepthLevelGuide = {
   };
 };
 
-/** The legend's full guide: every chip state, plus one entry for the "not named" marker. */
+/** The legend's full guide: every chip state, plus one entry each for the Required and "not named" markers. */
 export const DEPTH_LEVEL_GUIDE: DepthLevelGuide = {
   groups: KEYWORD_GUIDE,
+  required: {
+    label: "Required",
+    band: FAMILIARITY_BAND,
+    meaning:
+      "The job description lists this as required. It counts for more of your Match Score than a Preferred one, so close these gaps first.",
+  },
   notNamed: {
     label: NOT_NAMED_GUIDE.label,
     band: HANDS_ON_BAND,
@@ -223,6 +236,8 @@ export type KeywordChip = {
   hint: string;
   /** The state's one-line meaning from `KEYWORD_GUIDE`. */
   meaning: string;
+  /** The job description lists the Keyword as Required. */
+  required: boolean;
   /** An Implied Skill: shown in Work History but never named on the resume in that sense. */
   implied: boolean;
   /** Entries that showed an Implied Skill, e.g. "Staff Engineer, Acme". Empty otherwise. */
@@ -279,6 +294,27 @@ export function coverageSummary(results: KeywordMatchResult[]): string {
     .join(" ");
 }
 
+function isRequiredKeyword(keyword: JdKeyword): boolean {
+  return keyword.importance === "required";
+}
+
+function isRequired({ best }: RequirementResult): boolean {
+  return isRequiredKeyword(best.keyword);
+}
+
+/** Required Requirements first, each tier in job description order. */
+export function requiredFirst(requirements: RequirementResult[]): RequirementResult[] {
+  return [...requirements.filter(isRequired), ...requirements.filter((requirement) => !isRequired(requirement))];
+}
+
+/** "5 of 7 required shown", counting any Credit like the group counts; null when nothing is Required. */
+export function requiredSummary(requirements: RequirementResult[]): string | null {
+  const required = requirements.filter(isRequired);
+  if (required.length === 0) return null;
+  const shown = required.filter(({ best }) => best.matched).length;
+  return `${shown} of ${required.length} required shown`;
+}
+
 function guideMeaning(category: JdKeyword["category"], name: GuideState["name"]): string {
   const group = KEYWORD_GUIDE.find((candidate) => candidate.category === category);
   return group?.states.find((state) => state.name === name)?.meaning ?? "";
@@ -287,6 +323,7 @@ function guideMeaning(category: JdKeyword["category"], name: GuideState["name"])
 /** `resume` is the one the evidence was scored against, so Entry indexes line up. */
 export function keywordChip(result: KeywordMatchResult, resume: ResumeContent): KeywordChip {
   const { keyword, level, evidence } = result;
+  const required = isRequiredKeyword(keyword);
   if (isSemanticKeyword(keyword)) {
     const name = matchBandName(level);
     return {
@@ -294,6 +331,7 @@ export function keywordChip(result: KeywordMatchResult, resume: ResumeContent): 
       srLabel: name,
       hint: keywordMatchHint(keyword.importance, level),
       meaning: guideMeaning("other", name),
+      required,
       implied: false,
       shownIn: [],
       tip: null,
@@ -306,7 +344,7 @@ export function keywordChip(result: KeywordMatchResult, resume: ResumeContent): 
   const hint = keywordLevelHint(keyword.importance, band);
   const meaning = guideMeaning(isSoft ? "soft" : "hard", name);
   if (!isImplied(result) || evidence.kind !== "skill") {
-    return { band, srLabel, hint, meaning, implied: false, shownIn: [], tip: null };
+    return { band, srLabel, hint, meaning, required, implied: false, shownIn: [], tip: null };
   }
   const shownIn = countingPlacements(evidence)
     .map(({ source }) => ("entry" in source ? entryLabel(resume, source) : ""))
@@ -316,6 +354,7 @@ export function keywordChip(result: KeywordMatchResult, resume: ResumeContent): 
     srLabel: `${srLabel}, ${NOT_NAMED_GUIDE.label}`,
     hint,
     meaning,
+    required,
     implied: true,
     shownIn,
     tip: isSoft ? NOT_NAMED_GUIDE.softTip(keyword.term) : NOT_NAMED_GUIDE.hardTip(keyword.term),

@@ -3,13 +3,16 @@ import { FiAlertCircle, FiCheck } from 'react-icons/fi';
 
 import { MAX_DEPTH_LEVEL } from '@/lib/resume/keywordMatch';
 
-import type { DepthBand } from './depthBands';
+import RequiredBadge from './RequiredBadge';
+import { DEPTH_LEVEL_GUIDE, type DepthBand } from './depthBands';
 
 type KeywordTagProps = {
   label: ReactNode;
   band: DepthBand;
   /** Screen-reader text after the label, e.g. "Familiarity, 2 of 3". */
   srLabel?: string;
+  /** A Required Keyword: adds a corner badge. */
+  required?: boolean;
   /** An Implied Skill: keeps its band look and adds a "not named" marker. */
   implied?: boolean;
 };
@@ -22,16 +25,25 @@ const BAND_CLASS: Record<DepthBand, string> = {
   3: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-300',
 };
 
-/** One keyword chip. The check is reserved for the top band; lower bands are outline or fill only. */
-export default function KeywordTag({ label, band, srLabel, implied = false }: KeywordTagProps) {
+/**
+ * One keyword chip. The check is reserved for the top band; lower bands are outline or fill only.
+ * Required sits on the corner and "not named" inline after the label, so the two never share a spot.
+ */
+export default function KeywordTag({ label, band, srLabel, required = false, implied = false }: KeywordTagProps) {
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${BAND_CLASS[band]}`}
+      className={`relative inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${BAND_CLASS[band]}`}
     >
       {band === MAX_DEPTH_LEVEL && <FiCheck className="h-3 w-3 flex-shrink-0" aria-hidden />}
       {label}
       {implied && <FiAlertCircle className="h-3 w-3 flex-shrink-0 opacity-80" aria-hidden />}
       {srLabel && <span className="sr-only">({srLabel})</span>}
+      {required && (
+        <>
+          <RequiredBadge className="absolute -right-1.5 -top-1.5" />
+          <span className="sr-only">({DEPTH_LEVEL_GUIDE.required.label})</span>
+        </>
+      )}
     </span>
   );
 }

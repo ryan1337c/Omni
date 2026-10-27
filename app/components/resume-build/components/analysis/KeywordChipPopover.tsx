@@ -73,7 +73,7 @@ export default function KeywordChipPopover({ label, chip, alternatives = [], cla
         }}
         className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-1 dark:focus-visible:ring-offset-slate-800"
       >
-        <KeywordTag label={label} band={chip.band} srLabel={chip.srLabel} implied={chip.implied} />
+        <KeywordTag label={label} band={chip.band} srLabel={chip.srLabel} required={chip.required} implied={chip.implied} />
       </button>
       <span
         ref={popoverRef}

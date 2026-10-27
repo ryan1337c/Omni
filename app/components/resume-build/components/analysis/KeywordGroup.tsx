@@ -4,7 +4,7 @@ import type { RequirementResult } from '@/lib/resume/keywordMatch';
 import type { ResumeContent } from '@/lib/resume/schema';
 
 import KeywordChipPopover from './KeywordChipPopover';
-import { keywordChip } from './depthBands';
+import { keywordChip, requiredFirst } from './depthBands';
 
 type KeywordGroupProps = {
   title: string;
@@ -41,8 +41,9 @@ export default function KeywordGroup({ title, subtitle, requirements, scoredResu
         </span>
       </div>
 
-      <div className="flex flex-wrap gap-1.5">
-        {requirements.map((requirement, index) => (
+      {/* Wider than the chip gap elsewhere: the Required badge overhangs each chip's top-right corner. */}
+      <div className="flex flex-wrap gap-2.5 pt-1">
+        {requiredFirst(requirements).map((requirement, index) => (
           <KeywordChipPopover
             key={`${requirement.best.keyword.term}-${index}`}
             label={requirementLabel(requirement)}

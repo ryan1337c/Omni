@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { KeywordMatchResult } from "@/lib/resume/keywordMatch";
+import type { KeywordMatchResult, RequirementResult } from "@/lib/resume/keywordMatch";
 import { parseResumeContent } from "@/lib/resume/parseResumeJson";
 import type { JdKeyword, SkillEvidence } from "@/lib/resume/schema";
 
@@ -15,6 +15,8 @@ import {
   keywordMatchHint,
   matchBandName,
   NOT_NAMED_GUIDE,
+  requiredFirst,
+  requiredSummary,
 } from "./depthBands";
 
 function keyword(category: JdKeyword["category"]): JdKeyword {
@@ -103,6 +105,47 @@ describe("coverageSummary", () => {
   });
 });
 
+function requirementOf(term: string, importance: JdKeyword["importance"], matched: boolean): RequirementResult {
+  const best: KeywordMatchResult = {
+    keyword: { ...keyword("other"), term, importance },
+    level: matched ? 0.95 : 0.1,
+    credit: matched ? 1 : 0,
+    matched,
+    evidence: { kind: "other", matchProbability: matched ? 0.95 : 0.1 },
+  };
+  return { options: [best], best };
+}
+
+describe("requiredFirst", () => {
+  it("puts Required Requirements before Preferred ones, keeping job description order within each", () => {
+    const requirements = [
+      requirementOf("A", "preferred", true),
+      requirementOf("B", "required", false),
+      requirementOf("C", "preferred", false),
+      requirementOf("D", "required", true),
+    ];
+
+    expect(requiredFirst(requirements).map(({ best }) => best.keyword.term)).toEqual(["B", "D", "A", "C"]);
+  });
+});
+
+describe("requiredSummary", () => {
+  it("counts Required Requirements that earn any Credit, ignoring Preferred ones", () => {
+    const requirements = [
+      requirementOf("A", "required", true),
+      requirementOf("B", "required", false),
+      requirementOf("C", "required", true),
+      requirementOf("D", "preferred", true),
+    ];
+
+    expect(requiredSummary(requirements)).toBe("2 of 3 required shown");
+  });
+
+  it("is null when nothing is Required", () => {
+    expect(requiredSummary([requirementOf("A", "preferred", true)])).toBeNull();
+  });
+});
+
 describe("keywordLevelHint", () => {
   it("shows the Depth Level out of three", () => {
     expect(keywordLevelHint("required", 3)).toBe("Required - Applied / Production (3/3)");
@@ -181,6 +224,15 @@ describe("DEPTH_LEVEL_GUIDE", () => {
     expect(hard?.states.find((state) => state.name === "Familiarity")?.meaning).toBe(chip.meaning);
   });
 
+  it("explains the Required marker once, on a sample chip", () => {
+    expect(DEPTH_LEVEL_GUIDE.required).toEqual({
+      label: "Required",
+      band: 2,
+      meaning:
+        "The job description lists this as required. It counts for more of your Match Score than a Preferred one, so close these gaps first.",
+    });
+  });
+
   it("explains the not named marker once, on a Depth Level chip, with a generic tip for Hard and an optional one for Soft Skills", () => {
     expect(DEPTH_LEVEL_GUIDE.notNamed).toEqual({
       label: "not named",
@@ -213,6 +265,7 @@ describe("keywordChip", () => {
       srLabel: "Shown",
       hint: "Required - Shown (95%)",
       meaning: guideMeaning("other", "Shown"),
+      required: true,
       implied: false,
       shownIn: [],
       tip: null,
@@ -260,6 +313,7 @@ describe("keywordChip", () => {
       srLabel: "Familiarity, 2 of 3",
       hint: "Required - Familiarity (2/3)",
       meaning: guideMeaning("hard", "Familiarity"),
+      required: true,
       implied: false,
       shownIn: [],
       tip: null,
@@ -283,10 +337,23 @@ describe("keywordChip", () => {
       srLabel: "Applied / Production, 3 of 3, not named",
       hint: "Required - Applied / Production (3/3)",
       meaning: guideMeaning("hard", "Applied / Production"),
+      required: true,
       implied: true,
       shownIn: ["Staff Engineer, Acme", "Tracker"],
       tip: 'Add "Skill" to that Bullet.',
     });
+  });
+
+  it("marks a Required Keyword as required and a Preferred one as not", () => {
+    const evidence = { kind: "other", matchProbability: 0.95 } as const;
+    const required = keywordChip({ keyword: keyword("other"), level: 0.95, credit: 1, matched: true, evidence }, resume);
+    const preferred = keywordChip(
+      { keyword: { ...keyword("hard"), importance: "preferred" }, level: 1, credit: 0, matched: true, evidence: namedSkill(1) },
+      resume,
+    );
+
+    expect(required.required).toBe(true);
+    expect(preferred.required).toBe(false);
   });
 
   it("frames the tip for an Implied Soft Skill as optional", () => {
