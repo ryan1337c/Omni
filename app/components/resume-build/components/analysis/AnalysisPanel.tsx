@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { FiLoader, FiRefreshCw } from 'react-icons/fi';
 import { resolveCategory, type RequirementResult, type ResumeScore } from '@/lib/resume/keywordMatch';
 import type { KeywordCategory, KeywordScoring, ResumeContent } from '@/lib/resume/schema';
@@ -8,9 +8,9 @@ import type { KeywordCategory, KeywordScoring, ResumeContent } from '@/lib/resum
 import { KEYWORD_GROUPS, SCORE_RING_COLORS } from '../../constants';
 import KeywordGroup from './KeywordGroup';
 import Legend from './Legend';
-import { coverageSummary, requiredSummary } from './depthBands';
-import RequiredBadge from './RequiredBadge';
+import { coverageSummary, REQUIRED_GUIDE, requiredSummary } from './depthBands';
 import ScoreRing from './ScoreRing';
+import Switch from './Switch';
 
 type AnalysisPanelProps = {
   analysis: ResumeScore;
@@ -48,7 +48,8 @@ export default function AnalysisPanel({
   const { score, label, requirements } = analysis;
   const groups = useMemo(() => groupByCategory(requirements), [requirements]);
   const summary = useMemo(() => coverageSummary(requirements.map(({ best }) => best)), [requirements]);
-  const requiredLine = useMemo(() => requiredSummary(requirements), [requirements]);
+  const requiredShown = useMemo(() => requiredSummary(requirements), [requirements]);
+  const [highlightRequired, setHighlightRequired] = useState(false);
   const canReanalyze = isStale && !isScoring;
 
   return (
@@ -60,12 +61,6 @@ export default function AnalysisPanel({
             {label} for <em className="break-words">{jobTitle.trim() || 'this role'}</em>
           </h2>
           <p className="mt-1 text-sm text-slate-500 dark:text-gray-400">{summary}</p>
-          {requiredLine && (
-            <p className="mt-1 flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-gray-200">
-              <RequiredBadge />
-              {requiredLine}
-            </p>
-          )}
           {scoredBy === 'keyword' && (
             <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">
               Meaning-based scoring unavailable, so skills were matched by exact wording only:
@@ -103,7 +98,21 @@ export default function AnalysisPanel({
         </div>
       </div>
 
-      <Legend />
+      {requiredShown && (
+        <section className="flex items-center justify-between gap-4 rounded-lg border border-yellow-300/60 bg-yellow-50/60 px-3 py-2.5 dark:border-yellow-300/20 dark:bg-yellow-300/5">
+          <div className="min-w-0">
+            <div className="flex items-baseline gap-2">
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-white">{REQUIRED_GUIDE.title}</h3>
+              <span className="text-xs font-medium tabular-nums text-slate-500 dark:text-gray-400">{requiredShown}</span>
+            </div>
+            <p className="mt-0.5 text-xs text-slate-500 dark:text-gray-400">{REQUIRED_GUIDE.meaning}</p>
+          </div>
+          <label className="flex flex-shrink-0 items-center gap-2 text-xs text-slate-600 dark:text-gray-300">
+            Highlight required
+            <Switch checked={highlightRequired} onChange={setHighlightRequired} />
+          </label>
+        </section>
+      )}
 
       {KEYWORD_GROUPS.map(({ category, title, subtitle }) =>
         groups[category].length > 0 ? (
@@ -113,6 +122,7 @@ export default function AnalysisPanel({
             subtitle={subtitle}
             requirements={groups[category]}
             scoredResume={scoredResume}
+            highlightRequired={highlightRequired}
           />
         ) : null,
       )}
@@ -124,23 +134,10 @@ export default function AnalysisPanel({
             Mark matched keywords on the resume
           </p>
         </div>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={isHighlighting}
-          aria-label="Highlight keywords"
-          onClick={() => onHighlightingChange(!isHighlighting)}
-          className={`relative h-6 w-11 flex-shrink-0 rounded-full transition-colors focus:outline-none hover:ring-1 hover:ring-sky-500 hover:ring-offset-2 dark:hover:ring-offset-slate-800 ${
-            isHighlighting ? 'bg-sky-600 dark:bg-sky-500' : 'bg-slate-300 dark:bg-slate-600'
-          }`}
-        >
-          <span
-            className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
-              isHighlighting ? 'translate-x-5' : 'translate-x-0'
-            }`}
-          />
-        </button>
+        <Switch checked={isHighlighting} onChange={onHighlightingChange} label="Highlight keywords" />
       </div>
+
+      <Legend />
     </div>
   );
 }

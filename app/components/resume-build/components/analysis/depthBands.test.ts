@@ -5,6 +5,7 @@ import { parseResumeContent } from "@/lib/resume/parseResumeJson";
 import type { JdKeyword, SkillEvidence } from "@/lib/resume/schema";
 
 import {
+  chipEmphasis,
   coverageSummary,
   depthBand,
   depthBandName,
@@ -129,6 +130,18 @@ describe("requiredFirst", () => {
   });
 });
 
+describe("chipEmphasis", () => {
+  it("rings Required chips and fades the rest while highlighting Required", () => {
+    expect(chipEmphasis({ required: true }, true)).toBe("ring");
+    expect(chipEmphasis({ required: false }, true)).toBe("dim");
+  });
+
+  it("leaves every chip plain otherwise", () => {
+    expect(chipEmphasis({ required: true }, false)).toBeUndefined();
+    expect(chipEmphasis({ required: false }, false)).toBeUndefined();
+  });
+});
+
 describe("requiredSummary", () => {
   it("counts Required Requirements that earn any Credit, ignoring Preferred ones", () => {
     const requirements = [
@@ -138,7 +151,7 @@ describe("requiredSummary", () => {
       requirementOf("D", "preferred", true),
     ];
 
-    expect(requiredSummary(requirements)).toBe("2 of 3 required shown");
+    expect(requiredSummary(requirements)).toBe("2 of 3 shown");
   });
 
   it("is null when nothing is Required", () => {
@@ -222,15 +235,6 @@ describe("DEPTH_LEVEL_GUIDE", () => {
     );
 
     expect(hard?.states.find((state) => state.name === "Familiarity")?.meaning).toBe(chip.meaning);
-  });
-
-  it("explains the Required marker once, on a sample chip", () => {
-    expect(DEPTH_LEVEL_GUIDE.required).toEqual({
-      label: "Required",
-      band: 2,
-      meaning:
-        "The job description lists this as required. It counts for more of your Match Score than a Preferred one, so close these gaps first.",
-    });
   });
 
   it("explains the not named marker once, on a Depth Level chip, with a generic tip for Hard and an optional one for Soft Skills", () => {

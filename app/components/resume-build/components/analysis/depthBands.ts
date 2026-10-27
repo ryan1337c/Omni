@@ -174,14 +174,14 @@ export const NOT_NAMED_GUIDE = {
     `Optional: if it reads naturally, add ${term ? `"${term}"` : "the trait's name"} to that Bullet. The example already earns most of the credit.`,
 };
 
+/** The Required section above the keyword groups. */
+export const REQUIRED_GUIDE = {
+  title: "Required",
+  meaning: "Counts for more of your Match Score than Preferred, so close these gaps first.",
+};
+
 export type DepthLevelGuide = {
   groups: readonly GuideGroup[];
-  required: {
-    label: string;
-    /** Sample chip look; any chip can carry the marker. */
-    band: DepthBand;
-    meaning: string;
-  };
   notNamed: {
     label: string;
     /** Sample chip look; any Depth Level can carry the marker. */
@@ -192,15 +192,9 @@ export type DepthLevelGuide = {
   };
 };
 
-/** The legend's full guide: every chip state, plus one entry each for the Required and "not named" markers. */
+/** The legend's full guide: every chip state, plus one entry for the "not named" marker. */
 export const DEPTH_LEVEL_GUIDE: DepthLevelGuide = {
   groups: KEYWORD_GUIDE,
-  required: {
-    label: "Required",
-    band: FAMILIARITY_BAND,
-    meaning:
-      "The job description lists this as required. It counts for more of your Match Score than a Preferred one, so close these gaps first.",
-  },
   notNamed: {
     label: NOT_NAMED_GUIDE.label,
     band: HANDS_ON_BAND,
@@ -307,12 +301,21 @@ export function requiredFirst(requirements: RequirementResult[]): RequirementRes
   return [...requirements.filter(isRequired), ...requirements.filter((requirement) => !isRequired(requirement))];
 }
 
-/** "5 of 7 required shown", counting any Credit like the group counts; null when nothing is Required. */
+/** "ring" marks a highlighted chip and "dim" fades one that is not. */
+export type ChipEmphasis = "ring" | "dim";
+
+/** While Required is highlighted, Required chips are ringed and the rest faded; otherwise none are. */
+export function chipEmphasis(chip: Pick<KeywordChip, "required">, highlightRequired: boolean): ChipEmphasis | undefined {
+  if (!highlightRequired) return undefined;
+  return chip.required ? "ring" : "dim";
+}
+
+/** "5 of 7 shown" for Required Requirements, counting any Credit like the group counts; null when nothing is Required. */
 export function requiredSummary(requirements: RequirementResult[]): string | null {
   const required = requirements.filter(isRequired);
   if (required.length === 0) return null;
   const shown = required.filter(({ best }) => best.matched).length;
-  return `${shown} of ${required.length} required shown`;
+  return `${shown} of ${required.length} shown`;
 }
 
 function guideMeaning(category: JdKeyword["category"], name: GuideState["name"]): string {

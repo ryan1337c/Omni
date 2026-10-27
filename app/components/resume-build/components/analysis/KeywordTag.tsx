@@ -3,18 +3,18 @@ import { FiAlertCircle, FiCheck } from 'react-icons/fi';
 
 import { MAX_DEPTH_LEVEL } from '@/lib/resume/keywordMatch';
 
-import RequiredBadge from './RequiredBadge';
-import { DEPTH_LEVEL_GUIDE, type DepthBand } from './depthBands';
+import { REQUIRED_GUIDE, type ChipEmphasis, type DepthBand } from './depthBands';
 
 type KeywordTagProps = {
   label: ReactNode;
   band: DepthBand;
   /** Screen-reader text after the label, e.g. "Familiarity, 2 of 3". */
   srLabel?: string;
-  /** A Required Keyword: adds a corner badge. */
+  /** A Required Keyword: announced to screen readers. */
   required?: boolean;
   /** An Implied Skill: keeps its band look and adds a "not named" marker. */
   implied?: boolean;
+  emphasis?: ChipEmphasis;
 };
 
 /** Absent is dashed; fill strengthens with depth. */
@@ -25,25 +25,23 @@ const BAND_CLASS: Record<DepthBand, string> = {
   3: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-300',
 };
 
-/**
- * One keyword chip. The check is reserved for the top band; lower bands are outline or fill only.
- * Required sits on the corner and "not named" inline after the label, so the two never share a spot.
- */
-export default function KeywordTag({ label, band, srLabel, required = false, implied = false }: KeywordTagProps) {
+/** The offset keeps the gold ring apart from the amber Mentioned border. */
+const EMPHASIS_CLASS: Record<ChipEmphasis, string> = {
+  ring: 'ring-2 ring-yellow-400 ring-offset-2 ring-offset-white dark:ring-yellow-300 dark:ring-offset-slate-800',
+  dim: 'opacity-40',
+};
+
+/** One keyword chip. The check is reserved for the top band; lower bands are outline or fill only. */
+export default function KeywordTag({ label, band, srLabel, required = false, implied = false, emphasis }: KeywordTagProps) {
   return (
     <span
-      className={`relative inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${BAND_CLASS[band]}`}
+      className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition ${BAND_CLASS[band]} ${emphasis ? EMPHASIS_CLASS[emphasis] : ''}`}
     >
       {band === MAX_DEPTH_LEVEL && <FiCheck className="h-3 w-3 flex-shrink-0" aria-hidden />}
       {label}
       {implied && <FiAlertCircle className="h-3 w-3 flex-shrink-0 opacity-80" aria-hidden />}
       {srLabel && <span className="sr-only">({srLabel})</span>}
-      {required && (
-        <>
-          <RequiredBadge className="absolute -right-1.5 -top-1.5" />
-          <span className="sr-only">({DEPTH_LEVEL_GUIDE.required.label})</span>
-        </>
-      )}
+      {required && <span className="sr-only">({REQUIRED_GUIDE.title})</span>}
     </span>
   );
 }

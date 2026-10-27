@@ -1,15 +1,14 @@
 "use client";
 
 import { useId, useState, type ReactNode } from 'react';
-import { FiAlertCircle, FiChevronDown } from 'react-icons/fi';
+import { FiChevronDown } from 'react-icons/fi';
 
 import KeywordTag from './KeywordTag';
-import RequiredBadge from './RequiredBadge';
 import { DEPTH_BANDS, DEPTH_LEVEL_GUIDE as GUIDE, depthBandName } from './depthBands';
 
 const LEGEND = DEPTH_BANDS.map((band) => ({ band, label: depthBandName(band) }));
 
-function GuideRow({ chip, meaning, children }: { chip: ReactNode; meaning: string; children?: ReactNode }) {
+function GuideRow({ chip, meaning, children }: { chip: ReactNode; meaning: string; children: ReactNode }) {
   return (
     <li className="space-y-1">
       {chip}
@@ -47,18 +46,6 @@ export default function Legend() {
         </button>
       </div>
 
-      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
-        <span className="font-medium text-slate-700 dark:text-gray-200">Markers:</span>
-        <span className="flex items-center gap-1.5">
-          <RequiredBadge /> {GUIDE.required.label}
-        </span>
-        <span aria-hidden>·</span>
-        <span className="flex items-center gap-1.5">
-          <FiAlertCircle className="h-3 w-3 flex-shrink-0" aria-hidden />
-          <span className="inline-block first-letter:uppercase">{GUIDE.notNamed.label}</span>
-        </span>
-      </div>
-
       <div id={guideId} hidden={!isOpen} className="mt-4 space-y-4">
         {GUIDE.groups.map((group) => (
           <section key={group.category}>
@@ -76,16 +63,6 @@ export default function Legend() {
             </ul>
           </section>
         ))}
-
-        <section>
-          <h4 className="mb-2 text-xs font-semibold text-slate-900 dark:text-white">{GUIDE.required.label}</h4>
-          <ul>
-            <GuideRow
-              chip={<KeywordTag label="Skill" band={GUIDE.required.band} required />}
-              meaning={GUIDE.required.meaning}
-            />
-          </ul>
-        </section>
 
         <section>
           <h4 className="mb-2 text-xs font-semibold text-slate-900 first-letter:uppercase dark:text-white">

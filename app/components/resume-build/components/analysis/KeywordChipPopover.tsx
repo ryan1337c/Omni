@@ -3,7 +3,7 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 
 import KeywordTag from './KeywordTag';
-import type { KeywordChip } from './depthBands';
+import type { ChipEmphasis, KeywordChip } from './depthBands';
 
 type KeywordChipPopoverProps = {
   label: ReactNode;
@@ -12,6 +12,7 @@ type KeywordChipPopoverProps = {
   alternatives?: { term: string; state: string }[];
   /** An Other Keyword's Clause; "" when it has none. */
   clause?: string;
+  emphasis?: ChipEmphasis;
 };
 
 /** Gap kept between the popover and the viewport edge, in px. */
@@ -22,7 +23,7 @@ const VIEWPORT_MARGIN = 8;
  * Opens on click, tap, or keyboard focus; closes on Escape, outside press, or focus leaving.
  * The `role="status"` region stays mounted so inserted content is announced.
  */
-export default function KeywordChipPopover({ label, chip, alternatives = [], clause = '' }: KeywordChipPopoverProps) {
+export default function KeywordChipPopover({ label, chip, alternatives = [], clause = '', emphasis }: KeywordChipPopoverProps) {
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLSpanElement>(null);
   const popoverRef = useRef<HTMLSpanElement>(null);
@@ -73,7 +74,7 @@ export default function KeywordChipPopover({ label, chip, alternatives = [], cla
         }}
         className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-1 dark:focus-visible:ring-offset-slate-800"
       >
-        <KeywordTag label={label} band={chip.band} srLabel={chip.srLabel} required={chip.required} implied={chip.implied} />
+        <KeywordTag label={label} band={chip.band} srLabel={chip.srLabel} required={chip.required} implied={chip.implied} emphasis={emphasis} />
       </button>
       <span
         ref={popoverRef}

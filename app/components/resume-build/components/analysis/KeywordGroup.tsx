@@ -4,7 +4,7 @@ import type { RequirementResult } from '@/lib/resume/keywordMatch';
 import type { ResumeContent } from '@/lib/resume/schema';
 
 import KeywordChipPopover from './KeywordChipPopover';
-import { keywordChip, requiredFirst } from './depthBands';
+import { chipEmphasis, keywordChip, requiredFirst } from './depthBands';
 
 type KeywordGroupProps = {
   title: string;
@@ -12,6 +12,8 @@ type KeywordGroupProps = {
   requirements: RequirementResult[];
   /** The resume `requirements` were scored against, for naming the Entries that showed an Implied Skill. */
   scoredResume: ResumeContent;
+  /** Ring Required chips and fade the rest. */
+  highlightRequired: boolean;
 };
 
 /** "Expo or React Native", with the option that earns the Credit emphasized once it matches. */
@@ -25,7 +27,7 @@ function requirementLabel({ options, best }: RequirementResult) {
   ));
 }
 
-export default function KeywordGroup({ title, subtitle, requirements, scoredResume }: KeywordGroupProps) {
+export default function KeywordGroup({ title, subtitle, requirements, scoredResume, highlightRequired }: KeywordGroupProps) {
   // `matched` is true for Explicit and Implied Skills and for Other Keywords that earn credit.
   const presentCount = requirements.filter(({ best }) => best.matched).length;
 
@@ -41,24 +43,28 @@ export default function KeywordGroup({ title, subtitle, requirements, scoredResu
         </span>
       </div>
 
-      {/* Wider than the chip gap elsewhere: the Required badge overhangs each chip's top-right corner. */}
-      <div className="flex flex-wrap gap-2.5 pt-1">
-        {requiredFirst(requirements).map((requirement, index) => (
-          <KeywordChipPopover
-            key={`${requirement.best.keyword.term}-${index}`}
-            label={requirementLabel(requirement)}
-            chip={keywordChip(requirement.best, scoredResume)}
-            alternatives={
-              requirement.options.length > 1
-                ? requirement.options.map((option) => ({
-                    term: option.keyword.term,
-                    state: keywordChip(option, scoredResume).srLabel,
-                  }))
-                : []
-            }
-            clause={requirement.best.keyword.clause}
-          />
-        ))}
+      {/* Wider than the chip gap elsewhere: the highlight ring and its offset extend past each chip. */}
+      <div className="flex flex-wrap gap-2.5">
+        {requiredFirst(requirements).map((requirement, index) => {
+          const chip = keywordChip(requirement.best, scoredResume);
+          return (
+            <KeywordChipPopover
+              key={`${requirement.best.keyword.term}-${index}`}
+              label={requirementLabel(requirement)}
+              chip={chip}
+              emphasis={chipEmphasis(chip, highlightRequired)}
+              alternatives={
+                requirement.options.length > 1
+                  ? requirement.options.map((option) => ({
+                      term: option.keyword.term,
+                      state: keywordChip(option, scoredResume).srLabel,
+                    }))
+                  : []
+              }
+              clause={requirement.best.keyword.clause}
+            />
+          );
+        })}
       </div>
     </section>
   );
