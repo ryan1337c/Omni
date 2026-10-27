@@ -38,8 +38,8 @@ export default function ResultsTabs({ panels }: ResultsTabsProps) {
                 className={`w-full rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
                   selected
                     ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white'
-                    : 'text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-200'
-                } disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:text-slate-500 dark:disabled:hover:text-gray-400`}
+                    : 'text-slate-600 hover:text-slate-900 dark:text-gray-400 dark:hover:text-gray-200'
+                } disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:text-slate-600 dark:disabled:hover:text-gray-400`}
               >
                 {label}
               </button>
