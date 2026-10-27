@@ -34,7 +34,7 @@ export default function AccountSection({
           <button
             type="button"
             onClick={onEditName}
-            className="flex min-h-14 w-full items-center justify-between gap-8 py-3 text-left transition-colors hover:text-violet-700 dark:hover:text-purple-300"
+            className="flex min-h-14 w-full items-center justify-between gap-8 py-3 text-left transition-colors hover:text-violet-700 dark:hover:text-indigo-300"
           >
             <span className="text-sm font-medium text-slate-800 dark:text-slate-200">
               Name

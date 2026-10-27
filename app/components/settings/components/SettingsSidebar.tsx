@@ -50,7 +50,7 @@ export default function SettingsSidebar({
               onClick={() => onSelectSection(id)}
               className={`flex flex-shrink-0 items-center gap-3 whitespace-nowrap rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-colors sm:w-full ${
                 isActive
-                  ? "bg-violet-100 text-violet-800 dark:bg-purple-400/15 dark:text-purple-200"
+                  ? "bg-violet-100 text-violet-800 dark:bg-indigo-500/20 dark:text-indigo-200"
                   : "text-slate-600 hover:bg-slate-200/70 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/10 dark:hover:text-white"
               }`}
             >

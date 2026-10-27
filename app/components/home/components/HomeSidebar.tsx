@@ -188,7 +188,7 @@ export default function HomeSidebar({
                   <LockKeyhole
                     size={14}
                     aria-label="Pro feature"
-                    className={`ml-auto flex-shrink-0 text-violet-600 dark:text-purple-300 transition-opacity duration-300 ${isSidebarExpanded ? "opacity-100" : "opacity-0"}`}
+                    className={`ml-auto flex-shrink-0 text-violet-600 dark:text-indigo-300 transition-opacity duration-300 ${isSidebarExpanded ? "opacity-100" : "opacity-0"}`}
                   />
                 )}
               </div>
@@ -220,7 +220,7 @@ export default function HomeSidebar({
                   <LockKeyhole
                     size={14}
                     aria-label="Pro feature"
-                    className={`ml-auto flex-shrink-0 text-violet-600 dark:text-purple-300 transition-opacity duration-300 ${isSidebarExpanded ? "opacity-100" : "opacity-0"}`}
+                    className={`ml-auto flex-shrink-0 text-violet-600 dark:text-indigo-300 transition-opacity duration-300 ${isSidebarExpanded ? "opacity-100" : "opacity-0"}`}
                   />
                 )}
               </div>
@@ -255,7 +255,7 @@ export default function HomeSidebar({
                   <LockKeyhole
                     size={14}
                     aria-label="Pro feature"
-                    className={`ml-auto flex-shrink-0 text-violet-600 dark:text-purple-300 transition-opacity duration-300 ${isSidebarExpanded ? "opacity-100" : "opacity-0"}`}
+                    className={`ml-auto flex-shrink-0 text-violet-600 dark:text-indigo-300 transition-opacity duration-300 ${isSidebarExpanded ? "opacity-100" : "opacity-0"}`}
                   />
                 )}
               </div>

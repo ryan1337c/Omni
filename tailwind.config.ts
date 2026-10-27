@@ -153,6 +153,13 @@ const config: Config = {
 			'0%': { transform: 'translate(-50%, -100%)', boxShadow: 'none' },
 			'100%': { transform: 'translate(-50%, 0)', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)' },
 		},
+		heartbeat: {
+			'0%, 100%': { transform: 'scale(1)' },
+			'14%': { transform: 'scale(1.35)' },
+			'28%': { transform: 'scale(1)' },
+			'42%': { transform: 'scale(1.35)' },
+			'70%': { transform: 'scale(1)' },
+		},
 
   		},
   		animation: {
@@ -167,6 +174,7 @@ const config: Config = {
         	'spin-around': 'spin-around calc(var(--speed, 3s) * 2) infinite linear',
 			 "shine": "shine 3s infinite",
 		 	'slide-down': 'slide-down 0.3s ease-in-out forwards',
+			heartbeat: 'heartbeat 1.1s ease-in-out',
   		},
   		borderRadius: {
   			lg: 'var(--radius)',

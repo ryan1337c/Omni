@@ -77,7 +77,7 @@ export default function EditNameDialog({
           <button
             type="submit"
             disabled={isSavingName || !nameDraft.trim()}
-            className="rounded-full bg-violet-600 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-purple-500 dark:hover:bg-purple-600"
+            className="rounded-full bg-violet-600 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-btnDark dark:hover:bg-btnDarkHover"
           >
             {isSavingName ? "Saving..." : "Save"}
           </button>
