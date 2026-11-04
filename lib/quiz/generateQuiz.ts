@@ -1,24 +1,32 @@
 import { MAX_CONTEXT_CHARS } from "@/lib/credits/contextMeter";
 import { MAX_SAMPLE_TEST_QUESTIONS, QuizGenerationError } from "./errors";
 import { extractDocumentText, type QuizDocument } from "./extractDocumentText";
+import type { GenerationSourceKind } from "./generationSourceKinds";
 
-export type GenerationSource =
-  | { kind: "fromScratch"; text: string }
-  | { kind: "notes"; document: QuizDocument; focus?: string }
-  | { kind: "sampleTest"; document: QuizDocument };
+type ByKind<Fields extends Record<GenerationSourceKind, object>> = {
+  [K in GenerationSourceKind]: { kind: K } & Fields[K];
+}[GenerationSourceKind];
+
+/** What the user gave for the chosen Generation Source. */
+export type GenerationSourceInput = ByKind<{
+  fromScratch: { text: string };
+  notes: { document: QuizDocument; focus?: string };
+  sampleTest: { document: QuizDocument };
+}>;
 
 export type GenerateQuizInput = {
   title: string;
-  source: GenerationSource;
+  source: GenerationSourceInput;
   /** Ignored for Sample Test, which takes every question in the document. */
   questionCount: number;
 };
 
 /** A Generation Source with its documents resolved to text. */
-export type PreparedSource =
-  | { kind: "fromScratch"; text: string }
-  | { kind: "notes"; notesText: string; focus: string }
-  | { kind: "sampleTest"; testText: string };
+type PreparedSource = ByKind<{
+  fromScratch: { text: string };
+  notes: { notesText: string; focus: string };
+  sampleTest: { testText: string };
+}>;
 
 export type PreparedQuiz = {
   title: string;
@@ -66,7 +74,7 @@ function pricedSourceText(source: PreparedSource): string[] {
   }
 }
 
-async function prepareSource(source: GenerationSource): Promise<PreparedSource> {
+async function prepareSource(source: GenerationSourceInput): Promise<PreparedSource> {
   switch (source.kind) {
     case "fromScratch": {
       const text = source.text.trim();
@@ -100,8 +108,13 @@ function withinContextLimit(text: string): string {
   return text;
 }
 
-export function buildQuizSystemPrompt(prepared: PreparedQuiz): string {
+const MAX_CHOICES = 5;
+
+function buildQuizSystemPrompt(prepared: PreparedQuiz): string {
   const sampleTest = prepared.source.kind === "sampleTest";
+  const exampleChoices = JSON.stringify(
+    Array.from({ length: MAX_CHOICES }, (_, index) => String.fromCharCode(65 + index)),
+  );
   return [
     "You are a helpful quiz generator.",
     "You must generate a valid JSON object.",
@@ -111,13 +124,13 @@ export function buildQuizSystemPrompt(prepared: PreparedQuiz): string {
     sampleTest
       ? '2. Otherwise, take every question from the test, in order, without dropping any. If the test has no recognizable questions, return: { "questions": [] }'
       : "2. Otherwise, generate a quiz with exactly the requested number of questions.",
-    '3. Format: { "questions": [{ "question_text": "...", "choices": ["A", "B", "C", "D", "E"], "correct_index": 0, "explanation": "..." }] }',
+    `3. Format: { "questions": [{ "question_text": "...", "choices": ${exampleChoices}, "correct_index": 0, "explanation": "..." }] }`,
     sampleTest
-      ? "4. Keep printed choices word for word, in order, however many there are. Write 5 choices for open-ended questions."
-      : "4. Each question MUST have exactly 5 choices.",
+      ? `4. Keep printed choices word for word, in order, however many there are. Write ${MAX_CHOICES} choices for open-ended questions.`
+      : `4. Each question MUST have exactly ${MAX_CHOICES} choices.`,
     sampleTest
       ? '5. "correct_index" is the 0-based index of the correct choice. Use the test\'s answer key when it has one; otherwise work out the correct choice.'
-      : '5. "correct_index" must be an integer (0-4).',
+      : `5. "correct_index" must be an integer (0-${MAX_CHOICES - 1}).`,
     '6. Each question MUST have a non-empty "explanation" of 1-3 sentences saying why the correct choice is right. Mention the most tempting wrong choice when that helps.',
     ...(sampleTest
       ? ["7. When the test prints its own explanation for a question, use it as the explanation."]
@@ -126,7 +139,7 @@ export function buildQuizSystemPrompt(prepared: PreparedQuiz): string {
 }
 
 // The """ delimiters mark the user's text as data rather than instructions.
-export function buildQuizUserPrompt(prepared: PreparedQuiz): string {
+function buildQuizUserPrompt(prepared: PreparedQuiz): string {
   const { source } = prepared;
   const header = `Context/Title: "${prepared.title}"`;
 
@@ -220,7 +233,6 @@ function checkSampleTestQuestionCount(raw: unknown) {
 /** Questions over `max` Choices are rejected, or trimmed to `max` when `trimExtra` is set. */
 type ChoiceCount = { min: number; max: number; trimExtra: boolean };
 
-const MAX_CHOICES = 5;
 const GENERATED_CHOICES: ChoiceCount = { min: MAX_CHOICES, max: MAX_CHOICES, trimExtra: false };
 const SAMPLE_TEST_CHOICES: ChoiceCount = { min: 2, max: MAX_CHOICES, trimExtra: true };
 
@@ -256,14 +268,14 @@ function parseQuestions(raw: unknown, choiceCount: ChoiceCount): GeneratedQuesti
     }
     return {
       question_text,
-      ...keepCorrectChoice(choices, correct_index, choiceCount.max),
+      ...trimChoicesKeepingCorrect(choices, correct_index, choiceCount.max),
       explanation: explanation.trim(),
     };
   });
 }
 
 /** Keeps the correct Choice plus the first others, in printed order, up to `max`. */
-function keepCorrectChoice(choices: string[], correctIndex: number, max: number) {
+function trimChoicesKeepingCorrect(choices: string[], correctIndex: number, max: number) {
   if (choices.length <= max) {
     return { choices, correct_index: correctIndex };
   }

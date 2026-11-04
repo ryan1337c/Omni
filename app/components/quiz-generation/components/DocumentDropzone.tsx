@@ -4,7 +4,7 @@ import { useRef, useState, type DragEvent } from "react";
 import { FileText, UploadCloud, X } from "lucide-react";
 
 import FieldError from "@/app/components/shared/generation/components/FieldError";
-import { DOCUMENT_ACCEPT } from "@/lib/quiz/documentRules";
+import { DOCUMENT_ACCEPT, MAX_DOCUMENT_SIZE_LABEL } from "@/lib/quiz/documentRules";
 
 type DocumentDropzoneProps = {
   label: string;
@@ -120,7 +120,7 @@ export default function DocumentDropzone({
               </span>{" "}
               or drag and drop
             </p>
-            <p className="text-xs text-slate-500">PDF or DOCX, up to 4 MB</p>
+            <p className="text-xs text-slate-500">PDF or DOCX, up to {MAX_DOCUMENT_SIZE_LABEL}</p>
           </>
         )}
       </div>

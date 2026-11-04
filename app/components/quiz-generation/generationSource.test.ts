@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   generationSourceReducer,
   initialGenerationSourceState,
+  nextSourceError,
+  updateInputs,
   usesQuestionCount,
   validateGenerationSource,
   type GenerationSourceAction,
@@ -39,6 +41,16 @@ describe("validateGenerationSource", () => {
     });
 
     expect(validateGenerationSource(state)).toBeUndefined();
+  });
+
+  it("rejects From Scratch text over 40,000 characters with the server's wording", () => {
+    const withText = (text: string) =>
+      apply({ type: "updateInputs", source: "fromScratch", inputs: { text } });
+
+    expect(validateGenerationSource(withText("a".repeat(40_001)))).toBe(
+      "Your text is over the 40,000-character limit. Shorten or split it and try again.",
+    );
+    expect(validateGenerationSource(withText("a".repeat(40_000)))).toBeUndefined();
   });
 });
 
@@ -92,7 +104,7 @@ describe("Sample Test", () => {
 
   it("requires a file", () => {
     expect(validateGenerationSource(apply({ type: "select", source: "sampleTest" }))).toBe(
-      "Please upload a PDF or DOCX file.",
+      "Upload a PDF or DOCX file.",
     );
   });
 
@@ -139,6 +151,35 @@ describe("Sample Test", () => {
   });
 });
 
+describe("nextSourceError", () => {
+  const image = new File(["x"], "notes.png", { type: "image/png" });
+  const change = (current: string | undefined, ...actions: GenerationSourceAction[]) => {
+    const before = apply(...actions.slice(0, -1));
+    const action = actions[actions.length - 1];
+    return nextSourceError(current, action, generationSourceReducer(before, action));
+  };
+
+  it("shows a chosen file's problem at once", () => {
+    expect(
+      change(undefined, { type: "select", source: "notes" }, updateInputs("notes", { file: image })),
+    ).toBe("Upload a PDF or DOCX file.");
+  });
+
+  it("waits for submit while typing From Scratch text", () => {
+    expect(change(undefined, updateInputs("fromScratch", { text: "  " }))).toBeUndefined();
+    expect(change("Please enter a topic.", updateInputs("fromScratch", { text: "  " }))).toBe(
+      "Please enter a topic.",
+    );
+  });
+
+  it("clears once the source is valid or another source is selected", () => {
+    expect(change("Please enter a topic.", updateInputs("fromScratch", { text: "Cells" }))).toBeUndefined();
+    expect(
+      change("Upload a PDF or DOCX file.", { type: "select", source: "sampleTest" }),
+    ).toBeUndefined();
+  });
+});
+
 describe("validateGenerationSource for Notes", () => {
   const withNotes = (file: File | null, focus = "") =>
     apply(
@@ -148,7 +189,7 @@ describe("validateGenerationSource for Notes", () => {
 
   it("requires a file", () => {
     expect(validateGenerationSource(withNotes(null, "Chapter 3"))).toBe(
-      "Please upload a PDF or DOCX file.",
+      "Upload a PDF or DOCX file.",
     );
   });
 
@@ -171,7 +212,7 @@ describe("validateGenerationSource for Notes", () => {
     });
 
     expect(validateGenerationSource(withNotes(big))).toBe(
-      "This file is larger than 4 MB. Shrink or split it and try again.",
+      "Your file is larger than 4 MB. Shrink or split it and try again.",
     );
   });
 });

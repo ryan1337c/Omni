@@ -22,6 +22,7 @@ export default function FromScratchPanel({
       rows={3}
       value={text}
       error={error}
+      allowOverLimit
       isProcessing={isProcessing}
       onChange={onTextChange}
     />
