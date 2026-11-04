@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -13,6 +14,47 @@ function fakeAi(response: unknown): QuizAiClient {
       typeof response === "string" ? response : JSON.stringify(response),
   };
 }
+
+function recordingAi(response: unknown) {
+  const prompts: { system: string; user: string }[] = [];
+  const ai: QuizAiClient = {
+    complete: async (prompt) => {
+      prompts.push(prompt);
+      return JSON.stringify(response);
+    },
+  };
+  return { ai, prompts };
+}
+
+const PDF = "application/pdf";
+const DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+function fixture(name: string): Uint8Array {
+  return new Uint8Array(readFileSync(new URL(`./fixtures/${name}`, import.meta.url)));
+}
+
+function notes(
+  name: string,
+  mimeType: string,
+  focus?: string,
+): GenerateQuizInput {
+  return {
+    title: "Cell biology",
+    source: { kind: "notes", document: { bytes: fixture(name), mimeType }, focus },
+    questionCount: 1,
+  };
+}
+
+const oneValidQuestion = {
+  questions: [
+    {
+      question_text: "What makes ATP?",
+      choices: ["Mitochondria", "Ribosomes", "Nucleus", "Golgi", "Lysosome"],
+      correct_index: 0,
+      explanation: "Mitochondria make ATP.",
+    },
+  ],
+};
 
 const fromScratch: GenerateQuizInput = {
   title: "Photosynthesis",
@@ -128,6 +170,84 @@ describe("generateQuiz from scratch", () => {
 
     await expect(generateQuiz(prepared, { ai })).rejects.toMatchObject({
       kind: "invalid_input",
+    });
+  });
+});
+
+describe("generateQuiz from Notes", () => {
+  it("passes the text of a PDF to the AI client", async () => {
+    const { ai, prompts } = recordingAi(oneValidQuestion);
+
+    const prepared = await prepareQuiz(notes("notes.pdf", PDF));
+    const questions = await generateQuiz(prepared, { ai });
+
+    expect(prompts[0].user).toContain("Mitochondria make ATP.");
+    expect(prompts[0].user).toContain("Ribosomes build proteins.");
+    expect(questions).toEqual(oneValidQuestion.questions);
+  });
+
+  it("passes the text of a DOCX and the focus text to the AI client", async () => {
+    const { ai, prompts } = recordingAi(oneValidQuestion);
+
+    const prepared = await prepareQuiz(notes("notes.docx", DOCX, "Only chlorophyll"));
+    await generateQuiz(prepared, { ai });
+
+    expect(prompts[0].user).toContain("Photosynthesis happens in chloroplasts.");
+    expect(prompts[0].user).toContain("Only chlorophyll");
+  });
+
+  it("prices the extracted text plus the focus text", async () => {
+    const prepared = await prepareQuiz(notes("notes.docx", DOCX, "Only chlorophyll"));
+
+    expect(prepared.pricedText.join(" ")).toContain("Chlorophyll absorbs light.");
+    expect(prepared.pricedText).toContain("Only chlorophyll");
+  });
+
+  it("rejects a Notes question without 5 Choices as invalid AI output", async () => {
+    const prepared = await prepareQuiz(notes("notes.pdf", PDF));
+    const ai = fakeAi({
+      questions: [
+        { question_text: "Q?", choices: ["A", "B"], correct_index: 0, explanation: "A." },
+      ],
+    });
+
+    await expect(generateQuiz(prepared, { ai })).rejects.toMatchObject({
+      kind: "invalid_ai_output",
+    });
+  });
+
+  it("rejects a file that isn't a PDF or DOCX", async () => {
+    await expect(prepareQuiz(notes("notes.pdf", "image/png"))).rejects.toMatchObject({
+      kind: "unsupported_file_type",
+    });
+  });
+
+  it("rejects a file over 4 MB", async () => {
+    const input: GenerateQuizInput = {
+      title: "Big",
+      source: {
+        kind: "notes",
+        document: { bytes: new Uint8Array(4 * 1024 * 1024 + 1), mimeType: PDF },
+      },
+      questionCount: 1,
+    };
+
+    await expect(prepareQuiz(input)).rejects.toMatchObject({ kind: "file_too_large" });
+  });
+
+  it.each([
+    ["a PDF with no text, like a scan", "blank.pdf", PDF],
+    ["an empty DOCX", "empty.docx", DOCX],
+    ["a file that isn't really a PDF", "notes.docx", PDF],
+  ])("rejects %s as having no readable text", async (_, name, mimeType) => {
+    await expect(prepareQuiz(notes(name, mimeType))).rejects.toMatchObject({
+      kind: "no_readable_text",
+    });
+  });
+
+  it("rejects a document with over 40,000 characters of text as too long", async () => {
+    await expect(prepareQuiz(notes("long.docx", DOCX))).rejects.toMatchObject({
+      kind: "text_too_long",
     });
   });
 });

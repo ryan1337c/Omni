@@ -159,7 +159,7 @@ export function useQuizGeneration({
         try {
           const { result, data } = await generateQuizRequest(
             form.title,
-            generationSource.inputs.fromScratch.text,
+            generationSource,
             questionCount,
           );
 
@@ -218,8 +218,11 @@ export function useQuizGeneration({
   const handleGenerationSourceChange = (action: GenerationSourceAction) => {
     const next = generationSourceReducer(generationSource, action);
     setGenerationSource(next);
-    if (action.type === "select" || !validateGenerationSource(next)) {
+    const sourceError = validateGenerationSource(next);
+    if (action.type === "select" || !sourceError) {
       form.setFormErrors((prev) => ({ ...prev, source: undefined }));
+    } else if (action.type === "updateInputs" && "file" in action.inputs && action.inputs.file) {
+      form.setFormErrors((prev) => ({ ...prev, source: sourceError }));
     }
   };
 

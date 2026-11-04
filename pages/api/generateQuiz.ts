@@ -1,4 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
+import formidable, { errors as formidableErrors } from "formidable";
+import fs from "fs/promises";
 import { requireEntitlement, requireUser } from "@/lib/requireUser";
 import {
     consumeCredits,
@@ -11,8 +13,11 @@ import {
     createOpenAiQuizClient,
     generateQuiz,
     prepareQuiz,
+    resolveDocumentMimeType,
+    MAX_DOCUMENT_BYTES,
     QuizGenerationError,
     type GeneratedQuestion,
+    type GenerationSource,
 } from "@/lib/quiz";
 
 type ResponseData = {
@@ -26,18 +31,74 @@ type ResponseData = {
     max?: number;
 }
 
-interface GenerateRequest extends NextApiRequest {
-    body: {
-        title: string;
-        topic: string;
-        questionCount: Number;
-    }
-}
+export const config = {
+    api: {
+        bodyParser: false,
+    },
+    // Reading a long document can push generation past the default Vercel Hobby timeout.
+    maxDuration: 60,
+};
 
 const quizAi = createOpenAiQuizClient();
 
+const parseForm = (req: NextApiRequest): Promise<{ fields: formidable.Fields; files: formidable.Files }> => {
+    return new Promise((resolve, reject) => {
+        const form = formidable({
+            maxFiles: 1,
+            maxFileSize: MAX_DOCUMENT_BYTES,
+            maxTotalFileSize: MAX_DOCUMENT_BYTES,
+            allowEmptyFiles: true,
+        });
+        form.parse(req, (err, fields, files) => {
+            if (err) {
+                reject(toUploadError(err));
+            } else {
+                resolve({ fields, files });
+            }
+        });
+    });
+};
+
+// @types/formidable lacks `biggerThanTotalMaxFileSize`, which formidable 3 raises before the per-file check.
+const FILE_TOO_LARGE_CODES = [
+    formidableErrors.biggerThanMaxFileSize,
+    (formidableErrors as unknown as Record<string, number>).biggerThanTotalMaxFileSize,
+];
+
+function toUploadError(err: any) {
+    return FILE_TOO_LARGE_CODES.includes(err?.code)
+        ? new QuizGenerationError("file_too_large", err.message)
+        : err;
+}
+
+async function toGenerationSource(
+    source: string | undefined,
+    text: string,
+    file: formidable.File | undefined,
+): Promise<GenerationSource> {
+    switch (source) {
+        case "fromScratch":
+            return { kind: "fromScratch", text };
+        case "notes": {
+            if (!file) {
+                throw new QuizGenerationError("missing_file");
+            }
+            return {
+                kind: "notes",
+                document: {
+                    bytes: await fs.readFile(file.filepath),
+                    mimeType: resolveDocumentMimeType(file.mimetype, file.originalFilename),
+                },
+                focus: text,
+            };
+        }
+        default:
+            throw new QuizGenerationError("invalid_input", `Unknown Generation Source "${source}"`);
+    }
+}
+
 export default async function handler(
-    req: GenerateRequest,
+    req: NextApiRequest,
     res: NextApiResponse<ResponseData>
 ) {
     if (req.method !== 'POST') {
@@ -54,17 +115,22 @@ export default async function handler(
         return res.status(entitlement.status).json({ error: entitlement.error });
     }
 
-    const { title, topic, questionCount } = req.body;
-
-    console.log(`Generating Quiz -> Title: ${title} | Count: ${questionCount}`);
-
     let reservation: CreditReservation | undefined;
+    let uploadedFile: formidable.File | undefined;
 
     try {
+        const { fields, files } = await parseForm(req);
+        uploadedFile = files.file?.[0];
+        const title = fields.title?.[0] ?? "";
+        const source = fields.source?.[0];
+        const questionCount = Number(fields.questionCount?.[0]);
+
+        console.log(`Generating Quiz -> Title: ${title} | Source: ${source} | Count: ${questionCount}`);
+
         const prepared = await prepareQuiz({
-            title: title ?? "",
-            source: { kind: "fromScratch", text: topic ?? "" },
-            questionCount: Number(questionCount),
+            title,
+            source: await toGenerationSource(source, fields.text?.[0] ?? "", uploadedFile),
+            questionCount,
         });
 
         reservation = await consumeCredits(auth.user.id, {
@@ -95,5 +161,9 @@ export default async function handler(
         return res.status(500).json({ 
             error: error.message || "Failed to generate quiz" 
         });
+    } finally {
+        if (uploadedFile) {
+            await fs.rm(uploadedFile.filepath, { force: true }).catch(() => {});
+        }
     }
 }

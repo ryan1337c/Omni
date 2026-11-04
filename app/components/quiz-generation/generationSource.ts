@@ -1,7 +1,10 @@
-export type GenerationSource = "fromScratch";
+import { checkDocumentFile } from "@/lib/quiz/documentRules";
+
+export type GenerationSource = "fromScratch" | "notes";
 
 export type GenerationSourceInputs = {
   fromScratch: { text: string };
+  notes: { file: File | null; focus: string };
 };
 
 export type GenerationSourceState = {
@@ -13,6 +16,7 @@ export const initialGenerationSourceState: GenerationSourceState = {
   selected: "fromScratch",
   inputs: {
     fromScratch: { text: "" },
+    notes: { file: null, focus: "" },
   },
 };
 
@@ -55,5 +59,11 @@ export function validateGenerationSource(
       return state.inputs.fromScratch.text.trim()
         ? undefined
         : "Please enter a topic.";
+    case "notes":
+      return validateDocument(state.inputs.notes.file);
   }
+}
+
+function validateDocument(file: File | null): string | undefined {
+  return file ? checkDocumentFile(file) : "Please upload a PDF or DOCX file.";
 }
