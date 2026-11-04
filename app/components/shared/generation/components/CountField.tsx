@@ -42,7 +42,7 @@ export default function CountField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onBlur={onBlur}
-        className={`${INPUT_BASE_CLASSES} border-slate-200 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500 focus:border-slate-400 dark:focus:border-slate-500 focus:ring-1 focus:ring-slate-400 outline-none`}
+        className={`${INPUT_BASE_CLASSES} border-slate-200 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500 focus:border-slate-400 dark:focus:border-btnDark focus:ring-1 focus:ring-slate-400 dark:focus:ring-btnDark outline-none`}
       />
     </div>
   );

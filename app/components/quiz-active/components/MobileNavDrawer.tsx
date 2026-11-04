@@ -36,14 +36,14 @@ export default function MobileNavDrawer({
         className="absolute inset-0 bg-black/50  animate-in fade-in"
         onClick={onClose}
       />
-      <div className="relative w-72 h-[100dvh] bg-white dark:bg-slate-800 shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
-        <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+      <div className="relative w-72 h-[100dvh] bg-white dark:bg-slate-900 shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+        <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <h3 className="font-bold text-slate-800 dark:text-white flex items-center gap-2">
             <AlignLeft size={18} /> Navigator
           </h3>
           <button
             onClick={onClose}
-            className="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full"
+            className="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full"
           >
             <X size={20} />
           </button>
@@ -63,7 +63,7 @@ export default function MobileNavDrawer({
             ))}
           </div>
         </div>
-        <div className="p-4 pb-8 border-t border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/20">
+        <div className="p-4 pb-8 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40">
           <NavigatorLegend isSubmitted={isSubmitted} variant="compact" />
         </div>
       </div>

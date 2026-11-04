@@ -22,8 +22,8 @@ export default function QuizNavigatorSidebar({
   onJump,
 }: QuizNavigatorSidebarProps) {
   return (
-    <div className="w-80 bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700 hidden lg:flex flex-col flex-shrink-0">
-      <div className="p-5 border-b border-slate-200 dark:border-slate-700">
+    <div className="w-80 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 hidden lg:flex flex-col flex-shrink-0">
+      <div className="p-5 border-b border-slate-200 dark:border-slate-800">
         <h3 className="font-bold text-slate-800 dark:text-white flex items-center gap-2">
           <AlignLeft size={18} /> Quiz Navigator
         </h3>
@@ -43,7 +43,7 @@ export default function QuizNavigatorSidebar({
           ))}
         </div>
       </div>
-      <div className="p-5 border-t border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/20">
+      <div className="p-5 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40">
         <NavigatorLegend isSubmitted={isSubmitted} variant="full" />
       </div>
     </div>

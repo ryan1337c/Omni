@@ -18,9 +18,9 @@ export default function TimeUpModal({
 
   return createPortal(
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60  animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl max-w-sm w-full p-6 border border-slate-200 dark:border-slate-700">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl max-w-sm w-full p-6 border border-slate-200 dark:border-btnDark/30">
         <div className="flex flex-col items-center text-center gap-4">
-          <div className="p-3 bg-violet-100 dark:bg-blue-900/30 rounded-full text-violet-600 dark:text-blue-400">
+          <div className="p-3 bg-violet-100 dark:bg-btnDark/20 rounded-full text-violet-600 dark:text-btnDark">
             <Clock size={32} />
           </div>
           <div>
@@ -35,7 +35,7 @@ export default function TimeUpModal({
           <div className="flex gap-3 w-full mt-4">
             <button
               onClick={onDismiss}
-              className="flex-1 px-4 py-2.5 text-sm font-semibold text-white bg-violet-600 hover:bg-violet-700 dark:bg-blue-600 dark:hover:bg-blue-700 rounded-lg transition-colors shadow-sm"
+              className="flex-1 px-4 py-2.5 text-sm font-semibold text-white bg-violet-600 hover:bg-violet-700 dark:bg-btnDark dark:hover:bg-btnDarkHover rounded-lg transition-colors shadow-sm"
             >
               View Results
             </button>

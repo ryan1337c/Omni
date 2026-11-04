@@ -25,7 +25,7 @@ export default function CreationModeToggle({
       <div
         role="radiogroup"
         aria-label="Creation Mode"
-        className="inline-flex gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700"
+        className="inline-flex gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
       >
         {SEGMENTS.map(({ mode: segmentMode, label, icon: Icon }) => {
           const isSelected = mode === segmentMode;
@@ -39,7 +39,7 @@ export default function CreationModeToggle({
               onClick={() => onChange(segmentMode)}
               className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
                 isSelected
-                  ? "bg-white dark:bg-slate-700 text-violet-700 dark:text-violet-300 shadow-sm"
+                  ? "bg-white text-violet-700 shadow-sm dark:bg-btnDark dark:text-white"
                   : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
               }`}
             >

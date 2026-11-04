@@ -21,7 +21,7 @@ export default function CreateNewTile({
     <div
       className={`relative group min-h-52 min-w-0 rounded-2xl transition-all duration-200 ${
         isNewMenuOpen
-          ? "bg-white dark:bg-slate-800 shadow-xl border-2 border-violet-500 dark:border-violet-500 z-40"
+          ? "bg-white dark:bg-slate-800 shadow-xl border-2 border-violet-500 dark:border-btnDark z-40"
           : "border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-violet-400 dark:hover:border-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/50 z-0"
       }`}
     >
@@ -51,9 +51,9 @@ export default function CreateNewTile({
           <div className="flex min-h-0 flex-1 flex-col gap-2 justify-center">
             <button
               onClick={onCreateDeck}
-              className="flex min-w-0 w-full flex-col items-center gap-2 p-3 lg:flex-row lg:gap-3 lg:items-center rounded-xl bg-slate-50 dark:bg-slate-700/50 hover:bg-violet-50 dark:hover:bg-violet-900/20 hover:text-violet-700 dark:hover:text-violet-300 border border-transparent hover:border-violet-200 dark:hover:border-violet-800 transition-all text-center lg:text-left group/item"
+              className="flex min-w-0 w-full flex-col items-center gap-2 p-3 lg:flex-row lg:gap-3 lg:items-center rounded-xl bg-slate-50 dark:bg-slate-700/50 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-700 dark:hover:text-blue-300 border border-transparent hover:border-blue-200 dark:hover:border-blue-800 transition-all text-center lg:text-left group/item"
             >
-              <div className="shrink-0 p-2 bg-white dark:bg-slate-800 rounded-lg shadow-sm group-hover/item:text-violet-600">
+              <div className="shrink-0 p-2 bg-white dark:bg-slate-800 rounded-lg shadow-sm group-hover/item:text-blue-600">
                 <Files size={18} />
               </div>
               <span className="min-w-0 w-full font-semibold text-sm leading-snug break-words lg:flex-1">

@@ -19,7 +19,7 @@ type DurationSelectProps = {
   onChange: (value: string) => void;
 };
 
-const durationTriggerClasses = `${INPUT_BASE_CLASSES} h-auto outline-none border-slate-200 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500`;
+const durationTriggerClasses = `${INPUT_BASE_CLASSES} h-auto outline-none border-slate-200 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500 focus:border-btnDark focus:ring-1 focus:ring-btnDark dark:focus:border-btnDark dark:focus:ring-btnDark`;
 
 export default function DurationSelect({
   value,
@@ -41,7 +41,7 @@ export default function DurationSelect({
             <SelectItem
               key={option.value}
               value={option.value}
-              className="text-slate-700 dark:text-slate-200 focus:bg-slate-100 dark:focus:bg-slate-700 cursor-pointer"
+              className="text-slate-700 dark:text-slate-200 focus:bg-slate-100 dark:focus:bg-btnDark/25 dark:focus:text-white cursor-pointer"
             >
               {option.label}
             </SelectItem>

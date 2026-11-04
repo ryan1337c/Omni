@@ -24,21 +24,21 @@ export default function ModeSelector({
         onClick={() => onChange("manual")}
         className={`relative flex flex-col items-center justify-center gap-3 p-4 rounded-xl border-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
           mode === "manual"
-            ? "border-violet-600 bg-violet-50 dark:bg-violet-900/20"
-            : "border-slate-200 dark:border-slate-700 hover:border-violet-300 dark:hover:border-slate-500"
+            ? "border-violet-600 bg-violet-50 dark:border-btnDark dark:bg-btnDark/15"
+            : "border-slate-200 dark:border-slate-700 hover:border-violet-300 dark:hover:border-btnDark/60"
         }`}
       >
         <PencilRuler
           size={24}
           className={
             mode === "manual"
-              ? "text-violet-600 dark:text-violet-400"
-              : "text-slate-400"
+              ? "text-violet-600 dark:text-btnDark"
+              : "text-slate-400 dark:text-slate-500"
           }
         />
         <div className="text-center">
           <span
-            className={`block font-semibold ${mode === "manual" ? "text-violet-900 dark:text-violet-100" : "text-slate-600 dark:text-slate-300"}`}
+            className={`block font-semibold ${mode === "manual" ? "text-violet-900 dark:text-white" : "text-slate-600 dark:text-slate-300"}`}
           >
             Manual
           </span>
@@ -51,21 +51,21 @@ export default function ModeSelector({
         onClick={() => onChange("ai")}
         className={`relative flex flex-col items-center justify-center gap-3 p-4 rounded-xl border-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
           mode === "ai"
-            ? "border-violet-600 bg-violet-50 dark:bg-violet-900/20"
-            : "border-slate-200 dark:border-slate-700 hover:border-violet-300 dark:hover:border-slate-500"
+            ? "border-violet-600 bg-violet-50 dark:border-btnDark dark:bg-btnDark/15"
+            : "border-slate-200 dark:border-slate-700 hover:border-violet-300 dark:hover:border-btnDark/60"
         }`}
       >
         <Sparkles
           size={24}
           className={
             mode === "ai"
-              ? "text-violet-600 dark:text-violet-400"
-              : "text-slate-400"
+              ? "text-violet-600 dark:text-btnDark"
+              : "text-slate-400 dark:text-slate-500"
           }
         />
         <div className="text-center">
           <span
-            className={`block font-semibold ${mode === "ai" ? "text-violet-900 dark:text-violet-100" : "text-slate-600 dark:text-slate-300"}`}
+            className={`block font-semibold ${mode === "ai" ? "text-violet-900 dark:text-white" : "text-slate-600 dark:text-slate-300"}`}
           >
             Generate with AI
           </span>

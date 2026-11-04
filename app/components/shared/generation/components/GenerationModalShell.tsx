@@ -40,26 +40,26 @@ export default function GenerationModalShell({
         />
       )}
       <div
-        className="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden border border-slate-200 dark:border-slate-700 flex flex-col max-h-[90vh]"
+        className="relative bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden border border-slate-200 dark:border-btnDark/30 flex flex-col max-h-[90vh]"
         role="dialog"
       >
         {isProcessing && (
-          <div className="absolute inset-0 z-[60] bg-white/60 dark:bg-slate-900/60 backdrop-blur-[1px] flex flex-col items-center justify-center animate-fade-in">
-            <Loader2 className="h-10 w-10 text-violet-600 animate-spin mb-3" />
+          <div className="absolute inset-0 z-[60] bg-white/60 dark:bg-slate-950/70 backdrop-blur-[1px] flex flex-col items-center justify-center animate-fade-in">
+            <Loader2 className="h-10 w-10 text-violet-600 dark:text-btnDark animate-spin mb-3" />
             <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
               {processingLabel}
             </p>
           </div>
         )}
 
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-700">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800">
           <h2 className="text-xl font-bold text-slate-800 dark:text-white">
             {title}
           </h2>
           <button
             disabled={isProcessing}
             onClick={onClose}
-            className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <X size={20} />
           </button>
@@ -71,7 +71,7 @@ export default function GenerationModalShell({
           {children}
         </div>
 
-        <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-700 flex justify-end gap-3">
+        <div className="px-6 py-4 bg-slate-50 dark:bg-slate-950/40 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
           {footer}
         </div>
 

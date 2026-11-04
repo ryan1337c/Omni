@@ -44,8 +44,8 @@ export default function DocumentDropzone({
   const borderClasses = error
     ? "border-red-400 dark:border-red-500"
     : isDragging
-      ? "border-violet-500 bg-violet-50 dark:bg-violet-900/20"
-      : "border-slate-300 dark:border-slate-600 hover:border-violet-400";
+      ? "border-violet-500 bg-violet-50 dark:border-btnDark dark:bg-btnDark/15"
+      : "border-slate-300 dark:border-slate-600 hover:border-violet-400 dark:hover:border-btnDark/70";
 
   return (
     <div className="space-y-2">
@@ -89,7 +89,7 @@ export default function DocumentDropzone({
       >
         {file ? (
           <div className="flex w-full items-center gap-3 text-left">
-            <FileText size={24} className="shrink-0 text-violet-600 dark:text-violet-400" />
+            <FileText size={24} className="shrink-0 text-violet-600 dark:text-btnDark" />
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-slate-700 dark:text-slate-200">
                 {file.name}
@@ -115,7 +115,7 @@ export default function DocumentDropzone({
           <>
             <UploadCloud size={28} className="text-slate-400" />
             <p className="text-sm text-slate-600 dark:text-slate-300">
-              <span className="font-semibold text-violet-600 dark:text-violet-400">
+              <span className="font-semibold text-violet-600 dark:text-btnDark">
                 Click to browse
               </span>{" "}
               or drag and drop

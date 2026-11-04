@@ -120,13 +120,13 @@ export default function LibraryToolbar({
             />
           </button>
           {isSortMenuOpen && (
-            <div className="absolute top-full right-0 mt-2 w-40 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-20 py-1 flex flex-col animate-in fade-in zoom-in-95 duration-100">
+            <div className="absolute top-full right-0 mt-2 w-40 bg-white dark:bg-slate-900 border border-slate-200 dark:border-btnDark/30 rounded-xl shadow-xl z-20 py-1 flex flex-col animate-in fade-in zoom-in-95 duration-100">
               <button
                 onClick={() => {
                   setSortOption("last_updated");
                   setIsSortMenuOpen(false);
                 }}
-                className={`flex items-center gap-2 px-3 py-2 text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-700 text-left ${sortOption === "last_updated" ? "text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/20" : "text-slate-600 dark:text-slate-300"}`}
+                className={`flex items-center gap-2 px-3 py-2 text-xs font-medium hover:bg-slate-50 dark:hover:bg-btnDark/15 text-left ${sortOption === "last_updated" ? "text-violet-600 dark:text-indigo-200 bg-violet-50 dark:bg-btnDark/25" : "text-slate-600 dark:text-slate-300"}`}
               >
                 <Clock size={14} /> Last Updated
               </button>
@@ -135,7 +135,7 @@ export default function LibraryToolbar({
                   setSortOption("created_at");
                   setIsSortMenuOpen(false);
                 }}
-                className={`flex items-center gap-2 px-3 py-2 text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-700 text-left ${sortOption === "created_at" ? "text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/20" : "text-slate-600 dark:text-slate-300"}`}
+                className={`flex items-center gap-2 px-3 py-2 text-xs font-medium hover:bg-slate-50 dark:hover:bg-btnDark/15 text-left ${sortOption === "created_at" ? "text-violet-600 dark:text-indigo-200 bg-violet-50 dark:bg-btnDark/25" : "text-slate-600 dark:text-slate-300"}`}
               >
                 <Calendar size={14} /> Created Date
               </button>

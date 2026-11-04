@@ -31,7 +31,7 @@ export default function ServerErrorToast({
             <button
               type="button"
               onClick={() => router.push(BILLING_SETTINGS_HREF)}
-              className="mt-2 rounded-full bg-violet-600 px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-violet-700 dark:bg-purple-500 dark:hover:bg-purple-600"
+              className="mt-2 rounded-full bg-violet-600 px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-violet-700 dark:bg-btnDark dark:hover:bg-btnDarkHover"
             >
               Upgrade
             </button>

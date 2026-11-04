@@ -37,12 +37,12 @@ export default function QuestionNavButton({
       statusBg = "bg-red-600";
     }
   } else if (userAns !== undefined) {
-    statusBg = "bg-violet-600";
+    statusBg = "bg-violet-600 dark:bg-btnDark";
   }
 
   if (isCurrent) {
     borderClass =
-      "border-violet-600 ring-2 ring-violet-200 dark:ring-violet-900 z-10";
+      "border-violet-600 ring-2 ring-violet-200 dark:border-btnDark dark:ring-btnDark/40 z-10";
   }
 
   return (
@@ -50,7 +50,7 @@ export default function QuestionNavButton({
       onClick={() => onJump(idx)}
       className={`
                 flex flex-col items-stretch overflow-hidden rounded-lg border transition-all 
-                aspect-[3/4] ${borderClass} hover:border-violet-400
+                aspect-[3/4] ${borderClass} hover:border-violet-400 dark:hover:border-btnDark
             `}
     >
       <div className="flex-1 flex items-center justify-center bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold text-sm">

@@ -21,9 +21,9 @@ export default function QuizStartScreen({
   onStart,
 }: QuizStartScreenProps) {
   return (
-    <div className="flex flex-col h-full w-full bg-slate-50 dark:bg-gray-900 items-center justify-center p-4 md:p-6 animate-fade-in">
-      <div className="max-w-2xl w-full bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col max-h-[85vh]">
-        <div className="h-32 md:h-40 bg-gradient-to-r from-violet-600 to-indigo-600 relative shrink-0">
+    <div className="flex flex-col h-full w-full bg-slate-50 dark:bg-slate-950 items-center justify-center p-4 md:p-6 animate-fade-in">
+      <div className="max-w-2xl w-full bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-btnDark/30 dark:shadow-[0_0_25px_3px_rgba(99,102,241,0.18)] overflow-hidden flex flex-col max-h-[85vh]">
+        <div className="h-32 md:h-40 bg-gradient-to-r from-violet-600 to-indigo-600 dark:bg-gradient-to-b dark:from-indigo-500/40 dark:to-indigo-950 relative shrink-0">
           <div className="absolute inset-0 overflow-y-auto custom-scrollbar z-10">
             <div className="min-h-full w-full flex items-center justify-center p-6">
               <h1 className="text-2xl md:text-3xl font-bold text-white text-center break-words leading-tight">
@@ -49,7 +49,7 @@ export default function QuizStartScreen({
           <div className="flex flex-col-reverse sm:flex-row gap-3 md:gap-4 justify-center mt-8">
             <button
               onClick={onExit}
-              className="px-6 py-3 rounded-xl text-slate-600 dark:text-slate-300 font-medium hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+              className="px-6 py-3 rounded-xl text-slate-600 dark:text-slate-300 font-medium hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
               Cancel
             </button>

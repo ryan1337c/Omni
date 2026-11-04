@@ -177,7 +177,7 @@ export default function LibraryItemCard(props: LibraryItemCardProps) {
               {item.count} items
             </p>
           </div>
-          <div className="pt-3 mt-auto border-t border-blue-100 dark:border-slate-700/50 text-xs text-slate-400 dark:text-slate-500 flex flex-col gap-0.5">
+          <div className="pt-3 mt-auto border-t border-blue-100 dark:border-slate-700/50 text-xs text-slate-500 dark:text-slate-400 flex flex-col gap-0.5">
             <div className="flex items-center gap-1.5">
               <Calendar size={12} /> Created {timeAgo(item.created_at ?? "")}
             </div>
@@ -200,7 +200,7 @@ export default function LibraryItemCard(props: LibraryItemCardProps) {
       <div className="absolute top-2 left-2 right-0 bottom-0 bg-slate-200 dark:bg-slate-700 rounded-2xl border border-slate-300 dark:border-slate-600 z-0"></div>
       <div className="absolute top-0 left-0 right-2 bottom-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 flex flex-col justify-between shadow-sm z-10">
         <div className="flex justify-between items-start">
-          <div className="p-2.5 bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 rounded-lg">
+          <div className="p-2.5 bg-violet-100 dark:bg-btnDark/20 text-violet-600 dark:text-indigo-300 rounded-lg">
             <Files size={20} />
           </div>
           <MoreMenu {...props} />
@@ -215,7 +215,7 @@ export default function LibraryItemCard(props: LibraryItemCardProps) {
             </span>
           </div>
         </div>
-        <div className="pt-3 mt-auto border-t border-slate-100 dark:border-slate-700 text-xs text-slate-400 dark:text-slate-500 flex flex-col gap-0.5">
+        <div className="pt-3 mt-auto border-t border-slate-100 dark:border-slate-700 text-xs text-slate-500 dark:text-slate-400 flex flex-col gap-0.5">
           <div className="flex items-center gap-1.5">
             <Calendar size={12} /> Created {timeAgo(item.created_at ?? "")}
           </div>

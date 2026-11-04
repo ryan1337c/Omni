@@ -59,7 +59,7 @@ function ExplanationField({
       <button
         onClick={() => setIsExpanded(true)}
         disabled={isProcessing}
-        className="ml-7 text-xs font-medium text-violet-600 dark:text-violet-400 hover:underline flex items-center gap-1 mt-2 disabled:opacity-50 disabled:no-underline"
+        className="ml-7 text-xs font-medium text-violet-600 dark:text-btnDark hover:underline flex items-center gap-1 mt-2 disabled:opacity-50 disabled:no-underline"
       >
         <Plus size={12} /> Add explanation
       </button>
@@ -126,10 +126,10 @@ export default function ManualQuestionsEditor({
         {questions.map((q, qIndex) => (
           <div
             key={q.id}
-            className="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/30"
+            className="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60"
           >
             <div className="flex gap-3 mb-4">
-              <span className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 text-sm font-bold text-slate-600 dark:text-slate-300">
+              <span className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-slate-200 dark:bg-btnDark/20 text-sm font-bold text-slate-600 dark:text-indigo-200">
                 {qIndex + 1}
               </span>
               <div className="flex-grow space-y-3">
@@ -148,7 +148,7 @@ export default function ManualQuestionsEditor({
                     disabled={isProcessing}
                     className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors disabled:opacity-50 ${
                       q.type === "multiple_choice"
-                        ? "bg-violet-100 text-violet-700 border-violet-200 dark:bg-violet-900/30 dark:text-violet-300 dark:border-violet-700"
+                        ? "bg-violet-100 text-violet-700 border-violet-200 dark:bg-btnDark dark:text-white dark:border-btnDark"
                         : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"
                     }`}
                   >
@@ -159,7 +159,7 @@ export default function ManualQuestionsEditor({
                     disabled={isProcessing}
                     className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors disabled:opacity-50 ${
                       q.type === "short_answer"
-                        ? "bg-violet-100 text-violet-700 border-violet-200 dark:bg-violet-900/30 dark:text-violet-300 dark:border-violet-700"
+                        ? "bg-violet-100 text-violet-700 border-violet-200 dark:bg-btnDark dark:text-white dark:border-btnDark"
                         : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"
                     }`}
                   >
@@ -231,7 +231,7 @@ export default function ManualQuestionsEditor({
                     <button
                       onClick={() => onAddOption(q.id)}
                       disabled={isProcessing}
-                      className="ml-7 text-xs font-medium text-violet-600 dark:text-violet-400 hover:underline flex items-center gap-1 mt-2 disabled:opacity-50 disabled:no-underline"
+                      className="ml-7 text-xs font-medium text-violet-600 dark:text-btnDark hover:underline flex items-center gap-1 mt-2 disabled:opacity-50 disabled:no-underline"
                     >
                       <Plus size={12} /> Add Option
                     </button>
@@ -252,7 +252,7 @@ export default function ManualQuestionsEditor({
       <button
         onClick={onAddQuestion}
         disabled={isProcessing}
-        className="w-full py-3 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl flex items-center justify-center gap-2 text-slate-500 dark:text-slate-400 font-medium hover:border-violet-300 dark:hover:border-slate-500 hover:text-violet-600 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full py-3 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl flex items-center justify-center gap-2 text-slate-500 dark:text-slate-400 font-medium hover:border-violet-300 dark:hover:border-btnDark hover:text-violet-600 dark:hover:text-indigo-200 hover:bg-slate-50 dark:hover:bg-btnDark/10 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <Plus size={18} />
         Add Question

@@ -65,24 +65,24 @@ export default function GenerationSourcePicker({
               onClick={() => onSelect(source)}
               className={`flex flex-col items-start gap-1.5 p-3 rounded-xl border-2 text-left transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
                 isSelected
-                  ? "border-violet-600 bg-violet-50 dark:bg-violet-900/20"
-                  : "border-slate-200 dark:border-slate-700 hover:border-violet-300 dark:hover:border-slate-500"
+                  ? "border-violet-600 bg-violet-50 dark:border-btnDark dark:bg-btnDark/15"
+                  : "border-slate-200 dark:border-slate-700 hover:border-violet-300 dark:hover:border-btnDark/60"
               }`}
             >
               <Icon
                 size={20}
                 className={
                   isSelected
-                    ? "text-violet-600 dark:text-violet-400"
-                    : "text-slate-400"
+                    ? "text-violet-600 dark:text-btnDark"
+                    : "text-slate-400 dark:text-slate-500"
                 }
               />
               <span
-                className={`text-sm font-semibold ${isSelected ? "text-violet-900 dark:text-violet-100" : "text-slate-600 dark:text-slate-300"}`}
+                className={`text-sm font-semibold ${isSelected ? "text-violet-900 dark:text-white" : "text-slate-600 dark:text-slate-300"}`}
               >
                 {title}
               </span>
-              <span className="text-xs text-slate-500">{description}</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">{description}</span>
             </button>
           );
         })}
