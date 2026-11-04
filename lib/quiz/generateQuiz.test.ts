@@ -21,7 +21,7 @@ const fromScratch: GenerateQuizInput = {
 };
 
 describe("generateQuiz from scratch", () => {
-  it("returns the questions with 5 Choices and the correct index", async () => {
+  it("returns the questions with 5 Choices, the correct index, and an Explanation", async () => {
     const prepared = await prepareQuiz(fromScratch);
     const questions = await generateQuiz(prepared, {
       ai: fakeAi({
@@ -30,11 +30,14 @@ describe("generateQuiz from scratch", () => {
             question_text: "Where do the light reactions happen?",
             choices: ["Stroma", "Thylakoid membrane", "Nucleus", "Cytosol", "Cell wall"],
             correct_index: 1,
+            explanation:
+              "The light reactions run on the thylakoid membrane. The stroma hosts the Calvin cycle instead.",
           },
           {
             question_text: "Which gas is released?",
             choices: ["CO2", "N2", "O2", "H2", "CH4"],
             correct_index: 2,
+            explanation: "Splitting water releases O2 as a by-product.",
           },
         ],
       }),
@@ -45,11 +48,14 @@ describe("generateQuiz from scratch", () => {
         question_text: "Where do the light reactions happen?",
         choices: ["Stroma", "Thylakoid membrane", "Nucleus", "Cytosol", "Cell wall"],
         correct_index: 1,
+        explanation:
+          "The light reactions run on the thylakoid membrane. The stroma hosts the Calvin cycle instead.",
       },
       {
         question_text: "Which gas is released?",
         choices: ["CO2", "N2", "O2", "H2", "CH4"],
         correct_index: 2,
+        explanation: "Splitting water releases O2 as a by-product.",
       },
     ]);
   });
@@ -58,7 +64,12 @@ describe("generateQuiz from scratch", () => {
     const prepared = await prepareQuiz(fromScratch);
     const ai = fakeAi({
       questions: [
-        { question_text: "Q?", choices: ["A", "B", "C", "D"], correct_index: 0 },
+        {
+          question_text: "Q?",
+          choices: ["A", "B", "C", "D"],
+          correct_index: 0,
+          explanation: "A is right.",
+        },
       ],
     });
 
@@ -71,7 +82,35 @@ describe("generateQuiz from scratch", () => {
     const prepared = await prepareQuiz(fromScratch);
     const ai = fakeAi({
       questions: [
-        { question_text: "Q?", choices: ["A", "B", "C", "D", "E"], correct_index: 5 },
+        {
+          question_text: "Q?",
+          choices: ["A", "B", "C", "D", "E"],
+          correct_index: 5,
+          explanation: "A is right.",
+        },
+      ],
+    });
+
+    await expect(generateQuiz(prepared, { ai })).rejects.toMatchObject({
+      kind: "invalid_ai_output",
+    });
+  });
+
+  it.each([
+    ["missing", {}],
+    ["empty", { explanation: "  " }],
+    ["not text", { explanation: 42 }],
+  ])("rejects a question whose Explanation is %s as invalid AI output", async (_, extra) => {
+    const prepared = await prepareQuiz(fromScratch);
+    const ai = fakeAi({
+      questions: [
+        {
+          question_text: "Q1?",
+          choices: ["A", "B", "C", "D", "E"],
+          correct_index: 0,
+          explanation: "A is right.",
+        },
+        { question_text: "Q2?", choices: ["A", "B", "C", "D", "E"], correct_index: 1, ...extra },
       ],
     });
 
