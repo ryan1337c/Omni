@@ -9,6 +9,7 @@ import type {
 import DurationSelect from "./DurationSelect";
 import FromScratchPanel from "./FromScratchPanel";
 import GenerationSourcePicker from "./GenerationSourcePicker";
+import NotesPanel from "./NotesPanel";
 
 type QuizAiFieldsProps = {
   generationSource: GenerationSourceState;
@@ -56,6 +57,29 @@ export default function QuizAiFields({
                 type: "updateInputs",
                 source: "fromScratch",
                 inputs: { text },
+              })
+            }
+          />
+        )}
+
+        {selected === "notes" && (
+          <NotesPanel
+            file={inputs.notes.file}
+            focus={inputs.notes.focus}
+            error={sourceError}
+            isProcessing={isProcessing}
+            onFileChange={(file) =>
+              onGenerationSourceChange({
+                type: "updateInputs",
+                source: "notes",
+                inputs: { file },
+              })
+            }
+            onFocusChange={(focus) =>
+              onGenerationSourceChange({
+                type: "updateInputs",
+                source: "notes",
+                inputs: { focus },
               })
             }
           />

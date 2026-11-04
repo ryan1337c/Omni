@@ -1,7 +1,10 @@
 import { MAX_CONTEXT_CHARS } from "@/lib/credits/contextMeter";
 import { QuizGenerationError } from "./errors";
+import { extractDocumentText, type QuizDocument } from "./extractDocumentText";
 
-export type GenerationSource = { kind: "fromScratch"; text: string };
+export type GenerationSource =
+  | { kind: "fromScratch"; text: string }
+  | { kind: "notes"; document: QuizDocument; focus?: string };
 
 export type GenerateQuizInput = {
   title: string;
@@ -9,9 +12,14 @@ export type GenerateQuizInput = {
   questionCount: number;
 };
 
+/** A Generation Source with its documents resolved to text. */
+export type PreparedSource =
+  | { kind: "fromScratch"; text: string }
+  | { kind: "notes"; notesText: string; focus: string };
+
 export type PreparedQuiz = {
   title: string;
-  source: GenerationSource;
+  source: PreparedSource;
   questionCount: number;
   /** Text the credit pricer should measure for this request. */
   pricedText: string[];
@@ -35,22 +43,45 @@ export type GenerateQuizOptions = { ai: QuizAiClient };
  * before any credits are spent.
  */
 export async function prepareQuiz(input: GenerateQuizInput): Promise<PreparedQuiz> {
-  const text = input.source.text.trim();
-  if (!text) {
-    throw new QuizGenerationError("invalid_input", "From Scratch text is empty");
+  const source = await prepareSource(input.source);
+  const sourceText =
+    source.kind === "fromScratch" ? [source.text] : [source.notesText, source.focus];
+  return {
+    title: input.title,
+    source,
+    questionCount: input.questionCount,
+    pricedText: [input.title ?? "", ...sourceText],
+  };
+}
+
+async function prepareSource(source: GenerationSource): Promise<PreparedSource> {
+  switch (source.kind) {
+    case "fromScratch": {
+      const text = source.text.trim();
+      if (!text) {
+        throw new QuizGenerationError("invalid_input", "From Scratch text is empty");
+      }
+      return { kind: "fromScratch", text: withinContextLimit(text) };
+    }
+    case "notes": {
+      const notesText = await extractDocumentText(source.document);
+      return {
+        kind: "notes",
+        notesText: withinContextLimit(notesText),
+        focus: source.focus?.trim() ?? "",
+      };
+    }
   }
+}
+
+function withinContextLimit(text: string): string {
   if (text.length > MAX_CONTEXT_CHARS) {
     throw new QuizGenerationError(
       "text_too_long",
       `Text is ${text.length} characters; the limit is ${MAX_CONTEXT_CHARS}`,
     );
   }
-  return {
-    title: input.title,
-    source: { kind: "fromScratch", text },
-    questionCount: input.questionCount,
-    pricedText: [input.title ?? "", text],
-  };
+  return text;
 }
 
 export function buildQuizSystemPrompt(): string {
@@ -70,14 +101,36 @@ export function buildQuizSystemPrompt(): string {
 
 // The """ delimiters mark the user's text as data rather than instructions.
 export function buildQuizUserPrompt(prepared: PreparedQuiz): string {
+  const { source } = prepared;
+  const header = `Context/Title: "${prepared.title}"`;
+
+  if (source.kind === "fromScratch") {
+    return [
+      `Generate exactly ${prepared.questionCount} multiple-choice questions based on the text below.`,
+      "",
+      header,
+      "",
+      "User Input:",
+      '"""',
+      source.text,
+      '"""',
+    ].join("\n");
+  }
+
   return [
-    `Generate exactly ${prepared.questionCount} multiple-choice questions based on the text below.`,
+    `Generate exactly ${prepared.questionCount} new multiple-choice questions grounded in the study notes below.`,
+    "Only ask about material the notes cover. Follow the focus or style request when one is given.",
     "",
-    `Context/Title: "${prepared.title}"`,
+    header,
     "",
-    "User Input:",
+    "Notes:",
     '"""',
-    prepared.source.text,
+    source.notesText,
+    '"""',
+    "",
+    "Focus or style:",
+    '"""',
+    source.focus || "(none)",
     '"""',
   ].join("\n");
 }

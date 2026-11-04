@@ -1,6 +1,6 @@
 "use client";
 
-import { PenLine, type LucideIcon } from "lucide-react";
+import { NotebookText, PenLine, type LucideIcon } from "lucide-react";
 
 import type { GenerationSource } from "../generationSource";
 
@@ -17,6 +17,12 @@ const GENERATION_SOURCE_CARDS: GenerationSourceCard[] = [
     title: "From Scratch",
     description: "Describe a topic and the AI writes the quiz",
     icon: PenLine,
+  },
+  {
+    source: "notes",
+    title: "Notes",
+    description: "Upload study material and the AI writes questions from it",
+    icon: NotebookText,
   },
 ];
 
