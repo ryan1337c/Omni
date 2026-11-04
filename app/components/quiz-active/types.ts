@@ -9,6 +9,7 @@ export type Question = {
   question_text: string;
   question_type: string;
   correct_answer: string;
+  explanation?: string | null;
   choices: Choice[];
 };
 
