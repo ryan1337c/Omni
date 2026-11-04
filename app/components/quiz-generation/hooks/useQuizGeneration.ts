@@ -9,6 +9,12 @@ import { AuthServices } from "@/lib/authServices";
 import { PublicServices } from "@/lib/publicServices";
 
 import { generateQuizRequest } from "../api";
+import {
+  generationSourceReducer,
+  initialGenerationSourceState,
+  validateGenerationSource,
+  type GenerationSourceAction,
+} from "../generationSource";
 import type { QuizGenerationModalProps } from "../types";
 import { useManualQuestions } from "./useManualQuestions";
 
@@ -27,6 +33,9 @@ export function useQuizGeneration({
   const [userId, setUserId] = useState<string | null>(null);
   const [questionCount, setQuestionCount] = useState<number | string>(10);
   const [duration, setDuration] = useState("600");
+  const [generationSource, setGenerationSource] = useState(
+    initialGenerationSourceState,
+  );
 
   const authServices = new AuthServices();
   const publicServices = new PublicServices();
@@ -49,7 +58,7 @@ export function useQuizGeneration({
     form.setTitle("");
     form.setDescription("");
     form.setMode("ai");
-    form.setTopic("");
+    setGenerationSource(initialGenerationSourceState);
     setQuestionCount(10);
     setDuration("600");
     questions.resetQuestions();
@@ -61,7 +70,7 @@ export function useQuizGeneration({
     form.setTitle("");
     form.setDescription("");
     form.setMode("ai");
-    form.setTopic("");
+    setGenerationSource(initialGenerationSourceState);
     setQuestionCount(10);
     setDuration("600");
     questions.resetQuestions();
@@ -105,8 +114,9 @@ export function useQuizGeneration({
     }
 
     if (form.mode === "ai") {
-      if (!form.topic.trim()) {
-        newErrors.topic = "Please enter a topic.";
+      const sourceError = validateGenerationSource(generationSource);
+      if (sourceError) {
+        newErrors.source = sourceError;
         hasError = true;
       }
     } else {
@@ -155,7 +165,7 @@ export function useQuizGeneration({
         try {
           const { result, data } = await generateQuizRequest(
             form.title,
-            form.topic,
+            generationSource.inputs.fromScratch.text,
             questionCount,
           );
 
@@ -211,6 +221,14 @@ export function useQuizGeneration({
     }
   };
 
+  const handleGenerationSourceChange = (action: GenerationSourceAction) => {
+    const next = generationSourceReducer(generationSource, action);
+    setGenerationSource(next);
+    if (action.type === "select" || !validateGenerationSource(next)) {
+      form.setFormErrors((prev) => ({ ...prev, source: undefined }));
+    }
+  };
+
   const handleQuestionCountBlur = () => {
     setQuestionCount(clampCount(questionCount, 1, 50));
   };
@@ -230,6 +248,8 @@ export function useQuizGeneration({
     ...form,
     ...questions,
     editMode,
+    generationSource,
+    handleGenerationSourceChange,
     questionCount,
     setQuestionCount,
     duration,

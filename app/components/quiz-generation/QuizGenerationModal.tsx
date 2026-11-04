@@ -5,10 +5,10 @@ import {
   DescriptionField,
   GenerationModalFooter,
   GenerationModalShell,
-  ModeSelector,
   TitleField,
 } from "@/app/components/shared/generation";
 
+import CreationModeToggle from "./components/CreationModeToggle";
 import ManualQuestionsEditor from "./components/ManualQuestionsEditor";
 import QuizAiFields from "./components/QuizAiFields";
 import { useQuizGeneration } from "./hooks/useQuizGeneration";
@@ -48,6 +48,14 @@ export default function QuizGenerationModal(props: QuizGenerationModalProps) {
         ) : null
       }
     >
+      {!quiz.editMode && (
+        <CreationModeToggle
+          mode={quiz.mode}
+          isProcessing={props.isProcessing}
+          onChange={quiz.handleModeChange}
+        />
+      )}
+
       <TitleField
         label="Quiz Title"
         placeholder="e.g., Advanced Biology Finals"
@@ -63,15 +71,6 @@ export default function QuizGenerationModal(props: QuizGenerationModalProps) {
         isProcessing={props.isProcessing}
         onChange={quiz.setDescription}
       />
-
-      {!quiz.editMode && (
-        <ModeSelector
-          mode={quiz.mode}
-          isProcessing={props.isProcessing}
-          aiDescription="Auto-generated questions"
-          onChange={quiz.handleModeChange}
-        />
-      )}
 
       {quiz.mode === "manual" ? (
         <ManualQuestionsEditor
@@ -92,12 +91,12 @@ export default function QuizGenerationModal(props: QuizGenerationModalProps) {
         />
       ) : (
         <QuizAiFields
-          topic={quiz.topic}
-          topicError={quiz.formErrors.topic}
+          generationSource={quiz.generationSource}
+          sourceError={quiz.formErrors.source}
           questionCount={quiz.questionCount}
           duration={quiz.duration}
           isProcessing={props.isProcessing}
-          onTopicChange={quiz.handleTopicChange}
+          onGenerationSourceChange={quiz.handleGenerationSourceChange}
           onQuestionCountChange={quiz.setQuestionCount}
           onQuestionCountBlur={quiz.handleQuestionCountBlur}
           onDurationChange={quiz.setDuration}
