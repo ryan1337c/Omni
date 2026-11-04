@@ -10,6 +10,8 @@ function generationSourceFields(state: GenerationSourceState) {
       return { text: state.inputs.fromScratch.text, file: null };
     case "notes":
       return { text: state.inputs.notes.focus, file: state.inputs.notes.file };
+    case "sampleTest":
+      return { text: "", file: state.inputs.sampleTest.file };
   }
 }
 

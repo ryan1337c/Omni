@@ -252,6 +252,110 @@ describe("generateQuiz from Notes", () => {
   });
 });
 
+const sampleTest: GenerateQuizInput = {
+  title: "Biology practice test",
+  source: { kind: "sampleTest", document: { bytes: fixture("sample-test.pdf"), mimeType: PDF } },
+  questionCount: 10,
+};
+
+describe("generateQuiz from a Sample Test", () => {
+  it("keeps 2-, 4-, and 5-Choice questions as returned", async () => {
+    const returned = [
+      {
+        question_text: "True or False: Ribosomes build proteins.",
+        choices: ["True", "False"],
+        correct_index: 0,
+        explanation: "Ribosomes translate mRNA into proteins.",
+      },
+      {
+        question_text: "What makes ATP?",
+        choices: ["Mitochondria", "Ribosomes", "Nucleus", "Golgi"],
+        correct_index: 0,
+        explanation: "Mitochondria make ATP.",
+      },
+      {
+        question_text: "Which organelle holds DNA?",
+        choices: ["Nucleus", "Ribosome", "Vacuole", "Golgi", "Lysosome"],
+        correct_index: 0,
+        explanation: "The nucleus stores the cell's DNA.",
+      },
+    ];
+    const { ai, prompts } = recordingAi({ questions: returned });
+
+    const prepared = await prepareQuiz(sampleTest);
+    const questions = await generateQuiz(prepared, { ai });
+
+    expect(prompts[0].user).toContain("1. What makes ATP?");
+    expect(questions).toEqual(returned);
+  });
+
+  it("trims a 6-Choice question to 5 and keeps the correct Choice", async () => {
+    const prepared = await prepareQuiz(sampleTest);
+    const ai = fakeAi({
+      questions: [
+        {
+          question_text: "Which is a noble gas?",
+          choices: ["Oxygen", "Nitrogen", "Carbon", "Iron", "Sodium", "Neon"],
+          correct_index: 5,
+          explanation: "Neon is a noble gas.",
+        },
+      ],
+    });
+
+    const [question] = await generateQuiz(prepared, { ai });
+
+    expect(question.choices).toEqual(["Oxygen", "Nitrogen", "Carbon", "Iron", "Neon"]);
+    expect(question.correct_index).toBe(4);
+  });
+
+  it("reports no questions found when the document has none", async () => {
+    const prepared = await prepareQuiz(sampleTest);
+
+    await expect(
+      generateQuiz(prepared, { ai: fakeAi({ questions: [] }) }),
+    ).rejects.toMatchObject({ kind: "no_questions_found" });
+  });
+
+  it("suggests Notes when no questions are found", async () => {
+    const prepared = await prepareQuiz(sampleTest);
+    const error = await generateQuiz(prepared, { ai: fakeAi({ questions: [] }) }).catch(
+      (e) => e,
+    );
+
+    expect(error.toResponseBody().error).toContain("Notes");
+  });
+
+  it("reports too many questions when the document has over 50", async () => {
+    const prepared = await prepareQuiz(sampleTest);
+    const question = {
+      question_text: "Q?",
+      choices: ["True", "False"],
+      correct_index: 0,
+      explanation: "It's true.",
+    };
+
+    await expect(
+      generateQuiz(prepared, { ai: fakeAi({ questions: Array(51).fill(question) }) }),
+    ).rejects.toMatchObject({ kind: "too_many_questions" });
+    await expect(
+      generateQuiz(prepared, { ai: fakeAi({ questions: Array(50).fill(question) }) }),
+    ).resolves.toHaveLength(50);
+  });
+
+  it("rejects a Sample Test question with only 1 Choice as invalid AI output", async () => {
+    const prepared = await prepareQuiz(sampleTest);
+    const ai = fakeAi({
+      questions: [
+        { question_text: "Q?", choices: ["A"], correct_index: 0, explanation: "A." },
+      ],
+    });
+
+    await expect(generateQuiz(prepared, { ai })).rejects.toMatchObject({
+      kind: "invalid_ai_output",
+    });
+  });
+});
+
 describe("prepareQuiz", () => {
   it("rejects blank From Scratch text as invalid input", async () => {
     const input: GenerateQuizInput = {

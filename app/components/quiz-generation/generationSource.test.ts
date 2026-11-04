@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   generationSourceReducer,
   initialGenerationSourceState,
+  usesQuestionCount,
   validateGenerationSource,
   type GenerationSourceAction,
 } from "./generationSource";
@@ -83,6 +84,58 @@ describe("generationSourceReducer", () => {
 
     const back = generationSourceReducer(state, { type: "select", source: "notes" });
     expect(back.inputs.notes).toEqual({ file: notesPdf, focus: "Ch. 3" });
+  });
+});
+
+describe("Sample Test", () => {
+  const examDocx = new File(["x"], "exam.docx", { type: "" });
+
+  it("requires a file", () => {
+    expect(validateGenerationSource(apply({ type: "select", source: "sampleTest" }))).toBe(
+      "Please upload a PDF or DOCX file.",
+    );
+  });
+
+  it("accepts a PDF or DOCX file", () => {
+    const state = apply(
+      { type: "select", source: "sampleTest" },
+      { type: "updateInputs", source: "sampleTest", inputs: { file: examDocx } },
+    );
+
+    expect(validateGenerationSource(state)).toBeUndefined();
+  });
+
+  it("keeps each source's inputs when switching between all three sources", () => {
+    const state = apply(
+      { type: "updateInputs", source: "fromScratch", inputs: { text: "Cell biology" } },
+      { type: "select", source: "notes" },
+      { type: "updateInputs", source: "notes", inputs: { file: notesPdf, focus: "Ch. 3" } },
+      { type: "select", source: "sampleTest" },
+      { type: "updateInputs", source: "sampleTest", inputs: { file: examDocx } },
+      { type: "select", source: "fromScratch" },
+    );
+
+    expect(state.inputs).toEqual({
+      fromScratch: { text: "Cell biology" },
+      notes: { file: notesPdf, focus: "Ch. 3" },
+      sampleTest: { file: examDocx },
+    });
+  });
+
+  it("hides Number of Questions only for Sample Test", () => {
+    expect(usesQuestionCount("fromScratch")).toBe(true);
+    expect(usesQuestionCount("notes")).toBe(true);
+    expect(usesQuestionCount("sampleTest")).toBe(false);
+  });
+
+  it("is cleared on reset", () => {
+    const state = apply(
+      { type: "select", source: "sampleTest" },
+      { type: "updateInputs", source: "sampleTest", inputs: { file: examDocx } },
+      { type: "reset" },
+    );
+
+    expect(state.inputs.sampleTest).toEqual({ file: null });
   });
 });
 

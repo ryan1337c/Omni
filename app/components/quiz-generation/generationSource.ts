@@ -1,10 +1,11 @@
 import { checkDocumentFile } from "@/lib/quiz/documentRules";
 
-export type GenerationSource = "fromScratch" | "notes";
+export type GenerationSource = "fromScratch" | "notes" | "sampleTest";
 
 export type GenerationSourceInputs = {
   fromScratch: { text: string };
   notes: { file: File | null; focus: string };
+  sampleTest: { file: File | null };
 };
 
 export type GenerationSourceState = {
@@ -17,6 +18,7 @@ export const initialGenerationSourceState: GenerationSourceState = {
   inputs: {
     fromScratch: { text: "" },
     notes: { file: null, focus: "" },
+    sampleTest: { file: null },
   },
 };
 
@@ -61,7 +63,14 @@ export function validateGenerationSource(
         : "Please enter a topic.";
     case "notes":
       return validateDocument(state.inputs.notes.file);
+    case "sampleTest":
+      return validateDocument(state.inputs.sampleTest.file);
   }
+}
+
+/** Sample Test takes its Number of Questions from the document. */
+export function usesQuestionCount(source: GenerationSource): boolean {
+  return source !== "sampleTest";
 }
 
 function validateDocument(file: File | null): string | undefined {

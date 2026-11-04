@@ -1,6 +1,6 @@
 "use client";
 
-import { NotebookText, PenLine, type LucideIcon } from "lucide-react";
+import { ClipboardList, NotebookText, PenLine, type LucideIcon } from "lucide-react";
 
 import type { GenerationSource } from "../generationSource";
 
@@ -23,6 +23,12 @@ const GENERATION_SOURCE_CARDS: GenerationSourceCard[] = [
     title: "Notes",
     description: "Upload study material and the AI writes questions from it",
     icon: NotebookText,
+  },
+  {
+    source: "sampleTest",
+    title: "Sample Test",
+    description: "Upload an exam or practice test and take its questions",
+    icon: ClipboardList,
   },
 ];
 

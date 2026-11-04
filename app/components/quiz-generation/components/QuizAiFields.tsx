@@ -2,10 +2,12 @@
 
 import { CountField } from "@/app/components/shared/generation";
 
-import type {
-  GenerationSourceAction,
-  GenerationSourceState,
+import {
+  usesQuestionCount,
+  type GenerationSourceAction,
+  type GenerationSourceState,
 } from "../generationSource";
+import DocumentDropzone from "./DocumentDropzone";
 import DurationSelect from "./DurationSelect";
 import FromScratchPanel from "./FromScratchPanel";
 import GenerationSourcePicker from "./GenerationSourcePicker";
@@ -84,19 +86,37 @@ export default function QuizAiFields({
             }
           />
         )}
+
+        {selected === "sampleTest" && (
+          <DocumentDropzone
+            label="Sample Test"
+            file={inputs.sampleTest.file}
+            error={sourceError}
+            isProcessing={isProcessing}
+            onFileChange={(file) =>
+              onGenerationSourceChange({
+                type: "updateInputs",
+                source: "sampleTest",
+                inputs: { file },
+              })
+            }
+          />
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <CountField
-          label="Number of Questions"
-          hint="(1-50)"
-          min={1}
-          max={50}
-          value={questionCount}
-          isProcessing={isProcessing}
-          onChange={onQuestionCountChange}
-          onBlur={onQuestionCountBlur}
-        />
+        {usesQuestionCount(selected) && (
+          <CountField
+            label="Number of Questions"
+            hint="(1-50)"
+            min={1}
+            max={50}
+            value={questionCount}
+            isProcessing={isProcessing}
+            onChange={onQuestionCountChange}
+            onBlur={onQuestionCountBlur}
+          />
+        )}
         <DurationSelect
           value={duration}
           isProcessing={isProcessing}
