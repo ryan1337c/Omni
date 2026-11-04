@@ -4,7 +4,7 @@ Read during review. Each rule is a judgement call; lint, typecheck, and tests co
 
 ## Domain language
 
-Code, tests, and comments use the terms in [`GLOSSARY.md`](GLOSSARY.md), and never a term it lists under _Avoid_. Existing identifiers that predate a glossary term (such as the `matched` field) may stay, but new names and comments use the glossary term. When a change introduces a domain concept the glossary lacks, flag it.
+Code, tests, and comments use the terms in the context's glossary (see [`GLOSSARY-MAP.md`](GLOSSARY-MAP.md)), and never a term it lists under _Avoid_. Existing identifiers that predate a glossary term (such as the `matched` field) may stay, but new names and comments use the glossary term. When a change introduces a domain concept the glossary lacks, flag it.
 
 ## Comments
 

@@ -15,4 +15,5 @@ export type ManualQuestion = {
   type: "multiple_choice" | "short_answer";
   choices: string[];
   correct_index: number;
+  explanation: string;
 };

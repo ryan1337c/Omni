@@ -13,6 +13,7 @@ import { formatTime } from "../utils";
 import type { Question, QuizScore } from "../types";
 import ChoiceOptionButton from "./ChoiceOptionButton";
 import ExitConfirmModal from "./ExitConfirmModal";
+import ExplanationCallout from "./ExplanationCallout";
 import MobileNavDrawer from "./MobileNavDrawer";
 import QuizNavigatorSidebar from "./QuizNavigatorSidebar";
 import TimeUpModal from "./TimeUpModal";
@@ -138,6 +139,10 @@ export default function ActiveQuizView({
                 />
               ))}
             </div>
+
+            {isSubmitted && currentQuestion.explanation?.trim() && (
+              <ExplanationCallout explanation={currentQuestion.explanation.trim()} />
+            )}
           </div>
         </div>
 

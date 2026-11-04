@@ -12,6 +12,9 @@ type TopicFieldProps = {
   rows: number;
   value: string;
   error?: string;
+  required?: boolean;
+  /** Lets a paste run past `TOPIC_LIMIT` so the form can report it instead of cutting it off. */
+  allowOverLimit?: boolean;
   isProcessing: boolean;
   onChange: (value: string) => void;
 };
@@ -22,6 +25,8 @@ export default function TopicField({
   rows,
   value,
   error,
+  required = true,
+  allowOverLimit = false,
   isProcessing,
   onChange,
 }: TopicFieldProps) {
@@ -29,7 +34,12 @@ export default function TopicField({
     <div className="space-y-2">
       <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300">
         <AlignLeft size={16} />
-        {label} <span className="text-red-500">*</span>
+        {label}{" "}
+        {required ? (
+          <span className="text-red-500">*</span>
+        ) : (
+          <span className="text-xs font-normal text-slate-400">(optional)</span>
+        )}
       </label>
       <span
         className={`text-xs font-medium ${value.length >= TOPIC_LIMIT ? "text-red-500" : "text-slate-400 dark:text-slate-500"}`}
@@ -42,7 +52,7 @@ export default function TopicField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         rows={rows}
-        maxLength={TOPIC_LIMIT}
+        maxLength={allowOverLimit ? undefined : TOPIC_LIMIT}
         className={`${INPUT_BASE_CLASSES} outline-none ${getBorderClasses(!!error)}`}
       />
       {error && <FieldError message={error} />}

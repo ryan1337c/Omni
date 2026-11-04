@@ -1,24 +1,42 @@
 import { AuthServices } from "@/lib/authServices";
 
+import type { GenerationSourceState } from "./generationSource";
+
 const authServices = new AuthServices();
+
+function generationSourceFields(state: GenerationSourceState) {
+  switch (state.selected) {
+    case "fromScratch":
+      return { text: state.inputs.fromScratch.text, file: null };
+    case "notes":
+      return { text: state.inputs.notes.focus, file: state.inputs.notes.file };
+    case "sampleTest":
+      return { text: "", file: state.inputs.sampleTest.file };
+  }
+}
 
 export async function generateQuizRequest(
   title: string,
-  topic: string,
+  generationSource: GenerationSourceState,
   questionCount: number | string,
 ) {
+  const { text, file } = generationSourceFields(generationSource);
+  const body = new FormData();
+  body.append("title", title);
+  body.append("source", generationSource.selected);
+  body.append("questionCount", String(Number(questionCount)));
+  body.append("text", text);
+  if (file) {
+    body.append("file", file, file.name);
+  }
+
   const session = await authServices.getSession();
   const result = await fetch(`/api/generateQuiz`, {
     method: "POST",
     headers: {
-      "Content-type": "application/json",
       Authorization: `Bearer ${session.access_token}`,
     },
-    body: JSON.stringify({
-      title: title,
-      topic: topic,
-      questionCount: Number(questionCount),
-    }),
+    body,
   });
 
   const data = await result.json();

@@ -13,6 +13,7 @@ const emptyQuestion = (id = "1"): ManualQuestion => ({
   type: "multiple_choice",
   choices: ["", ""],
   correct_index: 0,
+  explanation: "",
 });
 
 export function useManualQuestions(
@@ -111,6 +112,12 @@ export function useManualQuestions(
     if (text.trim()) setFormErrors((prev) => ({ ...prev, manual: undefined }));
   };
 
+  const updateExplanation = (id: string, text: string) => {
+    setQuestions(
+      questions.map((q) => (q.id === id ? { ...q, explanation: text } : q)),
+    );
+  };
+
   return {
     questions,
     setQuestions,
@@ -125,5 +132,6 @@ export function useManualQuestions(
     addOption,
     removeOption,
     updateOptionText,
+    updateExplanation,
   };
 }

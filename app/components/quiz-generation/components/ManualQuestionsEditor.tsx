@@ -12,6 +12,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
+import { useState } from "react";
 
 import {
   INPUT_BASE_CLASSES,
@@ -38,8 +39,49 @@ type ManualQuestionsEditorProps = {
   onAddOption: (id: string) => void;
   onRemoveOption: (id: string, idx: number) => void;
   onUpdateOptionText: (id: string, idx: number, text: string) => void;
+  onUpdateExplanation: (id: string, text: string) => void;
   onDurationChange: (value: string) => void;
 };
+
+function ExplanationField({
+  explanation,
+  isProcessing,
+  onChange,
+}: {
+  explanation: string;
+  isProcessing: boolean;
+  onChange: (text: string) => void;
+}) {
+  const [isExpanded, setIsExpanded] = useState(() => !!explanation.trim());
+
+  if (!isExpanded) {
+    return (
+      <button
+        onClick={() => setIsExpanded(true)}
+        disabled={isProcessing}
+        className="ml-7 text-xs font-medium text-violet-600 dark:text-violet-400 hover:underline flex items-center gap-1 mt-2 disabled:opacity-50 disabled:no-underline"
+      >
+        <Plus size={12} /> Add explanation
+      </button>
+    );
+  }
+
+  return (
+    <div className="ml-7 mt-3 space-y-1.5">
+      <label className="block text-xs font-medium text-slate-500 dark:text-slate-400">
+        Explanation (optional)
+      </label>
+      <textarea
+        disabled={isProcessing}
+        placeholder="Why is the correct Choice right?"
+        value={explanation}
+        onChange={(e) => onChange(e.target.value)}
+        rows={2}
+        className={`${INPUT_BASE_CLASSES} text-sm bg-white dark:bg-slate-800 outline-none resize-none ${getBorderClasses(false)}`}
+      />
+    </div>
+  );
+}
 
 export default function ManualQuestionsEditor({
   questions,
@@ -55,6 +97,7 @@ export default function ManualQuestionsEditor({
   onAddOption,
   onRemoveOption,
   onUpdateOptionText,
+  onUpdateExplanation,
   onDurationChange,
 }: ManualQuestionsEditorProps) {
   return (
@@ -193,6 +236,12 @@ export default function ManualQuestionsEditor({
                       <Plus size={12} /> Add Option
                     </button>
                   )}
+
+                  <ExplanationField
+                    explanation={q.explanation}
+                    isProcessing={isProcessing}
+                    onChange={(text) => onUpdateExplanation(q.id, text)}
+                  />
                 </div>
               )}
             </div>
