@@ -15,6 +15,7 @@ import {
   validateGenerationSource,
   type GenerationSourceAction,
 } from "../generationSource";
+import { toManualQuestion } from "../manualQuestion";
 import type { QuizGenerationModalProps } from "../types";
 import { useManualQuestions } from "./useManualQuestions";
 
@@ -88,14 +89,7 @@ export function useQuizGeneration({
       setQuestionCount(initialData.count);
 
       if (initialData.questions) {
-        const formattedQuestions = initialData.questions.map((q: any) => ({
-          id: String(q.id),
-          question_text: q.question_text,
-          type: q.question_type || "multiple_choice",
-          choices: q.choices.map((c: any) => c.choice_text),
-          correct_index: q.choices.findIndex((c: any) => c.is_correct),
-        }));
-        questions.setQuestions(formattedQuestions);
+        questions.setQuestions(initialData.questions.map(toManualQuestion));
       }
     } else if (isOpen && !editMode) {
       resetForm();
