@@ -18,6 +18,7 @@ import {
     QuizGenerationError,
     type GeneratedQuestion,
     type GenerationSource,
+    type QuizDocument,
 } from "@/lib/quiz";
 
 type ResponseData = {
@@ -79,22 +80,23 @@ async function toGenerationSource(
     switch (source) {
         case "fromScratch":
             return { kind: "fromScratch", text };
-        case "notes": {
-            if (!file) {
-                throw new QuizGenerationError("missing_file");
-            }
-            return {
-                kind: "notes",
-                document: {
-                    bytes: await fs.readFile(file.filepath),
-                    mimeType: resolveDocumentMimeType(file.mimetype, file.originalFilename),
-                },
-                focus: text,
-            };
-        }
+        case "notes":
+            return { kind: "notes", document: await toQuizDocument(file), focus: text };
+        case "sampleTest":
+            return { kind: "sampleTest", document: await toQuizDocument(file) };
         default:
             throw new QuizGenerationError("invalid_input", `Unknown Generation Source "${source}"`);
     }
+}
+
+async function toQuizDocument(file: formidable.File | undefined): Promise<QuizDocument> {
+    if (!file) {
+        throw new QuizGenerationError("missing_file");
+    }
+    return {
+        bytes: await fs.readFile(file.filepath),
+        mimeType: resolveDocumentMimeType(file.mimetype, file.originalFilename),
+    };
 }
 
 export default async function handler(
@@ -148,6 +150,7 @@ export default async function handler(
 
         if (error instanceof QuizGenerationError) {
             // A refused topic keeps its credits, so gibberish can't be retried for free.
+            // Every other kind, including a Sample Test with no or too many questions, is refunded.
             if (error.kind !== "invalid_input") {
                 await refundCreditsQuietly(reservation);
             }

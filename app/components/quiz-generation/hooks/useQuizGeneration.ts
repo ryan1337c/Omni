@@ -175,7 +175,7 @@ export function useQuizGeneration({
             userId,
             form.mode,
             Number(duration),
-            Number(questionCount),
+            data.quiz.length,
             form.description,
             data.quiz,
           );
