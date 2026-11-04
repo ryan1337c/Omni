@@ -12,6 +12,7 @@ import { generateQuizRequest } from "../api";
 import {
   generationSourceReducer,
   initialGenerationSourceState,
+  nextSourceError,
   validateGenerationSource,
   type GenerationSourceAction,
 } from "../generationSource";
@@ -68,15 +69,7 @@ export function useQuizGeneration({
   };
 
   const handleClose = () => {
-    form.setTitle("");
-    form.setDescription("");
-    form.setMode("ai");
-    setGenerationSource(initialGenerationSourceState);
-    setQuestionCount(10);
-    setDuration("600");
-    questions.resetQuestions();
-    form.setFormErrors({});
-    form.setIsClearConfirmOpen(false);
+    resetForm();
     onClose();
   };
 
@@ -218,12 +211,10 @@ export function useQuizGeneration({
   const handleGenerationSourceChange = (action: GenerationSourceAction) => {
     const next = generationSourceReducer(generationSource, action);
     setGenerationSource(next);
-    const sourceError = validateGenerationSource(next);
-    if (action.type === "select" || !sourceError) {
-      form.setFormErrors((prev) => ({ ...prev, source: undefined }));
-    } else if (action.type === "updateInputs" && "file" in action.inputs && action.inputs.file) {
-      form.setFormErrors((prev) => ({ ...prev, source: sourceError }));
-    }
+    form.setFormErrors((prev) => ({
+      ...prev,
+      source: nextSourceError(prev.source, action, next),
+    }));
   };
 
   const handleQuestionCountBlur = () => {

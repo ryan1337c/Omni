@@ -12,12 +12,13 @@ import {
 import {
     createOpenAiQuizClient,
     generateQuiz,
+    isGenerationSourceKind,
     prepareQuiz,
     resolveDocumentMimeType,
     MAX_DOCUMENT_BYTES,
     QuizGenerationError,
     type GeneratedQuestion,
-    type GenerationSource,
+    type GenerationSourceInput,
     type QuizDocument,
 } from "@/lib/quiz";
 
@@ -72,11 +73,14 @@ function toUploadError(err: any) {
         : err;
 }
 
-async function toGenerationSource(
+async function toGenerationSourceInput(
     source: string | undefined,
     text: string,
     file: formidable.File | undefined,
-): Promise<GenerationSource> {
+): Promise<GenerationSourceInput> {
+    if (!isGenerationSourceKind(source)) {
+        throw new QuizGenerationError("invalid_input", `Unknown Generation Source "${source}"`);
+    }
     switch (source) {
         case "fromScratch":
             return { kind: "fromScratch", text };
@@ -84,8 +88,6 @@ async function toGenerationSource(
             return { kind: "notes", document: await toQuizDocument(file), focus: text };
         case "sampleTest":
             return { kind: "sampleTest", document: await toQuizDocument(file) };
-        default:
-            throw new QuizGenerationError("invalid_input", `Unknown Generation Source "${source}"`);
     }
 }
 
@@ -131,7 +133,7 @@ export default async function handler(
 
         const prepared = await prepareQuiz({
             title,
-            source: await toGenerationSource(source, fields.text?.[0] ?? "", uploadedFile),
+            source: await toGenerationSourceInput(source, fields.text?.[0] ?? "", uploadedFile),
             questionCount,
         });
 

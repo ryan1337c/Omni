@@ -3,6 +3,7 @@
 import { CountField } from "@/app/components/shared/generation";
 
 import {
+  updateInputs,
   usesQuestionCount,
   type GenerationSourceAction,
   type GenerationSourceState,
@@ -55,11 +56,7 @@ export default function QuizAiFields({
             error={sourceError}
             isProcessing={isProcessing}
             onTextChange={(text) =>
-              onGenerationSourceChange({
-                type: "updateInputs",
-                source: "fromScratch",
-                inputs: { text },
-              })
+              onGenerationSourceChange(updateInputs("fromScratch", { text }))
             }
           />
         )}
@@ -71,18 +68,10 @@ export default function QuizAiFields({
             error={sourceError}
             isProcessing={isProcessing}
             onFileChange={(file) =>
-              onGenerationSourceChange({
-                type: "updateInputs",
-                source: "notes",
-                inputs: { file },
-              })
+              onGenerationSourceChange(updateInputs("notes", { file }))
             }
             onFocusChange={(focus) =>
-              onGenerationSourceChange({
-                type: "updateInputs",
-                source: "notes",
-                inputs: { focus },
-              })
+              onGenerationSourceChange(updateInputs("notes", { focus }))
             }
           />
         )}
@@ -94,11 +83,7 @@ export default function QuizAiFields({
             error={sourceError}
             isProcessing={isProcessing}
             onFileChange={(file) =>
-              onGenerationSourceChange({
-                type: "updateInputs",
-                source: "sampleTest",
-                inputs: { file },
-              })
+              onGenerationSourceChange(updateInputs("sampleTest", { file }))
             }
           />
         )}

@@ -2,7 +2,7 @@ import OpenAI from "openai";
 
 import type { QuizAiClient } from "./generateQuiz";
 
-export const QUIZ_MODEL = "gpt-5.1";
+const QUIZ_MODEL = "gpt-5.1";
 
 export function createOpenAiQuizClient(
   openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY }),

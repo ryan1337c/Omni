@@ -1,8 +1,16 @@
 export const MAX_DOCUMENT_BYTES = 4 * 1024 * 1024;
 
+/** `MAX_DOCUMENT_BYTES` as users read it, e.g. "4 MB". */
+export const MAX_DOCUMENT_SIZE_LABEL = `${MAX_DOCUMENT_BYTES / (1024 * 1024)} MB`;
+
+export const UPLOAD_DOCUMENT_MESSAGE = "Upload a PDF or DOCX file.";
+export const DOCUMENT_TOO_LARGE_MESSAGE = `Your file is larger than ${MAX_DOCUMENT_SIZE_LABEL}. Shrink or split it and try again.`;
+
 export const PDF_MIME_TYPE = "application/pdf";
 export const DOCX_MIME_TYPE =
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+const GENERIC_MIME_TYPE = "application/octet-stream";
 
 const EXTENSION_MIME_TYPES: Record<string, string> = {
   pdf: PDF_MIME_TYPE,
@@ -18,13 +26,13 @@ export function isSupportedDocumentType(mimeType: string): boolean {
 
 /**
  * Browsers and upload parsers sometimes report a blank or generic MIME type
- * for DOCX files, so fall back to the file extension.
+ * for DOCX files, so only then fall back to the file extension.
  */
 export function resolveDocumentMimeType(
   mimeType: string | null | undefined,
   fileName: string | null | undefined,
 ): string {
-  if (mimeType && isSupportedDocumentType(mimeType)) {
+  if (mimeType && mimeType !== GENERIC_MIME_TYPE) {
     return mimeType;
   }
   const extension = fileName?.split(".").pop()?.toLowerCase() ?? "";
@@ -38,10 +46,10 @@ export function checkDocumentFile(file: {
   size: number;
 }): string | undefined {
   if (!isSupportedDocumentType(resolveDocumentMimeType(file.type, file.name))) {
-    return "Upload a PDF or DOCX file.";
+    return UPLOAD_DOCUMENT_MESSAGE;
   }
   if (file.size > MAX_DOCUMENT_BYTES) {
-    return "This file is larger than 4 MB. Shrink or split it and try again.";
+    return DOCUMENT_TOO_LARGE_MESSAGE;
   }
   return undefined;
 }

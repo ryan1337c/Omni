@@ -13,6 +13,8 @@ type TopicFieldProps = {
   value: string;
   error?: string;
   required?: boolean;
+  /** Lets a paste run past `TOPIC_LIMIT` so the form can report it instead of cutting it off. */
+  allowOverLimit?: boolean;
   isProcessing: boolean;
   onChange: (value: string) => void;
 };
@@ -24,6 +26,7 @@ export default function TopicField({
   value,
   error,
   required = true,
+  allowOverLimit = false,
   isProcessing,
   onChange,
 }: TopicFieldProps) {
@@ -49,7 +52,7 @@ export default function TopicField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         rows={rows}
-        maxLength={TOPIC_LIMIT}
+        maxLength={allowOverLimit ? undefined : TOPIC_LIMIT}
         className={`${INPUT_BASE_CLASSES} outline-none ${getBorderClasses(!!error)}`}
       />
       {error && <FieldError message={error} />}

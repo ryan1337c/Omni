@@ -22,6 +22,10 @@ _Avoid_: Topic & Style, freeform
 The Generation Source where the user uploads study material and the AI writes new questions grounded in it.
 _Avoid_: Study material upload, document mode
 
+**Focus**:
+Optional guidance given with Notes that steers which of the material the questions cover, or the style they take.
+_Avoid_: Prompt, instructions, filter
+
 **Sample Test**:
 The Generation Source where the user uploads an existing exam or practice test and the AI turns its own questions into a quiz, keeping its printed Choices and answer key where it has them.
 _Avoid_: Past paper, exam upload
