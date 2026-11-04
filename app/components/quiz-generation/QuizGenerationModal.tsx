@@ -87,6 +87,7 @@ export default function QuizGenerationModal(props: QuizGenerationModalProps) {
           onAddOption={quiz.addOption}
           onRemoveOption={quiz.removeOption}
           onUpdateOptionText={quiz.updateOptionText}
+          onUpdateExplanation={quiz.updateExplanation}
           onDurationChange={quiz.setDuration}
         />
       ) : (
