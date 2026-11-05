@@ -1,7 +1,6 @@
-import PDFJS, { type PdfJsPage } from "pdf-parse/lib/pdf.js/v1.10.100/build/pdf.js";
-
 import { encodePng, type DecodedImage } from "./encodePng";
 import { figureMarker, type Figure } from "./figureRules";
+import { configurePdfJs, PDFJS, type PdfJsPage } from "./pdfJs";
 
 type Matrix = number[];
 
@@ -17,7 +16,7 @@ type PlacedImage = { top: number; image: DecodedImage };
 export async function readPdfSampleTest(
   bytes: Uint8Array,
 ): Promise<{ text: string; figures: Figure[] }> {
-  PDFJS.disableWorker = true;
+  configurePdfJs();
   // "none" makes pdf.js decode JPEGs itself; the other modes need a browser to decode them.
   const doc = await PDFJS.getDocument({
     data: new Uint8Array(bytes),

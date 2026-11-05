@@ -21,8 +21,9 @@ declare module "pdf-parse/lib/pdf.js/v1.10.100/build/pdf.js" {
     destroy(): void;
   };
 
-  const PDFJS: {
+  export const PDFJS: {
     disableWorker: boolean;
+    disableFontFace: boolean;
     OPS: Record<string, number>;
     getDocument(source: {
       data: Uint8Array;

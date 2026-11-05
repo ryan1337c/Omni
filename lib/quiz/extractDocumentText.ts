@@ -3,20 +3,23 @@ import pdf from "pdf-parse/lib/pdf-parse.js";
 
 import { MAX_DOCUMENT_BYTES, PDF_MIME_TYPE, isSupportedDocumentType } from "./documentRules";
 import { QuizGenerationError } from "./errors";
+import { configurePdfJs } from "./pdfJs";
 
 export type QuizDocument = { bytes: Uint8Array; mimeType: string };
 
 /** Checks an uploaded document and returns its trimmed, non-empty text. */
 export async function extractDocumentText(document: QuizDocument): Promise<string> {
   checkDocumentTypeAndSize(document);
-  return requireReadableText(() =>
-    document.mimeType === PDF_MIME_TYPE
-      ? // pdf-parse misreads small Buffers (it reads past their slice of Node's shared pool), so it gets a plain copy.
-        pdf(new Uint8Array(document.bytes)).then((result) => result.text)
-      : mammoth
-          .extractRawText({ buffer: Buffer.from(document.bytes) })
-          .then((result) => result.value),
-  );
+  return requireReadableText(() => {
+    if (document.mimeType === PDF_MIME_TYPE) {
+      configurePdfJs();
+      // pdf-parse misreads small Buffers (it reads past their slice of Node's shared pool), so it gets a plain copy.
+      return pdf(new Uint8Array(document.bytes)).then((result) => result.text);
+    }
+    return mammoth
+      .extractRawText({ buffer: Buffer.from(document.bytes) })
+      .then((result) => result.value);
+  });
 }
 
 export function checkDocumentTypeAndSize(document: QuizDocument) {

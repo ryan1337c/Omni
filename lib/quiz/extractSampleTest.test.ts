@@ -23,6 +23,26 @@ function expectInOrder(text: string, parts: string[]) {
   expect(positions).toEqual([...positions].sort((a, b) => a - b));
 }
 
+/** pdf.js injects fonts after reading returns, so wait for those delayed rejections. */
+async function expectNoDocumentRejection(run: () => Promise<void>) {
+  const rejections: unknown[] = [];
+  const onReject = (reason: unknown) => {
+    rejections.push(reason);
+  };
+  process.on("unhandledRejection", onReject);
+  try {
+    await run();
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    expect(
+      rejections.filter(
+        (reason) => reason instanceof Error && reason.message.includes("document is not defined"),
+      ),
+    ).toEqual([]);
+  } finally {
+    process.off("unhandledRejection", onReject);
+  }
+}
+
 function pngSize(bytes: Uint8Array) {
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   return { width: view.getUint32(16), height: view.getUint32(20) };
@@ -84,6 +104,17 @@ describe("extractSampleTest from a PDF", () => {
     await expect(
       extractSampleTest({ bytes: fixture("blank.pdf"), mimeType: PDF }),
     ).rejects.toMatchObject({ kind: "no_readable_text" });
+  });
+
+  it("reads a PDF that embeds its own fonts without a document-missing rejection", async () => {
+    await expectNoDocumentRejection(async () => {
+      const { text, figures } = await extractSampleTest({
+        bytes: fixture("embedded-font.pdf"),
+        mimeType: PDF,
+      });
+      expect(figures).toEqual([]);
+      expect(text).toContain("Photosynthesis happens in chloroplasts.");
+    });
   });
 });
 
