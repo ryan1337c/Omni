@@ -1,3 +1,5 @@
+import type { StoredFigure } from "@/lib/quiz/figureRules";
+
 export type Choice = {
   question_id?: number;
   choice_text: string;
@@ -11,6 +13,7 @@ export type Question = {
   correct_answer: string;
   explanation?: string | null;
   choices: Choice[];
+  figures?: StoredFigure[];
 };
 
 export type QuizActiveModalProps = {

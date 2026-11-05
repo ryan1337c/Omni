@@ -14,5 +14,10 @@ export {
   resolveDocumentMimeType,
 } from "./documentRules";
 export { isGenerationSourceKind } from "./generationSourceKinds";
+export {
+  FIGURE_BUCKET,
+  newFigurePath,
+  type Figure,
+} from "./figureRules";
 export { QuizGenerationError, type QuizGenerationErrorKind } from "./errors";
 export { createOpenAiQuizClient } from "./openAiQuizClient";

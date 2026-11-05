@@ -16,8 +16,8 @@ import {
   validateGenerationSource,
   type GenerationSourceAction,
 } from "../generationSource";
-import { toManualQuestion } from "../manualQuestion";
-import type { QuizGenerationModalProps } from "../types";
+import { toManualQuestion, type SavedQuestion } from "../manualQuestion";
+import type { ManualQuestion, QuizGenerationModalProps } from "../types";
 import { useManualQuestions } from "./useManualQuestions";
 
 export function useQuizGeneration({
@@ -71,6 +71,40 @@ export function useQuizGeneration({
   const handleClose = () => {
     resetForm();
     onClose();
+  };
+
+  const withStoredFigures = async (manualQuestions: ManualQuestion[]) => {
+    const uploaded: string[] = [];
+    try {
+      const saved = [];
+      for (const question of manualQuestions) {
+        const picked = question.figures.flatMap((figure) =>
+          figure.kind === "picked" ? [figure.file] : [],
+        );
+        const pickedPaths = await publicServices.uploadQuizFigures(userId, picked);
+        uploaded.push(...pickedPaths);
+        let nextPicked = 0;
+        saved.push({
+          ...question,
+          figure_paths: question.figures.map((figure) =>
+            figure.kind === "stored" ? figure.path : pickedPaths[nextPicked++],
+          ),
+        });
+      }
+      return { saved, uploaded };
+    } catch (error) {
+      await publicServices.removeQuizFigures(uploaded);
+      throw error;
+    }
+  };
+
+  const undoUploadsIfFails = async <T,>(newPaths: string[], save: () => Promise<T>) => {
+    try {
+      return await save();
+    } catch (error) {
+      await publicServices.removeQuizFigures(newPaths);
+      throw error;
+    }
   };
 
   useEffect(() => {
@@ -130,12 +164,23 @@ export function useQuizGeneration({
       try {
         setIsProcessing(true);
 
-        const updatedQuiz = await publicServices.updateQuiz(
-          initialData.id,
-          form.title,
-          form.description,
-          Number(duration),
-          questions.questions,
+        const { saved, uploaded } = await withStoredFigures(questions.questions);
+        const updatedQuiz = await undoUploadsIfFails(uploaded, () =>
+          publicServices.updateQuiz(
+            initialData.id,
+            form.title,
+            form.description,
+            Number(duration),
+            saved,
+          ),
+        );
+
+        const kept = new Set(saved.flatMap((q) => q.figure_paths));
+        const before: string[] = (initialData.questions ?? []).flatMap(
+          (q: SavedQuestion) => (q.figures ?? []).map((figure) => figure.path),
+        );
+        await publicServices.removeQuizFigures(
+          before.filter((path) => !kept.has(path)),
         );
 
         onQuizUpdated(updatedQuiz);
@@ -163,14 +208,19 @@ export function useQuizGeneration({
             throw new Error(data.error || "Something went wrong!");
           }
 
-          const quiz = await publicServices.createQuiz(
-            form.title,
-            userId,
-            form.mode,
-            Number(duration),
-            data.quiz.length,
-            form.description,
-            data.quiz,
+          const generatedPaths: string[] = data.quiz.flatMap(
+            (q: { figure_paths: string[] }) => q.figure_paths,
+          );
+          const quiz = await undoUploadsIfFails(generatedPaths, () =>
+            publicServices.createQuiz(
+              form.title,
+              userId,
+              form.mode,
+              Number(duration),
+              data.quiz.length,
+              form.description,
+              data.quiz,
+            ),
           );
 
           onQuizCreated(quiz);
@@ -186,14 +236,17 @@ export function useQuizGeneration({
       } else {
         try {
           setIsProcessing(true);
-          const quiz = await publicServices.createQuiz(
-            form.title,
-            userId,
-            form.mode,
-            Number(duration),
-            questions.questions.length,
-            form.description,
-            questions.questions,
+          const { saved, uploaded } = await withStoredFigures(questions.questions);
+          const quiz = await undoUploadsIfFails(uploaded, () =>
+            publicServices.createQuiz(
+              form.title,
+              userId,
+              form.mode,
+              Number(duration),
+              saved.length,
+              form.description,
+              saved,
+            ),
           );
 
           onQuizCreated(quiz);

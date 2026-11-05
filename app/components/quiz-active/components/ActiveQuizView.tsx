@@ -14,6 +14,7 @@ import type { Question, QuizScore } from "../types";
 import ChoiceOptionButton from "./ChoiceOptionButton";
 import ExitConfirmModal from "./ExitConfirmModal";
 import ExplanationCallout from "./ExplanationCallout";
+import FigureGrid from "./FigureGrid";
 import MobileNavDrawer from "./MobileNavDrawer";
 import QuizNavigatorSidebar from "./QuizNavigatorSidebar";
 import TimeUpModal from "./TimeUpModal";
@@ -123,6 +124,11 @@ export default function ActiveQuizView({
 
         <div className="flex-1 overflow-y-auto p-4 md:p-10 custom-scrollbar">
           <div className="max-w-3xl mx-auto space-y-6 md:space-y-8">
+            <FigureGrid
+              key={currentQuestion.id}
+              figures={currentQuestion.figures ?? []}
+            />
+
             <div className="text-lg md:text-2xl font-semibold text-slate-800 dark:text-white leading-relaxed">
               {currentQuestion.question_text}
             </div>

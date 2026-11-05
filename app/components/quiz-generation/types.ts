@@ -1,3 +1,5 @@
+import type { StoredFigure } from "@/lib/quiz/figureRules";
+
 export type QuizGenerationModalProps = {
   isOpen: boolean;
   onClose: () => void;
@@ -9,6 +11,11 @@ export type QuizGenerationModalProps = {
   onQuizUpdated: (quiz: any) => void;
 };
 
+/** A Figure in the editor: already in storage, or picked from the device and uploaded on save. */
+export type FigureDraft =
+  | ({ kind: "stored" } & StoredFigure)
+  | { kind: "picked"; file: File; previewUrl: string };
+
 export type ManualQuestion = {
   id: string;
   question_text: string;
@@ -16,4 +23,5 @@ export type ManualQuestion = {
   choices: string[];
   correct_index: number;
   explanation: string;
+  figures: FigureDraft[];
 };

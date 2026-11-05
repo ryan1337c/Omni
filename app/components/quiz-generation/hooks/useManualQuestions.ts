@@ -3,9 +3,10 @@
 import { useState, type Dispatch, type SetStateAction } from "react";
 
 import type { FormErrors } from "@/app/components/shared/generation/types";
+import { checkFigureFiles } from "@/lib/quiz/figureRules";
 
 import { QUESTION_LIMIT } from "../constants";
-import type { ManualQuestion } from "../types";
+import type { FigureDraft, ManualQuestion } from "../types";
 
 const emptyQuestion = (id = "1"): ManualQuestion => ({
   id,
@@ -14,7 +15,14 @@ const emptyQuestion = (id = "1"): ManualQuestion => ({
   choices: ["", ""],
   correct_index: 0,
   explanation: "",
+  figures: [],
 });
+
+function releasePreviews(figures: FigureDraft[]) {
+  for (const figure of figures) {
+    if (figure.kind === "picked") URL.revokeObjectURL(figure.previewUrl);
+  }
+}
 
 export function useManualQuestions(
   setFormErrors: Dispatch<SetStateAction<FormErrors>>,
@@ -24,6 +32,7 @@ export function useManualQuestions(
   ]);
 
   const resetQuestions = () => {
+    releasePreviews(questions.flatMap((q) => q.figures));
     setQuestions([emptyQuestion()]);
   };
 
@@ -36,18 +45,22 @@ export function useManualQuestions(
   };
 
   const deleteQuestion = (id: string) => {
-    if (questions.length > 1) setQuestions(questions.filter((q) => q.id !== id));
+    if (questions.length <= 1) return;
+    releasePreviews(questions.find((q) => q.id === id)?.figures ?? []);
+    setQuestions(questions.filter((q) => q.id !== id));
   };
 
   const shouldConfirmClear = () => {
     return (
       questions.length > 1 ||
       questions[0].question_text.trim() !== "" ||
-      questions[0].choices.length > 2
+      questions[0].choices.length > 2 ||
+      questions[0].figures.length > 0
     );
   };
 
   const confirmClearAll = () => {
+    releasePreviews(questions.flatMap((q) => q.figures));
     setQuestions([emptyQuestion(Date.now().toString())]);
     setFormErrors((prev) => ({ ...prev, manual: undefined }));
   };
@@ -118,6 +131,39 @@ export function useManualQuestions(
     );
   };
 
+  /** Adds picked pictures as Figures, or returns why they can't be added. */
+  const addFigures = (id: string, files: File[]): string | undefined => {
+    const question = questions.find((q) => q.id === id);
+    if (!question) return undefined;
+    const error = checkFigureFiles(files, question.figures.length);
+    if (error) return error;
+
+    const picked: FigureDraft[] = files.map((file) => ({
+      kind: "picked",
+      file,
+      previewUrl: URL.createObjectURL(file),
+    }));
+    setQuestions(
+      questions.map((q) =>
+        q.id === id ? { ...q, figures: [...q.figures, ...picked] } : q,
+      ),
+    );
+    return undefined;
+  };
+
+  const removeFigure = (id: string, index: number) => {
+    const question = questions.find((q) => q.id === id);
+    if (!question) return;
+    releasePreviews([question.figures[index]]);
+    setQuestions(
+      questions.map((q) =>
+        q.id === id
+          ? { ...q, figures: q.figures.filter((_, i) => i !== index) }
+          : q,
+      ),
+    );
+  };
+
   return {
     questions,
     setQuestions,
@@ -133,5 +179,7 @@ export function useManualQuestions(
     removeOption,
     updateOptionText,
     updateExplanation,
+    addFigures,
+    removeFigure,
   };
 }

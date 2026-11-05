@@ -30,6 +30,10 @@ _Avoid_: Prompt, instructions, filter
 The Generation Source where the user uploads an existing exam or practice test and the AI turns its own questions into a quiz, keeping its printed Choices and answer key where it has them.
 _Avoid_: Past paper, exam upload
 
+**Part**:
+A lettered sub-question of a printed Sample Test question that shares its stem, like 1(a) and 1(b). Each Part becomes its own quiz question, carrying the stem it needs.
+_Avoid_: Sub-question, sub-part
+
 ### Questions
 
 **Choice**:
@@ -39,6 +43,10 @@ _Avoid_: Option, answer (when meaning any Choice)
 **Explanation**:
 A short note on a question saying why the correct Choice is right, and sometimes why a tempting wrong Choice is not.
 _Avoid_: Rationale, solution, hint
+
+**Figure**:
+A picture shown with a question, which the question may refer to. A question has up to four, in a fixed order; when it has more than one they are numbered, and the question text refers to them by that number.
+_Avoid_: Image, attachment, diagram
 
 ### Taking a quiz
 

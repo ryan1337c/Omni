@@ -1,10 +1,12 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
+import { extractSampleTest } from "./extractSampleTest";
 import {
   generateQuiz,
   prepareQuiz,
   type GenerateQuizInput,
+  type PreparedQuiz,
   type QuizAiClient,
 } from "./index";
 
@@ -92,12 +94,14 @@ describe("generateQuiz from scratch", () => {
         correct_index: 1,
         explanation:
           "The light reactions run on the thylakoid membrane. The stroma hosts the Calvin cycle instead.",
+        figures: [],
       },
       {
         question_text: "Which gas is released?",
         choices: ["CO2", "N2", "O2", "H2", "CH4"],
         correct_index: 2,
         explanation: "Splitting water releases O2 as a by-product.",
+        figures: [],
       },
     ]);
   });
@@ -183,7 +187,7 @@ describe("generateQuiz from Notes", () => {
 
     expect(prompts[0].user).toContain("Mitochondria make ATP.");
     expect(prompts[0].user).toContain("Ribosomes build proteins.");
-    expect(questions).toEqual(oneValidQuestion.questions);
+    expect(questions).toEqual([{ ...oneValidQuestion.questions[0], figures: [] }]);
   });
 
   it("passes the text of a DOCX and the focus text to the AI client", async () => {
@@ -286,7 +290,7 @@ describe("generateQuiz from a Sample Test", () => {
     const questions = await generateQuiz(prepared, { ai });
 
     expect(prompts[0].user).toContain("1. What makes ATP?");
-    expect(questions).toEqual(returned);
+    expect(questions).toEqual(returned.map((question) => ({ ...question, figures: [] })));
   });
 
   it("trims a 6-Choice question to 5 and keeps the correct Choice", async () => {
@@ -353,6 +357,87 @@ describe("generateQuiz from a Sample Test", () => {
     await expect(generateQuiz(prepared, { ai })).rejects.toMatchObject({
       kind: "invalid_ai_output",
     });
+  });
+});
+
+describe("generateQuiz assigns a Sample Test's Figures", () => {
+  const question = (figures: unknown) => ({
+    question_text: "Q?",
+    choices: ["True", "False"],
+    correct_index: 0,
+    explanation: "It's true.",
+    figures,
+  });
+
+  it("marks each Figure in the text the AI reads", async () => {
+    const { ai, prompts } = recordingAi({ questions: [question([])] });
+
+    const prepared = await prepareQuiz({
+      ...sampleTest,
+      source: {
+        kind: "sampleTest",
+        document: { bytes: fixture("sample-test-figures.docx"), mimeType: DOCX },
+      },
+    });
+    await generateQuiz(prepared, { ai });
+
+    expect(prompts[0].user).toContain("[FIGURE 1]");
+    expect(prompts[0].user).toContain("[FIGURE 3]");
+  });
+
+  it("gives Parts that share a picture the same Figure, and each other Part its own", async () => {
+    const document = { bytes: fixture("sample-test-figures.docx"), mimeType: DOCX };
+    const { figures } = await extractSampleTest(document);
+    const prepared = await prepareQuiz({
+      ...sampleTest,
+      source: { kind: "sampleTest", document },
+    });
+
+    const [partA, partB, partC, second] = await generateQuiz(prepared, {
+      ai: fakeAi({ questions: [question([1]), question([1]), question([2]), question([3])] }),
+    });
+
+    expect(partA.figures).toEqual([figures[0]]);
+    expect(partB.figures).toEqual([figures[0]]);
+    expect(partC.figures).toEqual([figures[1]]);
+    expect(second.figures).toEqual([figures[2]]);
+  });
+
+  const fiveFigures = Array.from({ length: 5 }, (_, index) => ({
+    bytes: new Uint8Array([index + 1]),
+    mimeType: "image/png" as const,
+  }));
+
+  const withFiveFigures: PreparedQuiz = {
+    title: "Graphs",
+    source: { kind: "sampleTest", testText: "1. Match each graph.", figures: fiveFigures },
+    questionCount: 10,
+    pricedText: [],
+  };
+
+  it("keeps the 4 most relevant Figures, in document order", async () => {
+    const [only] = await generateQuiz(withFiveFigures, {
+      ai: fakeAi({ questions: [question([5, 2, 4, 1, 3])] }),
+    });
+
+    expect(only.figures).toEqual([fiveFigures[0], fiveFigures[1], fiveFigures[3], fiveFigures[4]]);
+  });
+
+  it("ignores Figure numbers that don't name a Figure, and repeats", async () => {
+    const [only] = await generateQuiz(withFiveFigures, {
+      ai: fakeAi({ questions: [question([0, 6, "2", 1.5, 3, 3])] }),
+    });
+
+    expect(only.figures).toEqual([fiveFigures[2]]);
+  });
+
+  it("gives a question no Figures when the AI names none", async () => {
+    const [missing, notAList] = await generateQuiz(withFiveFigures, {
+      ai: fakeAi({ questions: [question(undefined), question("1")] }),
+    });
+
+    expect(missing.figures).toEqual([]);
+    expect(notAList.figures).toEqual([]);
   });
 });
 

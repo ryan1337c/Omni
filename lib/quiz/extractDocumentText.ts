@@ -8,6 +8,18 @@ export type QuizDocument = { bytes: Uint8Array; mimeType: string };
 
 /** Checks an uploaded document and returns its trimmed, non-empty text. */
 export async function extractDocumentText(document: QuizDocument): Promise<string> {
+  checkDocumentTypeAndSize(document);
+  return requireReadableText(() =>
+    document.mimeType === PDF_MIME_TYPE
+      ? // pdf-parse misreads small Buffers (it reads past their slice of Node's shared pool), so it gets a plain copy.
+        pdf(new Uint8Array(document.bytes)).then((result) => result.text)
+      : mammoth
+          .extractRawText({ buffer: Buffer.from(document.bytes) })
+          .then((result) => result.value),
+  );
+}
+
+export function checkDocumentTypeAndSize(document: QuizDocument) {
   if (!isSupportedDocumentType(document.mimeType)) {
     throw new QuizGenerationError(
       "unsupported_file_type",
@@ -20,14 +32,13 @@ export async function extractDocumentText(document: QuizDocument): Promise<strin
       `Document is ${document.bytes.byteLength} bytes; the limit is ${MAX_DOCUMENT_BYTES}`,
     );
   }
+}
 
+/** Runs a document reader and returns its trimmed text, which must not be empty. */
+export async function requireReadableText(read: () => Promise<string>): Promise<string> {
   let text: string;
   try {
-    text =
-      document.mimeType === PDF_MIME_TYPE
-        ? // pdf-parse misreads small Buffers (it reads past their slice of Node's shared pool), so it gets a plain copy.
-          (await pdf(new Uint8Array(document.bytes))).text
-        : (await mammoth.extractRawText({ buffer: Buffer.from(document.bytes) })).value;
+    text = await read();
   } catch (error) {
     throw new QuizGenerationError(
       "no_readable_text",

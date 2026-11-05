@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import formidable, { errors as formidableErrors } from "formidable";
 import fs from "fs/promises";
 import { requireEntitlement, requireUser } from "@/lib/requireUser";
+import { supabaseServerClient } from "@/lib/supaBaseServer";
 import {
     consumeCredits,
     refundCreditsQuietly,
@@ -13,8 +14,10 @@ import {
     createOpenAiQuizClient,
     generateQuiz,
     isGenerationSourceKind,
+    newFigurePath,
     prepareQuiz,
     resolveDocumentMimeType,
+    FIGURE_BUCKET,
     MAX_DOCUMENT_BYTES,
     QuizGenerationError,
     type GeneratedQuestion,
@@ -22,8 +25,11 @@ import {
     type QuizDocument,
 } from "@/lib/quiz";
 
+/** A generated question whose Figures are already in storage. */
+type QuestionWithStoredFigures = Omit<GeneratedQuestion, "figures"> & { figure_paths: string[] };
+
 type ResponseData = {
-    quiz?: GeneratedQuestion[];
+    quiz?: QuestionWithStoredFigures[];
     error?: string;
     code?: string;
     remaining?: number;
@@ -101,6 +107,46 @@ async function toQuizDocument(file: formidable.File | undefined): Promise<QuizDo
     };
 }
 
+/**
+ * Uploads each question's own copy of its Figures, so Parts that share a picture
+ * don't share a file. On any failure, removes what was uploaded and throws.
+ */
+async function storeFigures(questions: GeneratedQuestion[], userId: string): Promise<QuestionWithStoredFigures[]> {
+    const uploads = questions.flatMap((question, questionIndex) =>
+        question.figures.map(async (figure) => {
+            const path = newFigurePath(userId, figure.mimeType);
+            const { error } = await supabaseServerClient.storage
+                .from(FIGURE_BUCKET)
+                .upload(path, figure.bytes, { contentType: figure.mimeType });
+            if (error) {
+                throw error;
+            }
+            return { questionIndex, path };
+        }),
+    );
+    const results = await Promise.allSettled(uploads);
+    const stored = results.flatMap((result) => (result.status === "fulfilled" ? [result.value] : []));
+    const failed = results.find(
+        (result): result is PromiseRejectedResult => result.status === "rejected",
+    );
+    if (failed) {
+        if (stored.length > 0) {
+            await supabaseServerClient.storage
+                .from(FIGURE_BUCKET)
+                .remove(stored.map(({ path }) => path))
+                .catch(() => {});
+        }
+        throw failed.reason;
+    }
+
+    return questions.map(({ figures: _figures, ...question }, questionIndex) => ({
+        ...question,
+        figure_paths: stored
+            .filter((upload) => upload.questionIndex === questionIndex)
+            .map(({ path }) => path),
+    }));
+}
+
 export default async function handler(
     req: NextApiRequest,
     res: NextApiResponse<ResponseData>
@@ -142,7 +188,8 @@ export default async function handler(
             textParts: prepared.pricedText,
         });
 
-        const quiz = await generateQuiz(prepared, { ai: quizAi });
+        const questions = await generateQuiz(prepared, { ai: quizAi });
+        const quiz = await storeFigures(questions, auth.user.id);
         return res.status(200).json({ quiz });
 
     } catch (error: any) {

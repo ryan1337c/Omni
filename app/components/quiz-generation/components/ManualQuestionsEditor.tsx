@@ -6,20 +6,26 @@ import {
   CheckCircle2,
   Circle,
   Eraser,
+  ImagePlus,
   ListChecks,
   MessageSquare,
   Plus,
   Trash2,
   X,
 } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import {
   INPUT_BASE_CLASSES,
   getBorderClasses,
 } from "@/app/components/shared/generation";
+import {
+  FIGURE_ACCEPT,
+  MAX_FIGURES_PER_QUESTION,
+  figureNumberLabel,
+} from "@/lib/quiz/figureRules";
 
-import type { ManualQuestion } from "../types";
+import type { FigureDraft, ManualQuestion } from "../types";
 import DurationSelect from "./DurationSelect";
 
 type ManualQuestionsEditorProps = {
@@ -40,8 +46,94 @@ type ManualQuestionsEditorProps = {
   onRemoveOption: (id: string, idx: number) => void;
   onUpdateOptionText: (id: string, idx: number, text: string) => void;
   onUpdateExplanation: (id: string, text: string) => void;
+  /** Returns why the pictures can't be added, if they can't. */
+  onAddFigures: (id: string, files: File[]) => string | undefined;
+  onRemoveFigure: (id: string, index: number) => void;
   onDurationChange: (value: string) => void;
 };
+
+function figureSrc(figure: FigureDraft) {
+  return figure.kind === "stored" ? figure.url : figure.previewUrl;
+}
+
+function FigureField({
+  figures,
+  isProcessing,
+  onAdd,
+  onRemove,
+}: {
+  figures: FigureDraft[];
+  isProcessing: boolean;
+  onAdd: (files: File[]) => string | undefined;
+  onRemove: (index: number) => void;
+}) {
+  const [error, setError] = useState<string>();
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  return (
+    <div className="space-y-2">
+      {figures.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {figures.map((figure, index) => (
+            <div
+              key={figureSrc(figure)}
+              className="relative group rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-1"
+            >
+              <img
+                src={figureSrc(figure)}
+                alt={figureNumberLabel(index, figures.length) ?? "Figure"}
+                className="h-20 w-full object-contain"
+              />
+              {figureNumberLabel(index, figures.length) && (
+                <span className="absolute bottom-1 left-1 px-1.5 rounded bg-black/60 text-[10px] font-semibold text-white">
+                  {figureNumberLabel(index, figures.length)}
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  onRemove(index);
+                  setError(undefined);
+                }}
+                disabled={isProcessing}
+                className="absolute top-1 right-1 p-1 rounded-full bg-white/90 dark:bg-slate-900/90 text-slate-500 hover:text-red-500 shadow-sm disabled:opacity-50"
+                title="Remove figure"
+              >
+                <X size={12} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {figures.length < MAX_FIGURES_PER_QUESTION && (
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          disabled={isProcessing}
+          className="text-xs font-medium text-violet-600 dark:text-btnDark hover:underline flex items-center gap-1 disabled:opacity-50 disabled:no-underline"
+        >
+          <ImagePlus size={12} /> Add figure
+        </button>
+      )}
+      <input
+        ref={inputRef}
+        type="file"
+        accept={FIGURE_ACCEPT}
+        multiple
+        hidden
+        onChange={(e) => {
+          const files = Array.from(e.target.files ?? []);
+          e.target.value = "";
+          if (files.length > 0) setError(onAdd(files));
+        }}
+      />
+      {error && (
+        <p className="text-xs text-red-500 dark:text-red-400">{error}</p>
+      )}
+    </div>
+  );
+}
 
 function ExplanationField({
   explanation,
@@ -98,6 +190,8 @@ export default function ManualQuestionsEditor({
   onRemoveOption,
   onUpdateOptionText,
   onUpdateExplanation,
+  onAddFigures,
+  onRemoveFigure,
   onDurationChange,
 }: ManualQuestionsEditorProps) {
   return (
@@ -140,6 +234,13 @@ export default function ManualQuestionsEditor({
                   value={q.question_text}
                   onChange={(e) => onUpdateQuestionText(q.id, e.target.value)}
                   className={`${INPUT_BASE_CLASSES} placeholder-slate-400 bg-white dark:bg-slate-800 outline-none ${getBorderClasses(!!manualError && !q.question_text.trim())}`}
+                />
+
+                <FigureField
+                  figures={q.figures}
+                  isProcessing={isProcessing}
+                  onAdd={(files) => onAddFigures(q.id, files)}
+                  onRemove={(index) => onRemoveFigure(q.id, index)}
                 />
 
                 <div className="flex gap-2">
