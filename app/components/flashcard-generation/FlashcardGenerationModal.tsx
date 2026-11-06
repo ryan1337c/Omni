@@ -7,9 +7,9 @@ import {
   DescriptionField,
   GenerationModalFooter,
   GenerationModalShell,
-  ModeSelector,
   TitleField,
 } from "@/app/components/shared/generation";
+import CreationModeToggle from "@/app/components/quiz-generation/components/CreationModeToggle";
 
 import FlashcardAiFields from "./components/FlashcardAiFields";
 import ManualCardsEditor from "./components/ManualCardsEditor";
@@ -54,6 +54,14 @@ export default function FlashcardGenerationModal(
         ) : null
       }
     >
+      {!deck.editMode && (
+        <CreationModeToggle
+          mode={deck.mode}
+          isProcessing={props.isProcessing}
+          onChange={deck.handleModeChange}
+        />
+      )}
+
       <TitleField
         label="Deck Title"
         placeholder="e.g., Biochemistry Midterm"
@@ -70,15 +78,6 @@ export default function FlashcardGenerationModal(
         onChange={deck.setDescription}
       />
 
-      {!deck.editMode && (
-        <ModeSelector
-          mode={deck.mode}
-          isProcessing={props.isProcessing}
-          aiDescription="Auto-generated cards"
-          onChange={deck.handleModeChange}
-        />
-      )}
-
       {deck.mode === "manual" ? (
         <ManualCardsEditor
           cards={deck.cards}
@@ -91,11 +90,11 @@ export default function FlashcardGenerationModal(
         />
       ) : (
         <FlashcardAiFields
-          topic={deck.topic}
-          topicError={deck.formErrors.topic}
+          generationSource={deck.generationSource}
+          sourceError={deck.formErrors.source}
           cardCount={deck.cardCount}
           isProcessing={props.isProcessing}
-          onTopicChange={deck.handleTopicChange}
+          onGenerationSourceChange={deck.handleGenerationSourceChange}
           onCardCountChange={deck.setCardCount}
           onCardCountBlur={deck.handleCardCountBlur}
         />

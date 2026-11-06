@@ -8,6 +8,13 @@ import { useGenerationForm } from "@/app/hooks/useGenerationForm";
 import { PublicServices } from "@/lib/publicServices";
 
 import { generateDeckRequest } from "../api";
+import {
+  generationSourceReducer,
+  initialGenerationSourceState,
+  nextSourceError,
+  validateGenerationSource,
+  type GenerationSourceAction,
+} from "../generationSource";
 import type { FlashcardGenerationModalProps } from "../types";
 import { useManualCards } from "./useManualCards";
 
@@ -25,6 +32,7 @@ export function useFlashcardGeneration({
   const form = useGenerationForm();
   const cards = useManualCards(form.setFormErrors);
   const [cardCount, setCardCount] = useState<number | string>(10);
+  const [generationSource, setGenerationSource] = useState(initialGenerationSourceState);
 
   const publicServices = new PublicServices();
 
@@ -59,8 +67,9 @@ export function useFlashcardGeneration({
     }
 
     if (form.mode === "ai") {
-      if (!form.topic.trim()) {
-        newErrors.topic = "Please enter a topic.";
+      const sourceError = validateGenerationSource(generationSource);
+      if (sourceError) {
+        newErrors.source = sourceError;
         hasError = true;
       }
     } else {
@@ -126,8 +135,7 @@ export function useFlashcardGeneration({
       if (form.mode === "ai") {
         const { result, data } = await generateDeckRequest(
           form.title,
-          form.description,
-          form.topic,
+          generationSource,
           cardCount,
         );
 
@@ -176,6 +184,15 @@ export function useFlashcardGeneration({
     setCardCount(clampCount(cardCount, 5, 50));
   };
 
+  const handleGenerationSourceChange = (action: GenerationSourceAction) => {
+    const next = generationSourceReducer(generationSource, action);
+    setGenerationSource(next);
+    form.setFormErrors((prev) => ({
+      ...prev,
+      source: nextSourceError(prev.source, action, next),
+    }));
+  };
+
   const handleClearAllClick = () => {
     form.setIsClearConfirmOpen(true);
   };
@@ -191,6 +208,8 @@ export function useFlashcardGeneration({
     editMode,
     cardCount,
     setCardCount,
+    generationSource,
+    handleGenerationSourceChange,
     handleClose,
     handleGenerate,
     handleCardCountBlur,
