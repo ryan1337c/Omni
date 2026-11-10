@@ -43,22 +43,19 @@ export function FlipText({
 
   return (
     <div className="flex space-x-0.5">
-      <AnimatePresence mode="wait">
-        {characters.map((char, i) => (
-          <MotionComponent
-            key={i}
-            initial="hidden"
-            animate="visible"
-            exit="hidden"
-            variants={variants || defaultVariants}
-            transition={{ duration, delay: i * delayMultiple }}
-            className={cn("origin-center drop-shadow-sm", className)}
-            {...props}
-          >
-            {char}
-          </MotionComponent>
-        ))}
-      </AnimatePresence>
+      {characters.map((char, i) => (
+        <MotionComponent
+          key={i}
+          initial="hidden"
+          animate="visible"
+          variants={variants || defaultVariants}
+          transition={{ duration, delay: i * delayMultiple }}
+          className={cn("origin-center drop-shadow-sm", className)}
+          {...props}
+        >
+          {char}
+        </MotionComponent>
+      ))}
     </div>
   );
 }
