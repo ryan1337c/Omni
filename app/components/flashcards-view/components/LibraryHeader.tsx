@@ -17,18 +17,21 @@ export default function LibraryHeader({
 }: LibraryHeaderProps) {
   return (
     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-      <div>
-        <h1 className="text-3xl font-bold text-slate-800 dark:text-white">
+      <div className="min-w-0 flex-1">
+        <h1
+          className="text-3xl font-bold text-slate-800 dark:text-white truncate"
+          title={currFolder?.title}
+        >
           {currFolder ? currFolder.title : "Your Library"}
         </h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-1">
+        <p className="text-slate-500 dark:text-slate-400 mt-1 truncate">
           {currFolder
             ? `Managing content inside ${currFolder.title}`
             : "Manage your decks and folders."}
         </p>
       </div>
 
-      <div className="relative w-full md:w-80">
+      <div className="relative w-full md:w-80 shrink-0">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           <Search size={18} className="text-slate-400" />
         </div>

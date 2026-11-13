@@ -11,6 +11,8 @@ import {
 } from "@/app/components/shared/generation";
 import CreationModeToggle from "@/app/components/quiz-generation/components/CreationModeToggle";
 
+import { MAX_TITLE_LENGTH } from "@/app/components/flashcards-view/constants";
+
 import FlashcardAiFields from "./components/FlashcardAiFields";
 import ManualCardsEditor from "./components/ManualCardsEditor";
 import { useFlashcardGeneration } from "./hooks/useFlashcardGeneration";
@@ -65,6 +67,7 @@ export default function FlashcardGenerationModal(
       <TitleField
         label="Deck Title"
         placeholder="e.g., Biochemistry Midterm"
+        maxLength={MAX_TITLE_LENGTH}
         value={deck.title}
         error={deck.formErrors.title}
         isProcessing={props.isProcessing}

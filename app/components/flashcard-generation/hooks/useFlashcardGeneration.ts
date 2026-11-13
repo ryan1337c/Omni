@@ -6,6 +6,7 @@ import { clampCount } from "@/app/components/shared/generation/utils";
 import { useAuth } from "@/app/context/AuthContext";
 import { useGenerationForm } from "@/app/hooks/useGenerationForm";
 import { PublicServices } from "@/lib/publicServices";
+import { MAX_TITLE_LENGTH } from "@/app/components/flashcards-view/constants";
 
 import { generateDeckRequest } from "../api";
 import {
@@ -63,6 +64,10 @@ export function useFlashcardGeneration({
 
     if (!form.title.trim()) {
       newErrors.title = "Please enter a deck title.";
+      hasError = true;
+    }
+    else if (form.title.trim().length > MAX_TITLE_LENGTH) {
+      newErrors.title = `Deck title must be ${MAX_TITLE_LENGTH} characters or fewer.`;
       hasError = true;
     }
 

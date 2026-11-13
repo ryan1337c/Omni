@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import formidable, { errors as formidableErrors } from "formidable";
 import fs from "fs/promises";
 import { requireEntitlement, requireUser } from "@/lib/requireUser";
+import { MAX_TITLE_LENGTH } from "@/app/components/flashcards-view/constants";
 import {
     consumeCredits,
     refundCreditsQuietly,
@@ -133,7 +134,12 @@ export default async function handler(
     try {
         const { fields, files } = await parseForm(req);
         uploadedFile = files.file?.[0];
-        const title = fields.title?.[0] ?? "";
+        const title = (fields.title?.[0] ?? "").trim();
+        if (!title || title.length > MAX_TITLE_LENGTH) {
+          return res
+            .status(400)
+            .json({ error: `Deck title must be 1–${MAX_TITLE_LENGTH} characters.` });
+        }
         const source = fields.source?.[0];
         const cardCount = Number(fields.cardCount?.[0]);
 

@@ -42,3 +42,6 @@ export type ActiveDeck = {
   title: string;
   cards: Flashcard[];
 };
+
+export type LibraryItemKey = `folder:${number}` | `deck:${number}`;
+export type LibraryDropId = LibraryItemKey | "root";
