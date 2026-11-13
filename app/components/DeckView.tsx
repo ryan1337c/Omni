@@ -68,7 +68,7 @@ export default function DeckView({ deckTitle, cards, onExit }: DeckViewProps) {
     <div className="flex flex-col h-full w-full bg-slate-50 dark:bg-gray-900 animate-fade-in relative overflow-hidden">
       
       {/* HEADER */}
-      <div className="min-h-16 py-3 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex flex-col sm:flex-row sm:items-center justify-between px-4 md:px-6 flex-shrink-0 z-20 relative gap-3 sm:gap-0">
+      <div className="min-h-16 py-3 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex flex-col sm:flex-row sm:items-center justify-between px-4 md:px-6 flex-shrink-0 z-20 relative gap-3 sm:gap-6">
          
          {/* Left Side: Exit Button + Title */}
          <div className="flex items-center gap-4 overflow-hidden w-full sm:w-auto">

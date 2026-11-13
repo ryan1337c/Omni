@@ -206,7 +206,7 @@ export default function LibraryItemCard(props: LibraryItemCardProps) {
         {...dragProps}
         onClick={() => {
           if (justDragged.current) return;
-          onFolderClick(item); // use onDeckClick(item) in the deck version
+          onDeckClick(item);
         }}
         className={`group relative h-52 cursor-pointer transition-transform duration-300 ${hoverClass} ${zIndexClass} ${dragClass} ${dropClass}`}
       >
@@ -245,7 +245,7 @@ export default function LibraryItemCard(props: LibraryItemCardProps) {
       {...dragProps}
       onClick={() => {
         if (justDragged.current) return;
-        onFolderClick(item); // use onDeckClick(item) in the deck version
+        onDeckClick(item);
       }}
       className={`group relative h-52 cursor-pointer transition-transform duration-300 ${hoverClass} ${zIndexClass} ${dragClass} ${dropClass}`}
     >
