@@ -2,6 +2,7 @@
 
 import { Check, Folder, X } from "lucide-react";
 import { createPortal } from "react-dom";
+import { MAX_TITLE_LENGTH } from "../constants";
 
 type FolderCreateModalProps = {
   mounted: boolean;
@@ -54,6 +55,7 @@ export default function FolderCreateModal({
                 Name
               </label>
               <input
+                maxLength={MAX_TITLE_LENGTH}
                 autoFocus
                 type="text"
                 placeholder="Enter folder name..."
@@ -62,6 +64,9 @@ export default function FolderCreateModal({
                 onKeyDown={(e) => e.key === "Enter" && onCreate()}
                 className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white border-2 border-slate-200 dark:border-slate-700 focus:border-blue-500 dark:focus:border-blue-500 focus:outline-none transition-colors placeholder:text-slate-400"
               />
+              <p className="mt-1 text-right text-xs text-slate-400">
+                {newFolderName.length}/{MAX_TITLE_LENGTH}
+              </p>
             </div>
             <div className="flex gap-3 pt-2">
               <button

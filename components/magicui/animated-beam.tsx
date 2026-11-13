@@ -32,7 +32,7 @@ export const AnimatedBeam: React.FC<AnimatedBeamProps> = ({
   toRef,
   curvature = 0,
   reverse = false, // Include the reverse prop
-  duration = Math.random() * 3 + 4,
+  duration = 2,
   delay = 0,
   pathColor = "gray",
   pathWidth = 2,
@@ -51,8 +51,8 @@ export const AnimatedBeam: React.FC<AnimatedBeamProps> = ({
   // Calculate the gradient coordinates based on the reverse prop
   const gradientCoordinates = reverse
     ? {
-        x1: ["90%", "-10%"],
-        x2: ["100%", "0%"],
+        x1: ["0%", "100%"],
+        x2: ["-10%", "90%"],
         y1: ["0%", "0%"],
         y2: ["0%", "0%"],
       }
@@ -168,7 +168,7 @@ export const AnimatedBeam: React.FC<AnimatedBeamProps> = ({
           transition={{
             delay,
             duration,
-            ease: [0.16, 1, 0.3, 1], // https://easings.net/#easeOutExpo
+            ease: "linear", // https://easings.net/#easeOutExpo
             repeat: Infinity,
             repeatDelay: 0,
           }}

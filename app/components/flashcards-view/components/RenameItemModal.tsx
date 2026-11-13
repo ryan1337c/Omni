@@ -4,6 +4,7 @@ import { Pencil, X } from "lucide-react";
 import { createPortal } from "react-dom";
 
 import type { FlashcardItem } from "../types";
+import { MAX_TITLE_LENGTH } from "../constants";
 
 type RenameItemModalProps = {
   mounted: boolean;
@@ -56,6 +57,7 @@ export default function RenameItemModal({
                 Title
               </label>
               <input
+                maxLength={MAX_TITLE_LENGTH}
                 autoFocus
                 type="text"
                 value={renameValue}
@@ -63,6 +65,9 @@ export default function RenameItemModal({
                 onKeyDown={(e) => e.key === "Enter" && onSave()}
                 className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white border-2 border-slate-200 dark:border-slate-700 focus:border-violet-500 dark:focus:border-violet-500 focus:outline-none transition-colors placeholder:text-slate-400"
               />
+              <p className="mt-1 text-right text-xs text-slate-400">
+                {renameValue.length}/{MAX_TITLE_LENGTH}
+              </p>
             </div>
 
             <div className="flex gap-3 pt-2">

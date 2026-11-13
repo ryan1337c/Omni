@@ -13,6 +13,7 @@ import ManualQuestionsEditor from "./components/ManualQuestionsEditor";
 import QuizAiFields from "./components/QuizAiFields";
 import { useQuizGeneration } from "./hooks/useQuizGeneration";
 import type { QuizGenerationModalProps } from "./types";
+import { MAX_TITLE_LENGTH } from "@/app/components/flashcards-view/constants";
 
 export default function QuizGenerationModal(props: QuizGenerationModalProps) {
   const quiz = useQuizGeneration(props);
@@ -59,6 +60,7 @@ export default function QuizGenerationModal(props: QuizGenerationModalProps) {
       <TitleField
         label="Quiz Title"
         placeholder="e.g., Advanced Biology Finals"
+        maxLength={MAX_TITLE_LENGTH}
         value={quiz.title}
         error={quiz.formErrors.title}
         isProcessing={props.isProcessing}

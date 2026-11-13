@@ -10,6 +10,7 @@ type TitleFieldProps = {
   value: string;
   error?: string;
   isProcessing: boolean;
+  maxLength?: number;
   onChange: (value: string) => void;
 };
 
@@ -19,6 +20,7 @@ export default function TitleField({
   value,
   error,
   isProcessing,
+  maxLength,
   onChange,
 }: TitleFieldProps) {
   return (
@@ -27,6 +29,7 @@ export default function TitleField({
         {label} <span className="text-red-500">*</span>
       </label>
       <input
+        maxLength={maxLength}
         disabled={isProcessing}
         type="text"
         placeholder={placeholder}
@@ -35,6 +38,11 @@ export default function TitleField({
         className={`${INPUT_BASE_CLASSES} outline-none ${getBorderClasses(!!error)}`}
       />
       {error && <FieldError message={error} />}
+      {maxLength && (
+        <p className="mt-1 text-right text-xs text-slate-400">
+          {value.length}/{maxLength}
+        </p>
+      )}
     </div>
   );
 }

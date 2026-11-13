@@ -16,6 +16,10 @@ import { timeAgo } from "@/lib/utils";
 
 import type { FlashcardItem } from "../types";
 
+import { useDraggable, useDroppable, useDndMonitor } from "@dnd-kit/core";
+import { useRef } from "react";
+import { libraryItemKey } from "../utils";
+
 type LibraryItemCardProps = {
   item: FlashcardItem;
   isMenuOpen: boolean;
@@ -41,6 +45,7 @@ function StarButton({
       onClick={(e) => onToggleStar(item, e)}
       className="absolute top-24 right-5 p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors z-20 group/star hidden lg:block"
       title={item.isStarred ? "Unstar" : "Star"}
+      onPointerDown={(e) => e.stopPropagation()}
     >
       <Star
         size={20}
@@ -80,6 +85,7 @@ function MoreMenu({
           e.stopPropagation();
           onToggleMenu(!isMenuOpen);
         }}
+        onPointerDown={(e) => e.stopPropagation()}
         className={`relative group/more p-1.5 rounded-lg transition-colors ${
           isMenuOpen
             ? "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-200"
@@ -95,6 +101,7 @@ function MoreMenu({
               onToggleStar(item, e);
               onToggleMenu(false);
             }}
+            onPointerDown={(e) => e.stopPropagation()}
             className="flex lg:hidden items-center gap-2 px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 text-left"
           >
             <Star
@@ -150,16 +157,58 @@ export default function LibraryItemCard(props: LibraryItemCardProps) {
     onDeckClick,
   } = props;
 
+  const dndId = libraryItemKey(item);
+
+  // Every card can be picked up
+  const { attributes, listeners, setNodeRef: setDragRef, isDragging } =
+    useDraggable({ id: dndId, data: { item } });
+
+  // Only folders accept drops
+  const { setNodeRef: setDropRef, isOver } = useDroppable({
+    id: dndId,
+    disabled: item.type !== "folder",
+    data: { item },
+  });
+
+  // One DOM node is both the drag handle and the drop zone
+  const setNodeRef = (node: HTMLDivElement | null) => {
+    setDragRef(node);
+    setDropRef(node);
+  };
+
+  // Stop the click that fires when you let go of a drag from opening the item
+  const justDragged = useRef(false);
+  useDndMonitor({
+    onDragStart: ({ active }) => {
+      if (active.id === dndId) justDragged.current = true;
+    },
+    onDragEnd: () => setTimeout(() => (justDragged.current = false), 0),
+    onDragCancel: () => setTimeout(() => (justDragged.current = false), 0),
+  });
+
+  const dragProps = {
+    ref: setNodeRef,
+    ...listeners,
+    ...attributes,
+  };
+
+  const dragClass = isDragging ? "opacity-40" : "";
+  const dropClass =
+     isOver && !isDragging ? "ring-1 ring-violet-500 dark:ring-btnDark rounded-xl" : "";
+
   const hoverClass =
-    isMenuOpen || isNewMenuOpen ? "" : "hover:-translate-y-1 hover:drop-shadow-lg";
+    isMenuOpen || isNewMenuOpen || isDragging ? "" : "hover:-translate-y-1 hover:drop-shadow-lg";
   const zIndexClass = isMenuOpen ? "z-40" : "z-0";
 
   if (item.type === "folder") {
     return (
       <div
-        key={item.id}
-        onClick={() => onFolderClick(item)}
-        className={`group relative h-52 cursor-pointer transition-transform duration-300 ${hoverClass} ${zIndexClass}`}
+        {...dragProps}
+        onClick={() => {
+          if (justDragged.current) return;
+          onFolderClick(item); // use onDeckClick(item) in the deck version
+        }}
+        className={`group relative h-52 cursor-pointer transition-transform duration-300 ${hoverClass} ${zIndexClass} ${dragClass} ${dropClass}`}
       >
         <div className="absolute top-0 left-0 w-28 h-8 bg-blue-100 dark:bg-blue-900/40 rounded-t-xl border-t border-l border-r border-blue-200 dark:border-blue-700/50"></div>
         <div className="absolute top-4 inset-x-0 bottom-0 bg-blue-50 dark:bg-slate-800/80 border border-blue-200 dark:border-blue-700/50 rounded-b-xl rounded-tr-xl p-5 flex flex-col justify-between z-10">
@@ -193,9 +242,12 @@ export default function LibraryItemCard(props: LibraryItemCardProps) {
 
   return (
     <div
-      key={item.id}
-      onClick={() => onDeckClick(item)}
-      className={`group relative h-52 cursor-pointer transition-transform duration-300 ${hoverClass} ${zIndexClass}`}
+      {...dragProps}
+      onClick={() => {
+        if (justDragged.current) return;
+        onFolderClick(item); // use onDeckClick(item) in the deck version
+      }}
+      className={`group relative h-52 cursor-pointer transition-transform duration-300 ${hoverClass} ${zIndexClass} ${dragClass} ${dropClass}`}
     >
       <div className="absolute top-2 left-2 right-0 bottom-0 bg-slate-200 dark:bg-slate-700 rounded-2xl border border-slate-300 dark:border-slate-600 z-0"></div>
       <div className="absolute top-0 left-0 right-2 bottom-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 flex flex-col justify-between shadow-sm z-10">

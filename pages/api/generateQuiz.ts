@@ -24,6 +24,7 @@ import {
     type GenerationSourceInput,
     type QuizDocument,
 } from "@/lib/quiz";
+import { MAX_TITLE_LENGTH } from "@/app/components/flashcards-view/constants";
 
 /** A generated question whose Figures are already in storage. */
 type QuestionWithStoredFigures = Omit<GeneratedQuestion, "figures"> & { figure_paths: string[] };
@@ -171,7 +172,12 @@ export default async function handler(
     try {
         const { fields, files } = await parseForm(req);
         uploadedFile = files.file?.[0];
-        const title = fields.title?.[0] ?? "";
+        const title = (fields.title?.[0] ?? "").trim();
+        if (!title || title.length > MAX_TITLE_LENGTH) {
+          return res
+            .status(400)
+            .json({ error: `Quiz title must be 1–${MAX_TITLE_LENGTH} characters.` });
+        }
         const source = fields.source?.[0];
         const questionCount = Number(fields.questionCount?.[0]);
 

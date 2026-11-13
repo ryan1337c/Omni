@@ -19,6 +19,7 @@ import {
 import { toManualQuestion, type SavedQuestion } from "../manualQuestion";
 import type { ManualQuestion, QuizGenerationModalProps } from "../types";
 import { useManualQuestions } from "./useManualQuestions";
+import { MAX_TITLE_LENGTH } from "@/app/components/flashcards-view/constants";
 
 export function useQuizGeneration({
   isOpen,
@@ -131,6 +132,9 @@ export function useQuizGeneration({
 
     if (!form.title.trim()) {
       newErrors.title = "Please enter a quiz title.";
+      hasError = true;
+    } else if (form.title.trim().length > MAX_TITLE_LENGTH) {
+      newErrors.title = `Quiz title must be ${MAX_TITLE_LENGTH} characters or fewer.`;
       hasError = true;
     }
 

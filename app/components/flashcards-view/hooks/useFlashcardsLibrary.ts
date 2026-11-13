@@ -328,6 +328,37 @@ export function useFlashcardsLibrary({
     fetchItems(userId!, prevFolder ? prevFolder.id! : null);
   };
 
+  const handleMoveItem = async (item: FlashcardItem, newParentId: number | null) => {
+    if (!userId || !item.id) return;
+    if (item.parent_id === newParentId) return;
+  
+    const previous = items;
+    setItems((prev) =>
+      prev.map((entry) =>
+        entry.id === item.id && entry.type === item.type
+          ? { ...entry, parent_id: newParentId }
+          : entry,
+      ),
+    );
+  
+    try {
+      await publicServices.moveFlashcardItem(item.id, item.type, newParentId);
+    } catch (error) {
+      console.error("Failed to move item", error);
+      setItems(previous);
+      alert("Could not move that item.");
+    }
+  };
+  
+  const navigateTo = (folderIndex: number) => {
+    // -1 = root ("Documents")
+    const newPath = folderIndex < 0 ? [] : path.slice(0, folderIndex + 1);
+    setPath(newPath);
+    const folder = newPath[newPath.length - 1] || null;
+    fetchItems(userId!, folder ? folder.id! : null);
+    setSearchTerm("");
+  };
+
   return {
     isProcessing,
     setIsProcessing,
@@ -382,6 +413,9 @@ export function useFlashcardsLibrary({
     handleDeckUpdated,
     userId,
     handleGoBack,
+    path,
+    handleMoveItem,
+    navigateTo,
   };
 }
 
