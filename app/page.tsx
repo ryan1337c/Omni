@@ -10,7 +10,7 @@ import { FlipText } from "@/components/magicui/flip-text";
 import { Beam } from '@/components/magicui/beam';
 import { useInView } from 'react-intersection-observer';
 import { MarqueeDemo } from '@/components/magicui/review-cards';
-import { FaStar, FaGithub, FaPlay} from 'react-icons/fa';
+import { FaStar, FaGithub, FaPlay, FaStarHalfAlt } from 'react-icons/fa';
 import { BsChatDots, BsCpu, BsFileText, BsImage, BsUpload, BsCodeSlash, BsPatchQuestion, BsStickies } from 'react-icons/bs';
 import CountUp from 'react-countup';
 import Header from './components/Header';
@@ -341,12 +341,12 @@ export default function Home() {
             <h2 className={`text-4xl font-bold text-center mb-4 text-transparent bg-clip-text bg-gradient-to-r dark:from-indigo-400 dark:to-white from-violet-600 to-pink-500 transition-opacity duration-1000 ease-in ${testimoniesInView ? 'opacity-100' : 'opacity-0'}`}>
               Testimonials
             </h2>
-            <div className={`flex items-center gap-1 mb-10 transition-all delay-200 duration-1000 ease-in-out ${testimoniesInView ? 'opacity-100 transform-none' : 'opacity-0 translate-y-10'}`}>
+            <div className={`relative overflow-hidden flex items-center gap-1 mb-10 transition-all delay-200 duration-1000 ease-in-out ${testimoniesInView ? 'opacity-100 transform-none' : 'opacity-0 translate-y-10'}`}>
               <FaStar className="size-6 text-yellow-400" />
               <FaStar className="size-6 text-yellow-400" />
               <FaStar className="size-6 text-yellow-400" />
               <FaStar className="size-6 text-yellow-400" />
-              <FaStar className="size-6 text-yellow-400" />
+              <FaStarHalfAlt className="size-6 text-yellow-400" />
             </div>
               <div className={`w-full px-4 sm:px-8 md:px-20 lg:px-40 transition-opacity delay-300 duration-1000 ease-in ${testimoniesInView ? 'opacity-100' : 'opacity-0'}`}>
               <MarqueeDemo />

@@ -4,40 +4,40 @@ import { Marquee } from "@/components/magicui/marquee";
 
 const reviews = [
   {
-    name: "Leo",
-    username: "@dev_leo",
-    body: "My workflow is now basically: `Idea -> Bolt -> Done`. The speed is unreal. Shipping features has never been this fast.",
-    img: "https://avatar.vercel.sh/leo",
+    name: "Leo Martins",
+    username: "@leo.codes.late",
+    body: "Pasted my messy lecture notes in at 1am and got flashcards back before my coffee finished brewing. Passed my data structures midterm. Not saying it's magic, but…",
+    img: "/avatars/gojo.jpeg",
   },
   {
-    name: "Aya",
-    username: "@ayaink",
-    body: "Writer's block is officially a thing of the past. Bolt is my go-to for brainstorming, and it comes up with ideas I would've never thought of. 10/10.",
-    img: "https://avatar.vercel.sh/aya",
+    name: "Aya Nakamura",
+    username: "@ayainkpots",
+    body: "I use the image generator for my D&D campaign and the chat to untangle my bio readings. Weird combo, works perfectly.",
+    img: "/avatars/girl.jpg",
   },
   {
-    name: "Finn",
-    username: "@finnhacks",
-    body: "I love that I don't have to choose between models. I can just throw a problem at Bolt and it uses the best AI for the job. It's the multi-tool I've always wanted.",
-    img: "https://avatar.vercel.sh/finn",
+    name: "Finn O'Connell",
+    username: "@finnishedyet",
+    body: "The quiz mode is brutal in the best way. It caught every topic I'd been quietly skipping. My prof would be proud. Or concerned.",
+    img: "/avatars/boy.jpg",
   },
   {
-    name: "Chloe",
-    username: "@chloesun",
-    body: "Okay, I'm obsessed. The UI is gorgeous and it just *works*. Finally, an AI tool that doesn't feel like a science project.",
-    img: "https://avatar.vercel.sh/chloe",
+    name: "Chloe Sun",
+    username: "@chloe_sunnyside",
+    body: "Ran my resume through the tailor before applying to an internship and actually got a callback this time. Coincidence? I'm choosing to believe no.",
+    img: "/avatars/girl2.jpeg",
   },
   {
-    name: "Marco",
-    username: "@mpolo",
-    body: "My productivity has skyrocketed. Repetitive tasks that used to eat up my day are now completely automated. Cannot imagine my life without it.",
-    img: "https://avatar.vercel.sh/marco",
+    name: "Marco Rossi",
+    username: "@marco_rossi_irl",
+    body: "I had five tabs open for studying: notes, ChatGPT, Quizlet, a PDF, and regret. Now it's just Omni. Okay, and maybe still a little regret.",
+    img: "/avatars/ashe.jpeg",
   },
   {
-    name: "Zara",
-    username: "@zara_zenith",
-    body: "Using Bolt feels like my brain was just upgraded. It's fast, smart, and genuinely limitless. The hype is real.",
-    img: "https://avatar.vercel.sh/zara",
+    name: "Zara Ahmed",
+    username: "@zara.zzz",
+    body: "Clean UI, no clutter, and it doesn't make me feel dumb for asking the same question three times. 10/10 study buddy.",
+    img: "/avatars/neko.jpeg",
   },
 ];
 const firstRow = reviews.slice(0, reviews.length / 2);
@@ -65,7 +65,7 @@ const ReviewCard = ({
       )}
     >
       <div className="flex flex-row items-center gap-2">
-        <img className="rounded-full" width="32" height="32" alt="" src={img} />
+        <img className="size-8 rounded-full object-cover shrink-0" width="32" height="32" alt="" src={img} />
         <div className="flex flex-col">
           <figcaption className="text-sm font-medium dark:text-white">
             {name}
