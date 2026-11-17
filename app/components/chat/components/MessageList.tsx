@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { memo } from "react";
 
 import type { ChatMessage } from "../types";
 import { AssistantMessage } from "./AssistantMessage";
@@ -14,28 +14,21 @@ type MessageListProps = {
   onTypingComplete: () => void;
 };
 
-export function MessageList({
+
+
+function MessageListInner({
   chatHistory,
   chatBoxRef,
   messagesEndRef,
   isAutoScrollRef,
   onTypingComplete,
 }: MessageListProps) {
-  const messageRefs = useRef<HTMLDivElement[]>([]);
 
   return (
     <div className="w-full max-w-4xl mx-auto px-4 py-6">
       {chatHistory.map((chatMessage, index) => {
         if (chatMessage.role === "user") {
-          return (
-            <UserMessage
-              key={index}
-              chatMessage={chatMessage}
-              messageRef={(reference) => {
-                if (reference) messageRefs.current[index] = reference;
-              }}
-            />
-          );
+          return <UserMessage key={index} chatMessage={chatMessage}/>
         }
 
         return (
@@ -52,3 +45,5 @@ export function MessageList({
     </div>
   );
 }
+
+export const MessageList = memo(MessageListInner);

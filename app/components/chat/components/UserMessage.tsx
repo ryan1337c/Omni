@@ -1,22 +1,20 @@
 "use client";
 
 import chatStyles from "@/app/components/chatBubble.module.css";
-
+import { memo } from "react";
 import type { ChatMessage } from "../types";
 
 type UserMessageProps = {
   chatMessage: ChatMessage;
-  messageRef: (reference: HTMLDivElement | null) => void;
 };
 
-export function UserMessage({ chatMessage, messageRef }: UserMessageProps) {
+function UserMessageInner({ chatMessage }: UserMessageProps) {
   const hasImages =
     chatMessage.imagesData && chatMessage.imagesData.length > 0;
 
   return (
     <div className="flex justify-end w-full mb-4">
       <div
-        ref={messageRef}
         className={`max-w-[70%] md:max-w-[500px] w-fit text-sm text-left rounded-lg p-3 bg-gray-200 dark:bg-userChatBg dark:text-textDark break-words ${chatStyles.talkBubbleUser}`}
       >
         {hasImages && (
@@ -37,3 +35,5 @@ export function UserMessage({ chatMessage, messageRef }: UserMessageProps) {
     </div>
   );
 }
+
+export const UserMessage = memo(UserMessageInner);

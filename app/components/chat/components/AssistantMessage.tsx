@@ -12,6 +12,7 @@ import { downloadImage } from "../api";
 import { MISSING_IMAGE_PLACEHOLDER_URL } from "../constants";
 import type { ChatMessage } from "../types";
 import { formatMarkdown } from "../utils";
+import { useMemo, memo} from "react";
 
 type AssistantMessageProps = {
   chatMessage: ChatMessage;
@@ -20,12 +21,21 @@ type AssistantMessageProps = {
   onTypingComplete: () => void;
 };
 
-export function AssistantMessage({
+function AssistantMessageInner({
   chatMessage,
   chatBoxRef,
   isAutoScrollRef,
   onTypingComplete,
 }: AssistantMessageProps) {
+
+  const renderedContent = useMemo(
+    () =>
+      chatMessage.isNew
+        ? null
+        : renderContentSegments(parseContentSegments(chatMessage.content), formatMarkdown),
+    [chatMessage.content, chatMessage.isNew],
+  );
+
   return (
     <div className="flex justify-start w-full mb-4 items-start gap-3">
       <FaRobot
@@ -75,10 +85,7 @@ export function AssistantMessage({
               />
             ) : (
               <div className="whitespace-pre-wrap text-sm max-w-none prose-sm">
-                {renderContentSegments(
-                  parseContentSegments(chatMessage.content),
-                  formatMarkdown,
-                )}
+                {renderedContent}
               </div>
             )}
 
@@ -98,7 +105,6 @@ export function AssistantMessage({
                       }
                       width={256}
                       height={256}
-                      priority
                       className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
                     />
                     {image.public_url !== MISSING_IMAGE_PLACEHOLDER_URL && (
@@ -119,3 +125,5 @@ export function AssistantMessage({
     </div>
   );
 }
+
+export const AssistantMessage = memo(AssistantMessageInner);
