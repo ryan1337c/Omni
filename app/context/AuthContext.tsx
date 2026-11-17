@@ -42,18 +42,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     const [fullName, setFullName] = useState<string | null>(null);
     const [chatMode, setChatModeState] = useState("new chat"); // new chat, recents, chat, quiz, flashcards, resume
     const [tier, setTier] = useState<string | null>(null);
-    const [isInitialized, setIsInitialized] = useState(false);
-
-    // Recover mode on mount
-    useEffect(() => {
-        // if (typeof window !== "undefined") {
-        //     const savedMode = localStorage.getItem("chatMode");
-        //     if (savedMode) {
-        //         setChatModeState(savedMode);
-        //     }
-        // };
-        setIsInitialized(true);
-    }, [])
 
     const setChatMode = (mode: string) => {
         setChatModeState(mode);
@@ -171,10 +159,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             };
 
         }, []);
-
-        // Prevents rendering children until we know the correct chatMode
-        if (!isInitialized)
-            return null;
 
     return (
         <AuthContext.Provider value={{ isLoggedIn, fullName, tier, chatMode, setChatMode }}>
