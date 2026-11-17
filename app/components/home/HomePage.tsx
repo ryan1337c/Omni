@@ -42,10 +42,7 @@ export default function HomePage() {
             onPremiumFeatureClick={home.handlePremiumFeatureClick}
             onOpenRenameModal={home.handleOpenRenameModal}
             onDelete={home.handleDelete}
-            onSettingsClick={() => {
-              home.setSettingsSection("general");
-              home.setIsSettingsOpen(true);
-            }}
+            onSettingsClick={home.openSettings}
           />
 
           <div className="w-px flex-shrink-0 bg-slate-300 dark:bg-slate-600 hidden md:block" />
@@ -61,8 +58,8 @@ export default function HomePage() {
             setRecents={home.setRecents}
             openMenuId={home.openMenuId}
             setOpenMenuId={home.setOpenMenuId}
-            onMobileSidebarOpen={() => home.setIsMobileSidebarOpen(true)}
-            onOpenRenameModal={() => home.handleOpenRenameModal()}
+            onMobileSidebarOpen={home.openMobileSidebar}
+            onOpenRenameModal={home.handleOpenRenameModal}
             onNewChat={home.handleNewChat}
             onSelectChat={home.handleSelectChat}
             onDelete={home.handleDelete}

@@ -20,6 +20,7 @@ import SidebarTooltip from "@/app/components/SidebarTooltip";
 import ProfileMenu from "@/app/components/ProfileMenu";
 
 import type { PremiumFeature, RecentChat } from "../types";
+import { memo } from "react";
 
 type HomeSidebarProps = {
   isSidebarExpanded: boolean;
@@ -44,7 +45,7 @@ type HomeSidebarProps = {
   onSettingsClick: () => void;
 };
 
-export default function HomeSidebar({
+function HomeSidebar({
   isSidebarExpanded,
   setIsSidebarExpanded,
   isMobileSidebarOpen,
@@ -372,3 +373,5 @@ export default function HomeSidebar({
     </div>
   );
 }
+
+export default memo(HomeSidebar);

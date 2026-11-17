@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { useAuth } from "@/app/context/AuthContext";
@@ -47,13 +47,13 @@ export function useHomePage() {
     router.replace("/pages/home");
   }, [router, searchParams]);
 
-  const closeSettings = () => {
+  const closeSettings = useCallback(() => {
     setIsSettingsOpen(false);
 
     if (searchParams?.has("settings")) {
       router.replace("/pages/home");
     }
-  };
+  }, [router, searchParams]);
 
   const activeChat = recents.find((r) => r.chat_id === currChatId);
   const currentChatTitle =
@@ -66,26 +66,32 @@ export function useHomePage() {
     }
   }, [chatMode, recents]);
 
-  const handleOpenRenameModal = (chat?: RecentChat) => {
+  const openSettings = useCallback(() => {
+    setSettingsSection("general");
+    setIsSettingsOpen(true);
+  }, []);
+  const openMobileSidebar = useCallback(() => setIsMobileSidebarOpen(true), []);
+
+  const handleOpenRenameModal = useCallback((chat?: RecentChat) => {
     const targetChat = chat || activeChat;
     if (targetChat) {
       setChatToRename(targetChat);
       setRenameInputValue(targetChat.chat_title || "Untitled");
       setIsRenameModalOpen(true);
     }
-  };
+  }, [activeChat]);
 
-  const handleNewChat = () => {
+  const handleNewChat = useCallback(() => {
     setCurrChatId(null);
     setChatMode("new chat");
-  };
+  }, [setChatMode]);
 
-  const handleSelectChat = (id: string) => {
+  const handleSelectChat = useCallback((id: string) => {
     setCurrChatId(id);
     setChatMode("recents");
-  };
+  }, [setChatMode]);
 
-  const handlePremiumFeatureClick = (feature: PremiumFeature) => {
+  const handlePremiumFeatureClick = useCallback((feature: PremiumFeature) => {
     if (isFreeTier) {
       setIsMobileSidebarOpen(false);
       setPaywalledFeature(feature);
@@ -93,7 +99,7 @@ export function useHomePage() {
     }
 
     setChatMode(feature);
-  };
+  }, [isFreeTier, setChatMode]);
 
   const closePaywall = () => setPaywalledFeature(null);
 
@@ -122,7 +128,7 @@ export function useHomePage() {
     setIsRenameModalOpen(false);
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = useCallback(async (id: string) => {
     try {
       await publicServices.deleteHistory(id);
       setRecents((prev) => {
@@ -140,7 +146,7 @@ export function useHomePage() {
     } catch (error) {
       console.error("Delete failed:", error);
     }
-  };
+  }, [currChatId, setChatMode]);
 
   useEffect(() => {
     if (!paywalledFeature) return;
@@ -206,5 +212,7 @@ export function useHomePage() {
     isCheckoutLoading,
     checkoutError,
     startCheckout,
+    openSettings,
+    openMobileSidebar,
   };
 }

@@ -1,5 +1,5 @@
 'use client'
-import { useContext, createContext, useEffect, useState, ReactNode} from "react";
+import { useContext, createContext, useEffect, useState, ReactNode, useCallback } from "react";
 import { AuthServices } from "@/lib/authServices";
 import type { AuthChangeEvent, RealtimeChannel, Session, User } from "@supabase/supabase-js";
 import { PublicServices } from "@/lib/publicServices";
@@ -43,12 +43,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     const [chatMode, setChatModeState] = useState("new chat"); // new chat, recents, chat, quiz, flashcards, resume
     const [tier, setTier] = useState<string | null>(null);
 
-    const setChatMode = (mode: string) => {
+    const setChatMode = useCallback((mode: string) => {
         setChatModeState(mode);
-        // if (typeof window !== "undefined") {
-        //     localStorage.setItem("chatMode", mode)
-        // }
-    }
+    }, []);
 
     useEffect(() => {
 

@@ -9,6 +9,7 @@ import QuizView from "@/app/components/QuizView";
 import ResumeBuild from "@/app/components/resume-build";
 
 import type { RecentChat } from "../types";
+import { memo } from "react";
 
 type HomeMainPanelProps = {
   chatMode: string;
@@ -28,7 +29,7 @@ type HomeMainPanelProps = {
   onDelete: (id: string) => void;
 };
 
-export default function HomeMainPanel({
+function HomeMainPanel({
   chatMode,
   isProcessing,
   setIsProcessing,
@@ -63,7 +64,7 @@ export default function HomeMainPanel({
           <div className="flex-1 flex items-center animate-fade-in-sm min-w-0 max-w-[33.33%]">
             <button
               disabled={isProcessing}
-              onClick={onOpenRenameModal}
+              onClick={() => onOpenRenameModal()}
               className="flex items-center gap-2 text-lg w-full font-semibold text-gray-800 dark:text-textDark truncate group disabled:cursor-not-allowed"
             >
               <span className="truncate min-w-0">{currentChatTitle}</span>
@@ -118,3 +119,5 @@ export default function HomeMainPanel({
     </div>
   );
 }
+
+export default memo(HomeMainPanel);
