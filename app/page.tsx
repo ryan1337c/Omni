@@ -341,7 +341,7 @@ export default function Home() {
             <h2 className={`text-4xl font-bold text-center mb-4 text-transparent bg-clip-text bg-gradient-to-r dark:from-indigo-400 dark:to-white from-violet-600 to-pink-500 transition-opacity duration-1000 ease-in ${testimoniesInView ? 'opacity-100' : 'opacity-0'}`}>
               Testimonials
             </h2>
-            <div className={`relative overflow-hidden flex items-center gap-1 mb-10 transition-all delay-200 duration-1000 ease-in-out ${testimoniesInView ? 'opacity-100 transform-none' : 'opacity-0 translate-y-10'}`}>
+            <div className={`flex items-center gap-1 mb-10 transition-all delay-200 duration-1000 ease-in-out ${testimoniesInView ? 'opacity-100 transform-none' : 'opacity-0 translate-y-10'}`}>
               <FaStar className="size-6 text-yellow-400" />
               <FaStar className="size-6 text-yellow-400" />
               <FaStar className="size-6 text-yellow-400" />
