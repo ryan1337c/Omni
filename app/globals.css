@@ -600,3 +600,225 @@ input {
 ::highlight(resume-demonstrating-bullet) {
   background-color: #fffbeb; /* amber-50 */
 }
+/* ---------- Landing hero: background glow + orbit animation ---------- */
+.hero-glow {
+  background:
+    radial-gradient(600px 400px at 85% 8%, rgba(255, 172, 158, 0.45), transparent 70%),
+    radial-gradient(700px 500px at 10% 20%, rgba(190, 172, 254, 0.35), transparent 70%),
+    radial-gradient(600px 400px at 60% 40%, rgba(255, 155, 195, 0.25), transparent 70%);
+}
+.dark .hero-glow {
+  background:
+    radial-gradient(600px 400px at 85% 8%, rgba(99, 102, 241, 0.28), transparent 70%),
+    radial-gradient(700px 500px at 10% 20%, rgba(140, 72, 140, 0.22), transparent 70%);
+}
+@keyframes hero-spin { to { transform: rotate(360deg); } }
+@keyframes hero-spin-rev { to { transform: rotate(-360deg); } }
+@keyframes hero-pulse { 0%, 100% { transform: scale(1); opacity: 0.9; } 50% { transform: scale(1.06); opacity: 1; } }
+.hero-orbit { animation: hero-spin 60s linear infinite; }
+.hero-orbit-counter { animation: hero-spin-rev 60s linear infinite; } /* keeps icons upright */
+.hero-orbit-rev { animation: hero-spin-rev 90s linear infinite; }
+.hero-orb-core { animation: hero-pulse 5s ease-in-out infinite; }
+
+/* ---------- University logo marquee ---------- */
+@keyframes uni-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.uni-track { display: flex; width: max-content; animation: uni-scroll 40s linear infinite; }
+.uni-marquee:hover .uni-track { animation-play-state: paused; }
+.uni-mask {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-orbit, .hero-orbit-counter, .hero-orbit-rev, .hero-orb-core, .uni-track { animation: none; }
+}
+/* Pencil-style underline for "Top Universities" */
+.pencil-line {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  opacity: 0.85;
+}
+.pencil-line-drawn {
+  transition: stroke-dashoffset 1.1s cubic-bezier(0.55, 0.1, 0.35, 1) 0.25s;
+  stroke-dashoffset: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pencil-line { stroke-dashoffset: 0; transition: none; }
+}
+
+/* ---------- Landing bento grid ---------- */
+.bento {
+  --bsw-1: #fccdbe; --bsw-2: #feac9e; --bsw-3: #ff9bc3; --bsw-4: #beacfe;
+  --bsw-silk: rgba(255, 255, 255, 0.14);
+  --bring-a: #f472b6; --bring-b: #fb923c;
+  --bpin-bl: rgba(244, 114, 182, 0.55);
+  --bpin-tr: rgba(167, 139, 250, 0.55);
+  --bdots: #e5dfea;
+}
+.dark .bento {
+  --bsw-1: #965c6e; --bsw-2: #aa5470; --bsw-3: #8c488c; --bsw-4: #5452be;
+  --bsw-silk: rgba(230, 220, 255, 0.06);
+  --bring-a: #818cf8; --bring-b: #6366f1;
+  --bpin-bl: rgba(99, 102, 241, 0.35);
+  --bpin-tr: rgba(99, 102, 241, 0.28);
+  --bdots: #2c3646;
+}
+
+.bento-grid { --bento-gap: 12px; gap: var(--bento-gap); container-type: inline-size; }
+@media (min-width: 1024px) { .bento-grid { --bento-gap: 16px; } }
+
+/* Row-1 wave. Stacked (< lg): each tile shows the whole wave across its own width, pinned to
+   the bottom. lg and up: both tiles render it at the full row width (100cqw of .bento-grid)
+   and the right-hand tile shifts left by the chat tile's width plus the gap, so the curve
+   continues across the gap. Without container-query units it falls back to the stacked look. */
+.bento-swoosh {
+  position: absolute; left: 0; bottom: 0; width: 100%; height: 340px; max-height: 100%;
+  pointer-events: none; z-index: 0;
+  /* the wave fills extend past the viewBox; the frame clips them, so the grown edge shows them too */
+  overflow: visible;
+}
+@media (min-width: 1024px) {
+  .bento-swoosh { height: 100%; }
+}
+@supports (width: 1cqw) {
+  @media (min-width: 1024px) {
+    .bento-swoosh { width: 100cqw; max-width: none; }
+    .bento-swoosh-b { left: calc(-1 * ((100cqw - 11 * var(--bento-gap)) * 8 / 12 + 8 * var(--bento-gap))); }
+  }
+}
+.bento-sw-1 { stop-color: var(--bsw-1); }
+.bento-sw-2 { stop-color: var(--bsw-2); }
+.bento-sw-3 { stop-color: var(--bsw-3); }
+.bento-sw-4 { stop-color: var(--bsw-4); }
+.bento-silk { stroke: var(--bsw-silk); }
+.bento-ring-a { stop-color: var(--bring-a); }
+.bento-ring-b { stop-color: var(--bring-b); }
+
+/* Dotted paper and corner pinstripes (faded out with a radial mask) */
+.bento-dots {
+  background-image: radial-gradient(circle, var(--bdots) 1px, transparent 1.2px);
+  background-size: 16px 16px;
+}
+.bento-pin::before {
+  content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background: repeating-linear-gradient(135deg, var(--bpin) 0 1px, transparent 1px 7px);
+  -webkit-mask-image: radial-gradient(circle at var(--bpin-x) var(--bpin-y), #000, transparent 60%);
+  mask-image: radial-gradient(circle at var(--bpin-x) var(--bpin-y), #000, transparent 60%);
+}
+.bento-pin-bl { --bpin: var(--bpin-bl); --bpin-x: 0%; --bpin-y: 100%; }
+.bento-pin-tr { --bpin: var(--bpin-tr); --bpin-x: 100%; --bpin-y: 0%; }
+
+/* Quiz: a ring highlights step 1, 2, 3 in turn. Only opacity animates, and it is paused
+   until the tile is on screen (InViewGate sets data-inview). */
+.bento-step { position: relative; }
+.bento-step::after {
+  content: ''; position: absolute; inset: -3px; border-radius: 13px; pointer-events: none;
+  box-shadow: 0 0 0 2px #6366f1, 0 8px 22px rgba(99, 102, 241, 0.28);
+  opacity: 0;
+  animation: bento-step-ring 9s linear infinite;
+}
+.dark .bento-step::after { box-shadow: 0 0 0 2px #818cf8, 0 8px 22px rgba(99, 102, 241, 0.35); }
+.bento-step[data-step='2']::after { animation-delay: 3s; }
+.bento-step[data-step='3']::after { animation-delay: 6s; }
+.bento-gate[data-inview='false'] .bento-step::after { animation-play-state: paused; }
+@keyframes bento-step-ring {
+  0% { opacity: 0; }
+  4%, 28% { opacity: 1; }
+  34%, 100% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bento-step::after { animation: none; }
+}
+
+/* ---------- Bento hover ---------- */
+/* Only the panel frame, title and expand button grow outward by --grow; the illustration stays
+   put. A thin gradient border (the card behind the frame) leans toward the pointer: --tx / --ty
+   (-1..1) come from TiltGrid, so the near edges show ~2.5px of colour and the far edges none. */
+.bento-tilt {
+  --tx: 0;
+  --ty: 0;
+  --grow: 0px;
+  --mx: 50%;
+  --my: 50%;
+  --mr: 2000px;
+  --ease-out: cubic-bezier(0.33, 1, 0.68, 1);
+}
+.bento-tilt[data-active],
+.bento-tilt:focus-within { --grow: 6px; z-index: 2; }
+
+.bento-frame {
+  position: absolute;
+  inset: calc(var(--grow) * -1);
+  z-index: 1;
+  border-radius: calc(1rem + var(--grow));
+  transition: inset 0.3s var(--ease-out), border-radius 0.3s var(--ease-out);
+}
+/* Resting-size box inside the frame. It sits at the tile's own rectangle whatever the frame's
+   current size (same inset and transition, opposite sign), so art and textures never shift. */
+.bento-art {
+  position: absolute;
+  inset: calc(var(--grow) - 1px);
+  pointer-events: none;
+  transition: inset 0.3s var(--ease-out);
+}
+/* No shadows while hovered */
+.bento-tilt[data-active] .bento-frame,
+.bento-tilt:focus-within .bento-frame { box-shadow: none; }
+
+.bento-tilt-back {
+  position: absolute;
+  inset: calc(var(--grow) * -1);
+  z-index: 0;
+  border-radius: calc(1rem + var(--grow));
+  background: linear-gradient(135deg, #a78bfa 0%, #6366f1 45%, #f472b6 100%);
+  opacity: 0;
+  transform: translate3d(calc(var(--tx) * 0.75px), calc(var(--ty) * 0.75px), 0);
+  -webkit-mask-image: radial-gradient(circle at var(--mx) var(--my), #000 0, #000 var(--mr), transparent calc(var(--mr) * 1.6));
+  mask-image: radial-gradient(circle at var(--mx) var(--my), #000 0, #000 var(--mr), transparent calc(var(--mr) * 1.6));
+  transition: transform 0.18s ease-out, inset 0.3s var(--ease-out), border-radius 0.3s var(--ease-out), opacity 0.3s ease;
+  pointer-events: none;
+}
+.dark .bento-tilt-back {
+  background: linear-gradient(135deg, #818cf8 0%, #6366f1 50%, #3b82f6 100%);
+}
+.bento-tilt[data-active] .bento-tilt-back,
+.bento-tilt:focus-within .bento-tilt-back {
+  inset: calc((var(--grow) + 1px) * -1);
+  border-radius: calc(1rem + var(--grow) + 1px);
+  opacity: 1;
+}
+
+/* Title and expand button ride out with the frame's top corners */
+.bento-title,
+.bento-expand { transition: transform 0.3s var(--ease-out), background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease; }
+.bento-title { transform: translate(calc(var(--grow) * -1), calc(var(--grow) * -1)); }
+.bento-expand { transform: translate(var(--grow), calc(var(--grow) * -1)); }
+
+/* Expand button colours: indigo arrows on white at rest, swapped while active */
+.bento-expand { background: #ffffff; color: #6366f1; border-color: #e6e2ec; }
+.dark .bento-expand { background: #243045; color: #818cf8; border-color: rgba(255, 255, 255, 0.1); }
+.bento-tilt[data-active] .bento-expand,
+.bento-tilt:focus-within .bento-expand { background: #6366f1; color: #ffffff; border-color: #6366f1; }
+.dark .bento-tilt[data-active] .bento-expand,
+.dark .bento-tilt:focus-within .bento-expand { background: #818cf8; color: #243045; border-color: #818cf8; }
+
+/* Expand icon arrows slide apart in opposite directions, and back when the hover ends */
+.bento-arrow { transition: transform 0.3s var(--ease-out); }
+.bento-tilt[data-active] .bento-arrow-tr,
+.bento-tilt:focus-within .bento-arrow-tr { transform: translate(3px, -3px); }
+.bento-tilt[data-active] .bento-arrow-bl,
+.bento-tilt:focus-within .bento-arrow-bl { transform: translate(-3px, 3px); }
+
+@media (prefers-reduced-motion: reduce) {
+  .bento-tilt[data-active],
+  .bento-tilt:focus-within { --grow: 0px; }
+  .bento-tilt-back { transform: none; }
+  .bento-arrow, .bento-art { transition: none; }
+  .bento-tilt[data-active] .bento-arrow-tr, .bento-tilt[data-active] .bento-arrow-bl,
+  .bento-tilt:focus-within .bento-arrow-tr, .bento-tilt:focus-within .bento-arrow-bl { transform: none; }
+}
