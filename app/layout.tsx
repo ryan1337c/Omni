@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "./context/AuthContext";
 import { Suspense } from 'react';
+import AppLoading from "./components/AppLoading";
 import { Analytics } from "@vercel/analytics/next"
 import { ThemeProvider } from "./components/ThemeProvider";
 
@@ -28,7 +29,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            <Suspense fallback={<div>Loading...</div>}>
+            <Suspense fallback={<AppLoading />}>
               {children}
               <Analytics />
             </Suspense>

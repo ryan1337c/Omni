@@ -3,9 +3,18 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEnvelopeOpen } from '@fortawesome/free-regular-svg-icons';
 import { useSearchParams} from 'next/navigation';
 import { AuthServices } from '@/lib/authServices';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
+import AppLoading from '@/app/components/AppLoading';
 
-export default function Verify () {
+export default function Verify() {
+    return (
+        <Suspense fallback={<AppLoading />}>
+            <VerifyContent />
+        </Suspense>
+    );
+}
+
+function VerifyContent() {
 
     const searchParams = useSearchParams();
     const email = searchParams?.get('email');
