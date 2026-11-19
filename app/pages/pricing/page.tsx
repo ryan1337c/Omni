@@ -171,7 +171,7 @@ export default function PricingPage() {
                       </li>
                       <li className="flex items-center gap-3">
                         <FaCheckCircle className="text-emerald-500 flex-shrink-0" />
-                        <span>125x higher usage than Free</span>
+                        <span>4× higher usage than Free</span>
                       </li>
                       <li className="flex items-center gap-3">
                         <FaCheckCircle className="text-emerald-500 flex-shrink-0" />
