@@ -1,7 +1,6 @@
 'use client'
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { FaRobot, FaEye, FaEyeSlash } from "react-icons/fa";
 import { IoIosArrowRoundBack } from "react-icons/io";
 import { AuthServices } from '@/lib/authServices';
@@ -15,7 +14,6 @@ const Login = () => {
   const [backing, setBacking] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const router = useRouter();
 
   const handleGoogleSignIn = async () => {
     if (isProcessing) return;
@@ -53,9 +51,9 @@ const Login = () => {
       // 3. Reset cursor before navigating
       document.body.style.cursor = 'default';
 
-      // Client-side navigation keeps the login screen (buttons disabled) up
-      // until home is ready, instead of a full reload that flashes a fallback.
-      router.replace('/pages/home');
+      // Full navigation so the proxy sees the fresh session cookie; a client-side
+      // replace can reuse a cached pre-login redirect back to /pages/login.
+      window.location.replace('/pages/home');
     }
     catch (error: any) {
       const message = error.message || 'An unexpected error occurred';
