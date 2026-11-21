@@ -21,6 +21,9 @@ const nextConfig = {
       "./markdown/resumeStruct.md",
     ],
   },
+  experimental: {
+    agentUpgrade: "security",
+  },
 };
 
 export default nextConfig;
