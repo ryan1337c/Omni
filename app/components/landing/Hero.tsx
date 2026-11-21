@@ -67,7 +67,6 @@ const Hero = ({ onWatchDemo }: { onWatchDemo?: () => void }) => {
 
   return (
     <section className="relative flex flex-1 flex-col justify-center overflow-hidden">
-      <div className="hero-glow absolute inset-0 pointer-events-none" />
 
       <div className="relative max-w-6xl w-full mx-auto px-6 pt-28 md:pt-32 pb-10 lg:pb-20 grid grid-cols-[minmax(0,1fr)] lg:grid-cols-2 gap-6 lg:gap-14 items-center">
         {/* Copy */}
