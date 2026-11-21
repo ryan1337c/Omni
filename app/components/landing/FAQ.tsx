@@ -147,7 +147,7 @@ const FAQ = () => {
               role="tablist"
               aria-label="FAQ categories"
               aria-orientation="vertical"
-              className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:-mx-10 sm:px-10 lg:mx-0 lg:flex-col lg:overflow-visible lg:px-0 lg:pb-0"
+              className="grid w-full min-w-0 grid-cols-1 gap-2 sm:grid-cols-2 lg:flex lg:flex-col"
             >
               {CATEGORIES.map((cat, i) => {
                 const selected = cat.id === activeId;
@@ -163,13 +163,13 @@ const FAQ = () => {
                     tabIndex={selected ? 0 : -1}
                     onClick={() => selectCategory(cat.id)}
                     onKeyDown={(e) => onTabKeyDown(e, i)}
-                    className={`flex flex-none items-center justify-between gap-3 whitespace-nowrap rounded-2xl px-5 py-3 text-left text-[15px] font-medium transition-colors duration-200 motion-reduce:transition-none lg:whitespace-normal lg:py-4 ${FOCUS_RING} ${
+                    className={`flex w-full min-h-10 min-w-0 items-center justify-between gap-3 whitespace-normal rounded-2xl px-4 py-3 text-left text-[15px] font-medium transition-colors duration-200 motion-reduce:transition-none sm:px-5 lg:py-4 ${FOCUS_RING} ${
                       selected
                         ? 'bg-white text-[#0f172a] shadow-sm dark:bg-slate-700/80 dark:text-white dark:ring-1 dark:ring-white/10 dark:shadow-none'
                         : 'bg-white/45 text-slate-500 hover:bg-white/70 hover:text-slate-800 dark:bg-white/[0.04] dark:text-slate-400 dark:hover:bg-white/[0.08] dark:hover:text-slate-200'
                     }`}
                   >
-                    <span>{cat.label}</span>
+                    <span className="min-w-0 whitespace-normal">{cat.label}</span>
                     <ChevronRight
                       aria-hidden
                       className={`hidden size-4 flex-none transition-opacity lg:block ${selected ? 'opacity-70' : 'opacity-40'}`}
@@ -205,9 +205,9 @@ const FAQ = () => {
                         aria-expanded={open}
                         aria-controls={`${baseId}-answer`}
                         onClick={() => setOpenIndex(open ? null : i)}
-                        className={`flex w-full items-center justify-between gap-4 rounded-2xl px-5 py-4 text-left text-[15px] font-medium text-[#0f172a] dark:text-slate-100 sm:text-base ${FOCUS_RING}`}
+                        className={`flex w-full min-h-10 min-w-0 items-center justify-between gap-4 rounded-2xl px-4 py-4 text-left text-[15px] font-medium text-[#0f172a] dark:text-slate-100 sm:px-5 sm:text-base ${FOCUS_RING}`}
                       >
-                        <span>{item.q}</span>
+                        <span className="min-w-0 flex-1 whitespace-normal break-words">{item.q}</span>
                         <Plus
                           aria-hidden
                           className={`size-5 flex-none text-slate-500 transition-transform duration-300 ease-out motion-reduce:transition-none dark:text-slate-400 ${
@@ -226,7 +226,7 @@ const FAQ = () => {
                       }`}
                     >
                       <div className="overflow-hidden">
-                        <p className="px-5 pb-5 text-[15px] leading-relaxed text-slate-600 dark:text-slate-300">
+                        <p className="px-4 pb-5 text-[15px] leading-relaxed text-slate-600 dark:text-slate-300 sm:px-5">
                           {item.a}
                         </p>
                       </div>
