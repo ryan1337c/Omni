@@ -91,8 +91,11 @@ export default function Home() {
     <>
       <div className={`flex flex-col min-h-screen dark:text-white dark:bg-landingPage text-black bg-landingPageLight overflow-hidden`}>
         <Header />
-        <Hero onWatchDemo={scrollToDemo} />
-        <UniversityStrip />
+        {/* Hero + strip fill the first screen so the bento title starts just below the fold */}
+        <div className="flex min-h-svh flex-col">
+          <Hero onWatchDemo={scrollToDemo} />
+          <UniversityStrip />
+        </div>
         <Bento />
 
           {/* --- Hero Video Section --- */}
