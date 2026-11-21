@@ -43,9 +43,12 @@ const ThemeIconButton = () => {
 
 const Header = () => {
   const { isLoggedIn, fullName, tier } = useAuth();
+  const [mounted, setMounted] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -117,7 +120,18 @@ const Header = () => {
           <ThemeIconButton />
 
           <div className="hidden md:flex items-center gap-2">
-            {isLoggedIn ? (
+            {!mounted ? (
+              <div className="flex items-center gap-2" aria-hidden>
+                <span className="invisible inline-flex items-center gap-2 px-3 py-2 text-sm font-semibold whitespace-nowrap lg:px-4">
+                  <span className="inline-block h-3.5 w-3.5" />
+                  Log In
+                </span>
+                <span className="invisible inline-flex items-center gap-2 px-3 py-2 text-sm font-semibold whitespace-nowrap lg:px-4">
+                  <span className="inline-block h-3.5 w-3.5" />
+                  Sign Up
+                </span>
+              </div>
+            ) : isLoggedIn ? (
               <ProfileMenu
                 showHoverHint
                 placement="bottom-right"
@@ -187,7 +201,18 @@ const Header = () => {
                 </Link>
               ))}
               <hr className="my-2 border-slate-200 dark:border-slate-700" />
-              {isLoggedIn ? (
+              {!mounted ? (
+                <div className="flex flex-col gap-1" aria-hidden>
+                  <span className={`${mobileItem} invisible pointer-events-none`}>
+                    <span className="inline-block h-3.5 w-3.5" />
+                    Log In
+                  </span>
+                  <span className={`${mobileItem} invisible pointer-events-none`}>
+                    <span className="inline-block h-3.5 w-3.5" />
+                    Sign Up
+                  </span>
+                </div>
+              ) : isLoggedIn ? (
                 <ProfileMenuItems
                   onSettingsClick={openSettings}
                   onLogout={() => setIsMenuOpen(false)}
