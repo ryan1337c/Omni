@@ -21,10 +21,10 @@ type BentoTileProps = {
 //   title + expand    on top
 // On hover only the frame, title and expand button move outward (see .bento-tilt in
 // globals.css); the content stays where it is.
-// Grid placement classes (col-span / min-h) go on the outer element, bento-* texture classes on
+// Grid placement classes (col-span / min-h / h) go on the outer element, bento-* texture classes on
 // the texture layer inside the frame.
 // No hooks, so it renders as plain server HTML.
-const isLayoutClass = (c: string) => /(^|:)(col-span|row-span|min-h)-/.test(c);
+const isLayoutClass = (c: string) => /(^|:)(col-span|row-span|min-h|max-h|h)-/.test(c);
 
 const BentoTile = ({ title, href, linkLabel, className = '', art, children }: BentoTileProps) => {
   const classes = className.split(/\s+/).filter(Boolean);

@@ -54,11 +54,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         let requestVersion = 0;
         let entitlementChannel: RealtimeChannel | null = null;
         let subscribedUserId: string | null = null;
+        let tierRaf = 0;
 
         const loadTier = async (userId: string) => {
             const currentVersion = ++requestVersion;
             setTier(null);
-            setTimeout(() => {
+            if (tierRaf) cancelAnimationFrame(tierRaf);
+            // Defer so the loading (null) state can paint first, matching the old next-macrotask deferral.
+            tierRaf = requestAnimationFrame(() => {
+                tierRaf = 0;
                 publicServices.getSubscription(userId)
                     .then((result) => {
                         // Ignore results from an outdated request
@@ -67,7 +71,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
                         }
                     })
                     .catch(console.error);
-            }, 0);
+            });
         }
 
         const stopEntitlementUpdates = () => {
@@ -151,6 +155,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             // call unsubscribe to remove the callback
             return () => {
                 requestVersion++; // Invalidate any pending tier request
+                if (tierRaf) cancelAnimationFrame(tierRaf);
                 stopEntitlementUpdates();
                 data.subscription.unsubscribe()
             };

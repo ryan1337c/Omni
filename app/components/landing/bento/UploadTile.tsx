@@ -7,7 +7,7 @@ const UploadTile = () => (
     title="Upload and analyze files"
     href="/pages/home"
     linkLabel="Open Omni to upload and analyze files"
-    className="min-h-[260px] md:col-span-2 md:min-h-[300px] lg:col-span-6 lg:min-h-[330px]"
+    className="h-[324px] min-h-[324px] md:col-span-2 lg:h-[360px] lg:min-h-[360px] lg:col-span-6"
   >
     <p className="sr-only">Drop in documents and Omni will analyze, summarize or transform them.</p>
 

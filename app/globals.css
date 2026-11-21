@@ -713,26 +713,313 @@ input {
 .bento-pin-bl { --bpin: var(--bpin-bl); --bpin-x: 0%; --bpin-y: 100%; }
 .bento-pin-tr { --bpin: var(--bpin-tr); --bpin-x: 100%; --bpin-y: 0%; }
 
-/* Quiz: a ring highlights step 1, 2, 3 in turn. Only opacity animates, and it is paused
-   until the tile is on screen (InViewGate sets data-inview). */
+/* Quiz tile: focus ring follows the active box; the 9s cycle is driven in QuizTile.tsx. */
 .bento-step { position: relative; }
 .bento-step::after {
   content: ''; position: absolute; inset: -3px; border-radius: 13px; pointer-events: none;
   box-shadow: 0 0 0 2px #6366f1, 0 8px 22px rgba(99, 102, 241, 0.28);
   opacity: 0;
-  animation: bento-step-ring 9s linear infinite;
+  transition: opacity 280ms ease;
 }
 .dark .bento-step::after { box-shadow: 0 0 0 2px #818cf8, 0 8px 22px rgba(99, 102, 241, 0.35); }
-.bento-step[data-step='2']::after { animation-delay: 3s; }
-.bento-step[data-step='3']::after { animation-delay: 6s; }
-.bento-gate[data-inview='false'] .bento-step::after { animation-play-state: paused; }
-@keyframes bento-step-ring {
-  0% { opacity: 0; }
-  4%, 28% { opacity: 1; }
-  34%, 100% { opacity: 0; }
+.bento-step[data-active='true']::after { opacity: 1; }
+@media (min-width: 1024px) {
+  .bento-step::after { border-radius: 15px; }
 }
+
+.bento-quiz-stage {
+  container-type: inline-size;
+  --quiz-arrow-w: 22px;
+  --quiz-box-w: calc((100cqi - var(--quiz-arrow-w)) / 2);
+  --quiz-slide-ms: 720ms;
+}
+@media (min-width: 640px) {
+  .bento-quiz-stage { --quiz-arrow-w: 28px; }
+}
+@media (min-width: 1024px) {
+  .bento-quiz-stage { --quiz-arrow-w: 32px; }
+}
+
+.bento-quiz-track {
+  display: flex;
+  align-items: flex-start;
+  width: max-content;
+  transform: translateX(calc((100cqi + var(--quiz-arrow-w)) / 4));
+  transition: transform var(--quiz-slide-ms) ease-in-out;
+  will-change: transform;
+}
+
+.bento-quiz-stage[data-quiz-pos='create-take'] .bento-quiz-track {
+  transform: translateX(0);
+}
+
+.bento-quiz-stage[data-quiz-pos='take-review'] .bento-quiz-track {
+  transform: translateX(calc(-1 * (var(--quiz-box-w) + var(--quiz-arrow-w))));
+}
+
+/* Snap back to the centered create card only while faded out, so the loop reset does not rewind. */
+.bento-quiz-stage[data-quiz-phase='center'] .bento-quiz-track,
+.bento-quiz-stage[data-quiz-phase='reset'] .bento-quiz-track {
+  transition: none;
+}
+
+.bento-quiz-col {
+  flex: 0 0 var(--quiz-box-w);
+  width: var(--quiz-box-w);
+  min-width: 0;
+}
+
+.bento-quiz-col {
+  opacity: 1;
+  transition: opacity var(--quiz-slide-ms) ease;
+}
+
+.bento-quiz-stage[data-quiz-pos='center'] .bento-quiz-col[data-col='2'],
+.bento-quiz-stage[data-quiz-pos='center'] .bento-quiz-col[data-col='3'] {
+  opacity: 0;
+}
+
+.bento-quiz-stage[data-quiz-pos='create-take'] .bento-quiz-col[data-col='3'] {
+  opacity: 0;
+}
+
+.bento-quiz-stage[data-quiz-pos='take-review'] .bento-quiz-col[data-col='1'] {
+  opacity: 0;
+}
+
+.bento-quiz-stage[data-quiz-phase='center'] .bento-quiz-col,
+.bento-quiz-stage[data-quiz-phase='reset'] .bento-quiz-col {
+  transition: none;
+}
+
+.bento-quiz-arrow {
+  flex: 0 0 var(--quiz-arrow-w);
+  width: var(--quiz-arrow-w);
+  transform: scaleX(0);
+  transform-origin: left center;
+  opacity: 0;
+}
+
+.bento-quiz-stage[data-quiz-phase='slideTake'] .bento-quiz-arrow[data-arrow='1'] {
+  animation:
+    bento-quiz-arrow-grow var(--quiz-slide-ms) ease-in-out forwards,
+    bento-quiz-arrow-fade var(--quiz-slide-ms) linear forwards;
+}
+
+.bento-quiz-stage[data-quiz-phase='slideReview'] .bento-quiz-arrow[data-arrow='2'] {
+  animation:
+    bento-quiz-arrow-grow var(--quiz-slide-ms) ease-in-out forwards,
+    bento-quiz-arrow-fade var(--quiz-slide-ms) linear forwards;
+}
+
+.bento-quiz-stage[data-quiz-phase='toOption'] .bento-quiz-arrow[data-arrow='1'],
+.bento-quiz-stage[data-quiz-phase='pick'] .bento-quiz-arrow[data-arrow='1'],
+.bento-quiz-stage[data-quiz-phase='afterPick'] .bento-quiz-arrow[data-arrow='1'] {
+  transform: scaleX(1);
+  opacity: 1;
+}
+
+.bento-quiz-stage[data-quiz-phase='hold'] .bento-quiz-arrow[data-arrow='2'],
+.bento-quiz-stage[data-quiz-phase='reset'] .bento-quiz-arrow[data-arrow='2'] {
+  transform: scaleX(1);
+  opacity: 1;
+}
+
+/* Arrow 1 leaves with the Create box; fade it out during the review slide. */
+.bento-quiz-stage[data-quiz-pos='take-review'] .bento-quiz-arrow[data-arrow='1'] {
+  transform: scaleX(1);
+  opacity: 0;
+  animation: none;
+  transition: opacity var(--quiz-slide-ms) ease;
+}
+
+@keyframes bento-quiz-arrow-grow {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@keyframes bento-quiz-arrow-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.bento-quiz-generate {
+  position: relative;
+  transform: scale(1);
+  transition: transform 180ms ease, filter 180ms ease;
+}
+
+.bento-quiz-stage[data-quiz-phase='click'] .bento-quiz-generate {
+  transform: scale(0.96);
+  filter: brightness(0.92);
+}
+
+.bento-quiz-caret {
+  display: inline-block;
+  width: 1px;
+  height: 0.95em;
+  margin-left: 1px;
+  vertical-align: -0.1em;
+  background: currentColor;
+  animation: bento-quiz-caret 1s steps(1) infinite;
+}
+
+@keyframes bento-quiz-caret {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+.bento-quiz-title {
+  border-color: #e6e2ec;
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+.dark .bento-quiz-title { border-color: rgba(255, 255, 255, 0.1); }
+.bento-quiz-title[data-focused='true'] {
+  border-color: #818cf8;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.28);
+}
+
+.bento-quiz-cursor {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 30;
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 550ms ease-in-out, opacity 250ms ease;
+}
+
+.bento-quiz-cursor[data-instant='true'] {
+  transition: opacity 250ms ease;
+}
+
+.bento-quiz-cursor[data-visible='true'] {
+  opacity: 1;
+}
+
+.bento-quiz-fade {
+  opacity: 1;
+}
+
+.bento-quiz-stage[data-quiz-phase='reset'] .bento-quiz-fade {
+  animation: bento-quiz-fade-out 420ms ease-in forwards;
+}
+
+.bento-quiz-stage[data-quiz-phase='center'] .bento-quiz-fade {
+  animation: bento-quiz-fade-in 420ms ease-out both;
+}
+
+@keyframes bento-quiz-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes bento-quiz-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .bento-step::after { animation: none; }
+  .bento-quiz-track,
+  .bento-quiz-arrow,
+  .bento-quiz-cursor,
+  .bento-quiz-fade,
+  .bento-quiz-generate,
+  .bento-quiz-caret,
+  .bento-step::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .bento-quiz-arrow[data-drawn='true'] {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+  .bento-quiz-fade { opacity: 1; }
+}
+
+/* Code Assisting tile: prompt bar + line-by-line fill */
+.bento-code-prompt {
+  border-color: #e6e2ec;
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+.dark .bento-code-prompt { border-color: rgba(255, 255, 255, 0.1); }
+.bento-code-prompt[data-focused='true'] {
+  border-color: #818cf8;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.28);
+}
+
+.bento-code-caret {
+  display: inline-block;
+  width: 1px;
+  height: 0.95em;
+  margin-left: 1px;
+  vertical-align: -0.1em;
+  background: currentColor;
+  animation: bento-code-caret 1s steps(1) infinite;
+}
+@keyframes bento-code-caret {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+.bento-code-send {
+  transition: transform 160ms ease, filter 160ms ease;
+}
+.bento-code-send[data-pressed='true'] {
+  transform: scale(0.92);
+  filter: brightness(0.92);
+}
+
+.bento-code-cursor {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 30;
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 550ms ease-in-out, opacity 250ms ease;
+}
+.bento-code-cursor[data-instant='true'] {
+  transition: opacity 250ms ease;
+}
+.bento-code-cursor[data-visible='true'] {
+  opacity: 1;
+}
+
+@keyframes bento-code-line-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.bento-code-line {
+  animation: bento-code-line-in 340ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.bento-code-ink,
+.bento-code-prompt-text {
+  opacity: 1;
+}
+.bento-code-stage[data-code-phase='reset'] .bento-code-ink,
+.bento-code-stage[data-code-phase='reset'] .bento-code-prompt-text {
+  animation: bento-code-clear 400ms ease-in forwards;
+}
+@keyframes bento-code-clear {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  .bento-code-cursor,
+  .bento-code-ink,
+  .bento-code-prompt-text,
+  .bento-code-line,
+  .bento-code-caret,
+  .bento-code-send {
+    animation: none !important;
+    transition: none !important;
+  }
+  .bento-code-ink, .bento-code-prompt-text { opacity: 1; }
+  .bento-code-line { opacity: 1; transform: none; }
 }
 
 /* Chat tile: smooth slot expansion pushes older messages up, bubbles pop in */
@@ -809,6 +1096,115 @@ input {
   .bento-chat-shimmer,
   .bento-menu-pop,
   .bento-click-ring { animation: none; }
+}
+
+/* Resume tile: scroll-scrubbed score ring, highlight sweep, then keyword swaps */
+@property --resume-h0 {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+@property --resume-h1 {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+@property --resume-h2 {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+@property --resume-s0 {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+@property --resume-s1 {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+@property --resume-s2 {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+.bento-resume {
+  --resume-h0: 0;
+  --resume-h1: 0;
+  --resume-h2: 0;
+  --resume-s0: 0;
+  --resume-s1: 0;
+  --resume-s2: 0;
+  --resume-score: 0;
+  --resume-plain: #475569;
+  --resume-ink: #831843;
+  --resume-mark-bg: rgb(251 207 232 / 0.8);
+}
+.dark .bento-resume {
+  --resume-plain: #cbd5e1;
+  --resume-ink: #e0e7ff;
+  --resume-mark-bg: rgb(129 140 248 / 0.25);
+}
+/* Highlight sweep eases in; word-swap keeps the overshoot bounce */
+.bento-resume[data-snapping='true'] {
+  transition:
+    --resume-h0 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    --resume-h1 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    --resume-h2 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    --resume-s0 420ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    --resume-s1 420ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    --resume-s2 420ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.bento-resume-ring {
+  stroke-dasharray: var(--resume-score) 100;
+  /* Hide the round cap that would otherwise sit at 0% as a stray dot */
+  opacity: min(1, var(--resume-score));
+}
+.bento-resume-s0 { --hl: var(--resume-h0); --swap: var(--resume-s0); }
+.bento-resume-s1 { --hl: var(--resume-h1); --swap: var(--resume-s1); }
+.bento-resume-s2 { --hl: var(--resume-h2); --swap: var(--resume-s2); }
+.bento-resume-swap {
+  display: inline-block;
+  position: relative;
+  overflow: hidden;
+  vertical-align: baseline;
+  padding: 0 0.125rem;
+  border-radius: 2px;
+  color: color-mix(in srgb, var(--resume-ink) calc(var(--hl) * 100%), var(--resume-plain) calc((1 - var(--hl)) * 100%));
+}
+.bento-resume-sizer {
+  display: block;
+  visibility: hidden;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.bento-resume-hl {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: 2px;
+  background: var(--resume-mark-bg);
+  transform: scaleX(var(--hl));
+  transform-origin: left center;
+}
+.bento-resume-from,
+.bento-resume-to {
+  position: absolute;
+  left: 0.125rem;
+  top: 0;
+  white-space: nowrap;
+}
+.bento-resume-from {
+  opacity: calc(1 - var(--swap));
+  transform: translateY(calc(var(--swap) * 100%));
+}
+.bento-resume-to {
+  opacity: var(--swap);
+  transform: translateY(calc((var(--swap) - 1) * 100%));
+}
+@media (prefers-reduced-motion: reduce) {
+  .bento-resume[data-snapping='true'] { transition: none; }
 }
 
 /* ---------- Bento hover ---------- */
@@ -897,4 +1293,157 @@ input {
   .bento-arrow, .bento-art { transition: none; }
   .bento-tilt[data-active] .bento-arrow-tr, .bento-tilt[data-active] .bento-arrow-bl,
   .bento-tilt:focus-within .bento-arrow-tr, .bento-tilt:focus-within .bento-arrow-bl { transform: none; }
+}
+
+/* --- Bento flashcards tile: one-motion Q/A flip, then swipe right to the next card --- */
+.bento-flash-stage {
+  --flash-progress: 0.25;
+  --flash-flip-ms: 700ms;
+  --flash-swipe-ms: 750ms;
+}
+
+.bento-flash-stack {
+  isolation: isolate;
+}
+
+.bento-flash-scene {
+  position: relative;
+  height: 100%;
+  perspective: 1200px;
+  perspective-origin: 50% 50%;
+}
+
+.bento-flash-flipper {
+  position: relative;
+  height: 100%;
+  transform: rotateY(0deg);
+  transform-style: flat;
+}
+
+.bento-flash-stage[data-flash-phase='flip'] .bento-flash-flipper {
+  animation: bento-flash-spin var(--flash-flip-ms) ease-in-out forwards;
+}
+
+.bento-flash-stage[data-flash-phase='back'] .bento-flash-flipper {
+  transform: rotateY(180deg);
+}
+
+@keyframes bento-flash-spin {
+  from { transform: rotateY(0deg); }
+  to { transform: rotateY(180deg); }
+}
+
+.bento-flash-face {
+  position: absolute;
+  inset: 0;
+}
+
+/* Answer is pre-mirrored so it reads correctly once the flipper is at 180deg. */
+.bento-flash-mirror {
+  height: 100%;
+  transform: scaleX(-1);
+}
+
+.bento-flash-stage[data-flash-phase='front'] .bento-flash-face-front,
+.bento-flash-stage[data-flash-phase='back'] .bento-flash-face-back {
+  opacity: 1;
+  visibility: visible;
+}
+
+.bento-flash-stage[data-flash-phase='front'] .bento-flash-face-back,
+.bento-flash-stage[data-flash-phase='back'] .bento-flash-face-front {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.bento-flash-stage[data-flash-phase='flip'] .bento-flash-face-front {
+  animation: bento-flash-front-swap var(--flash-flip-ms) ease-in-out forwards;
+}
+
+.bento-flash-stage[data-flash-phase='flip'] .bento-flash-face-back {
+  animation: bento-flash-back-swap var(--flash-flip-ms) ease-in-out forwards;
+}
+
+@keyframes bento-flash-front-swap {
+  0%, 49.9% { opacity: 1; visibility: visible; }
+  50%, 100% { opacity: 0; visibility: hidden; }
+}
+
+@keyframes bento-flash-back-swap {
+  0%, 49.9% { opacity: 0; visibility: hidden; }
+  50%, 100% { opacity: 1; visibility: visible; }
+}
+
+.bento-flash-layer[data-role='next'] {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  transform: scale(0.97);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.bento-flash-layer[data-role='current'] {
+  position: relative;
+  z-index: 5;
+}
+
+/* Right swipe: one 0->100% motion (ease-in-out). Fade is a companion animation
+   on the same element so a mid-keyframe cannot restart the motion easing.
+   Opacity holds through 70%, then fades in the last 30%. */
+.bento-flash-stage[data-flash-phase='swipe'] .bento-flash-layer[data-role='current'] {
+  animation:
+    bento-flash-swipe-move var(--flash-swipe-ms) ease-in-out forwards,
+    bento-flash-swipe-fade var(--flash-swipe-ms) linear forwards;
+  z-index: 5;
+}
+
+@keyframes bento-flash-swipe-move {
+  from { transform: translateX(0) rotateZ(0deg); }
+  to { transform: translateX(120%) rotateZ(8deg); }
+}
+
+@keyframes bento-flash-swipe-fade {
+  0%, 70% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.bento-flash-stage[data-flash-phase='swipe'] .bento-flash-layer[data-role='next'] {
+  transform: scale(1);
+  opacity: 1;
+  transition: transform var(--flash-swipe-ms) ease-in-out;
+  z-index: 1;
+}
+
+.bento-flash-flip-btn {
+  transition: transform 180ms ease;
+}
+
+.bento-flash-stage[data-flash-phase='flip'] .bento-flash-flip-btn {
+  transform: scale(0.94);
+}
+
+.bento-flash-bar-fill {
+  width: 100%;
+  transform-origin: left center;
+  transform: scaleX(var(--flash-progress));
+  transition: transform var(--flash-swipe-ms) ease-in-out;
+}
+
+.bento-flash-stage[data-drain='true'] .bento-flash-bar-fill {
+  transition-timing-function: ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bento-flash-flipper,
+  .bento-flash-face,
+  .bento-flash-layer,
+  .bento-flash-bar-fill,
+  .bento-flash-flip-btn {
+    animation: none !important;
+    transition: none !important;
+  }
+  .bento-flash-flipper { transform: rotateY(0deg) !important; }
+  .bento-flash-face-front { opacity: 1 !important; visibility: visible !important; }
+  .bento-flash-face-back { opacity: 0 !important; visibility: hidden !important; }
 }
