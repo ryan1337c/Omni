@@ -10,7 +10,7 @@ import TiltGrid from './bento/TiltGrid';
 // Features bento grid with a solid heading above it.
 //   mobile  : one column, tiles stacked
 //   md      : two columns (chat, quiz, upload and vibe go full width)
-//   lg      : 12-column grid, rows of 8/4, 5/7 and 6/6 (about 400 / 340 / 330px tall)
+//   lg      : 12-column grid, rows of 8/4, 5/7 and 6/6 (about 400 / 340 / 360px tall)
 // The grid is a container-query container so the row-1 wave can be sized from its width in CSS
 // (see .bento-grid / .bento-swoosh in globals.css). No hooks here: the shell is server-safe.
 const Bento = () => (
