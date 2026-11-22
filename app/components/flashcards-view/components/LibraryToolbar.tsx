@@ -70,7 +70,7 @@ export default function LibraryToolbar({
                 setFilterType("all");
                 setIsFilterMenuOpen(false);
               }}
-              className={`flex items-center gap-2 px-3 py-2 text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-700 text-left ${filterType === "all" ? "text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/20" : "text-slate-600 dark:text-slate-300"}`}
+              className={`flex items-center gap-2 px-3 py-2 text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-700 text-left ${filterType === "all" ? "text-violet-600 dark:text-indigo-200 bg-violet-50 dark:bg-btnDark/25" : "text-slate-600 dark:text-slate-300"}`}
             >
               <LayoutList size={14} /> All Items
             </button>
@@ -79,7 +79,7 @@ export default function LibraryToolbar({
                 setFilterType("folder");
                 setIsFilterMenuOpen(false);
               }}
-              className={`flex items-center gap-2 px-3 py-2 text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-700 text-left ${filterType === "folder" ? "text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/20" : "text-slate-600 dark:text-slate-300"}`}
+              className={`flex items-center gap-2 px-3 py-2 text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-700 text-left ${filterType === "folder" ? "text-violet-600 dark:text-indigo-200 bg-violet-50 dark:bg-btnDark/25" : "text-slate-600 dark:text-slate-300"}`}
             >
               <Folder size={14} /> Folders Only
             </button>
@@ -88,7 +88,7 @@ export default function LibraryToolbar({
                 setFilterType("deck");
                 setIsFilterMenuOpen(false);
               }}
-              className={`flex items-center gap-2 px-3 py-2 text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-700 text-left ${filterType === "deck" ? "text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/20" : "text-slate-600 dark:text-slate-300"}`}
+              className={`flex items-center gap-2 px-3 py-2 text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-700 text-left ${filterType === "deck" ? "text-violet-600 dark:text-indigo-200 bg-violet-50 dark:bg-btnDark/25" : "text-slate-600 dark:text-slate-300"}`}
             >
               <Files size={14} /> Flashcards Only
             </button>

@@ -32,15 +32,15 @@ function Crumb({
   });
 
   if (isCurrent) {
-    return <span className="text-slate-400">{label}</span>;
+    return <span className="text-slate-400 dark:text-slate-500">{label}</span>;
   }
 
   return (
     <button
       ref={setNodeRef}
       onClick={onClick}
-      className={`px-1.5 py-0.5 rounded-md text-violet-600 dark:text-violet-400 hover:opacity-70 transition-all ${
-        isOver ? "ring-2 ring-violet-500 dark:ring-violet-400 bg-violet-50 dark:bg-violet-900/20" : ""
+      className={`px-1.5 py-0.5 rounded-md text-violet-600 dark:text-indigo-200 hover:opacity-70 dark:hover:bg-btnDark/15 transition-all ${
+        isOver ? "ring-2 ring-violet-500 dark:ring-btnDark bg-violet-50 dark:bg-btnDark/15" : ""
       }`}
     >
       {label}
@@ -64,7 +64,7 @@ export default function LibraryBreadcrumb({ path, onNavigate }: LibraryBreadcrum
       />
       {path.map((folder, index) => (
         <span key={libraryItemKey(folder)} className="flex items-center gap-1">
-          <ChevronRight size={14} className="text-slate-400" />
+          <ChevronRight size={14} className="text-slate-400 dark:text-slate-500" />
           <Crumb
             dropId={`crumb-${libraryItemKey(folder)}`}
             folder={folder}
