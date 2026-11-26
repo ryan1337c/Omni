@@ -20,6 +20,16 @@ import { toManualQuestion, type SavedQuestion } from "../manualQuestion";
 import type { ManualQuestion, QuizGenerationModalProps } from "../types";
 import { useManualQuestions } from "./useManualQuestions";
 import { MAX_TITLE_LENGTH } from "@/app/components/flashcards-view/constants";
+import {
+  MAX_CHOICE_LENGTH,
+  MAX_DESCRIPTION_LENGTH,
+  MAX_EXPLANATION_LENGTH,
+  MAX_MANUAL_QUESTIONS,
+  MAX_QUESTION_TEXT_LENGTH,
+  itemCountError,
+  lengthError,
+} from "@/lib/inputLimits";
+
 
 export function useQuizGeneration({
   isOpen,
@@ -79,10 +89,17 @@ export function useQuizGeneration({
     try {
       const saved = [];
       for (const question of manualQuestions) {
+        const storedCount = question.figures.filter(
+          (figure) => figure.kind === "stored",
+        ).length;
         const picked = question.figures.flatMap((figure) =>
           figure.kind === "picked" ? [figure.file] : [],
         );
-        const pickedPaths = await publicServices.uploadQuizFigures(userId, picked);
+        const pickedPaths = await publicServices.uploadQuizFigures(
+          userId,
+          picked,
+          storedCount,
+        );
         uploaded.push(...pickedPaths);
         let nextPicked = 0;
         saved.push({
@@ -138,6 +155,11 @@ export function useQuizGeneration({
       hasError = true;
     }
 
+    if ((form.description ?? "").length > MAX_DESCRIPTION_LENGTH) {
+      newErrors.description = lengthError("Description", MAX_DESCRIPTION_LENGTH);
+      hasError = true;
+    }
+
     if (form.mode === "ai") {
       const sourceError = validateGenerationSource(generationSource);
       if (sourceError) {
@@ -153,9 +175,36 @@ export function useQuizGeneration({
           q.type === "multiple_choice" && q.choices.some((opt) => !opt.trim()),
       );
 
-      if (invalidQuestions || invalidOptions) {
+      if (questions.questions.length > MAX_MANUAL_QUESTIONS) {
+        newErrors.manual = itemCountError("A quiz", MAX_MANUAL_QUESTIONS);
+        hasError = true;
+      } else if (invalidQuestions || invalidOptions) {
         newErrors.manual = "Please fill out all question text and choice fields.";
         hasError = true;
+      } else {
+        const overlongQuestion = questions.questions.find(
+          (q) =>
+            q.question_text.length > MAX_QUESTION_TEXT_LENGTH ||
+            (q.explanation ?? "").length > MAX_EXPLANATION_LENGTH ||
+            q.choices.some((opt) => opt.length > MAX_CHOICE_LENGTH),
+        );
+        if (overlongQuestion) {
+          const label =
+            overlongQuestion.question_text.length > MAX_QUESTION_TEXT_LENGTH
+              ? "Question text"
+              : (overlongQuestion.explanation ?? "").length >
+                  MAX_EXPLANATION_LENGTH
+                ? "Explanation"
+                : "Choice text";
+          const max =
+            label === "Question text"
+              ? MAX_QUESTION_TEXT_LENGTH
+              : label === "Explanation"
+                ? MAX_EXPLANATION_LENGTH
+                : MAX_CHOICE_LENGTH;
+          newErrors.manual = lengthError(label, max);
+          hasError = true;
+        }
       }
     }
 
@@ -189,9 +238,13 @@ export function useQuizGeneration({
 
         onQuizUpdated(updatedQuiz);
         handleClose();
-      } catch (e) {
-        console.error(e);
-        form.setServerError("An unexpected error occurred. Please try again.");
+      } catch (error) {
+        console.error(error);
+        form.setServerError(
+            error instanceof Error && error.message
+              ? error.message
+              : "An unexpected error occurred. Please try again.",
+          );
       } finally {
         setIsProcessing(false);
       }
@@ -257,7 +310,11 @@ export function useQuizGeneration({
           handleClose();
         } catch (error) {
           console.error(error);
-          form.setServerError("An unexpected error occurred. Please try again.");
+          form.setServerError(
+            error instanceof Error && error.message
+              ? error.message
+              : "An unexpected error occurred. Please try again.",
+          );
         } finally {
           setIsProcessing(false);
         }

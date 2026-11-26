@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react';
 import { AuthServices } from '@/lib/authServices';
+import { MAX_EMAIL_LENGTH } from '@/lib/inputLimits';
 import { useRouter } from 'next/navigation';
 import { IoArrowBack } from "react-icons/io5";
 import { FaCheckCircle } from "react-icons/fa";
@@ -58,7 +59,7 @@ export default function ForgotPassword () {
                             <label className="text-left font-semibold">Email</label>
                             <input className="bg-white text-black px-4 py-2 rounded-md shadow-[0_4px_12px_rgba(0,0,0,0.3)] focus:outline-none focus:ring-2
                                 [color-scheme:light] appearance-none" 
-                            id="email" name="email" placeholder='Enter email' type="email" required 
+                            id="email" name="email" placeholder='Enter email' type="email" required maxLength={MAX_EMAIL_LENGTH} 
                             onChange={(e) => setEmail(e.target.value)}></input>
                             
                             <div className="h-16 mt-2 flex items-center justify-center">

@@ -1,3 +1,4 @@
+import { MAX_FOCUS_LENGTH, lengthError } from "@/lib/inputLimits";
 import { checkDocumentFile, UPLOAD_DOCUMENT_MESSAGE } from "@/lib/quiz/documentRules";
 import type { GenerationSourceKind } from "@/lib/flashcards/generationSourceKinds";
 
@@ -82,8 +83,13 @@ export function validateGenerationSource(
     case "fromScratch":
       return state.inputs.fromScratch.text.trim() ? undefined : "Please enter a topic.";
     case "notes":
-      return state.inputs.notes.file
-        ? checkDocumentFile(state.inputs.notes.file)
-        : UPLOAD_DOCUMENT_MESSAGE;
+      return (
+        (state.inputs.notes.file
+          ? checkDocumentFile(state.inputs.notes.file)
+          : UPLOAD_DOCUMENT_MESSAGE) ??
+        (state.inputs.notes.focus.length > MAX_FOCUS_LENGTH
+          ? lengthError("Focus or style", MAX_FOCUS_LENGTH)
+          : undefined)
+      );
   }
 }

@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from 'react';
 import { FaCheckCircle } from 'react-icons/fa';
 import { Check, Shield, Sparkles, Users, Zap } from 'lucide-react';
-import Header from '@/app/components/Header';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/context/AuthContext';
 import { cn } from '@/lib/utils';
@@ -78,8 +77,6 @@ export default function PricingPage() {
   return (
     <>
       {mounted && (
-        <>
-          <Header />
           <div className="flex flex-col min-h-screen text-black bg-landingPageLight dark:text-white dark:bg-landingPage animate-fade-in">
             <div className="flex-grow flex flex-col items-center justify-center p-6 pt-28 pb-16">
               {/* --- Page Header (Theme-Aware) --- */}
@@ -270,7 +267,6 @@ export default function PricingPage() {
               </div>
             </div>
           </div>
-        </>
       )}
     </>
   );

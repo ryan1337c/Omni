@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import OpenAI from "openai";
 import { requireUser } from "@/lib/requireUser";
+import { MAX_IMAGE_PROMPT_LENGTH, lengthError } from "@/lib/inputLimits";
 import {
     consumeCredits,
     refundCreditsQuietly,
@@ -48,6 +49,9 @@ export default async function handler(
     const promptString = req.body.prompt;
     if (!promptString) {
       return res.status(400).json({ error: "You need a prompt" });
+    }
+    if (typeof promptString === "string" && promptString.length > MAX_IMAGE_PROMPT_LENGTH) {
+      return res.status(400).json({ error: lengthError("Image prompt", MAX_IMAGE_PROMPT_LENGTH) });
     }
 
     let reservation: CreditReservation | undefined;

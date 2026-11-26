@@ -3,8 +3,12 @@
 import React, {useEffect, useState} from 'react';
 import Link from 'next/link';
 import { FaEnvelope, FaGithub, FaLinkedin, FaPaperPlane, FaUser } from 'react-icons/fa';
-import Header from '@/app/components/Header';
 import { Loader2 } from 'lucide-react';
+import {
+  MAX_CONTACT_MESSAGE_LENGTH,
+  MAX_CONTACT_NAME_LENGTH,
+  MAX_EMAIL_LENGTH,
+} from '@/lib/inputLimits';
 
 export default function ContactPage() {
   const [mounted, setMounted] = useState(false);
@@ -12,6 +16,7 @@ export default function ContactPage() {
     type: 'idle',
     message: 'Send Message',
   })
+  const [messageLength, setMessageLength] = useState(0);
 
   useEffect(() => {
     setMounted(true);
@@ -31,10 +36,11 @@ export default function ContactPage() {
             body: JSON.stringify({ name, email, message })
         });
         const responseData = await response.json();
-        const msg = responseData.message;
+        const msg = responseData.error || responseData.message || 'An unexpected error occurred';
         if (response.ok) {
             setStatus({ type: 'idle', message: 'Send Message'});
             (event.target as HTMLFormElement).reset();
+            setMessageLength(0);
         } else {
             setStatus({ type: 'error', message: msg });
         }
@@ -48,8 +54,6 @@ export default function ContactPage() {
   return (
     <>
         {mounted && (
-            <>
-                <Header />
                 <div className="flex flex-col min-h-screen text-black bg-landingPageLight dark:text-white dark:bg-landingPage animate-fade-in">
                     <div className="flex-grow flex items-center justify-center p-6 pt-28">
                         <div className="max-w-5xl w-full">
@@ -104,30 +108,35 @@ export default function ContactPage() {
                                         {/* Name Input */}
                                         <div className="relative">
                                         <input
-                                            type="text" id="name" name="name" required
-                                            className="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-1 transition-shadow duration-300 bg-slate-100/60 border-slate-300 text-black placeholder-slate-400 focus:ring-violet-500 dark:bg-slate-800/60 dark:border-slate-700 dark:text-white dark:placeholder-gray-500 dark:focus:ring-indigo-500"
+                                            type="text" id="name" name="name" required maxLength={MAX_CONTACT_NAME_LENGTH}
+                                            className="w-full border rounded-lg pl-4 pr-12 py-3 focus:outline-none focus:ring-1 transition-shadow duration-300 bg-slate-100/60 border-slate-300 text-black placeholder-slate-400 focus:ring-violet-500 dark:bg-slate-800/60 dark:border-slate-700 dark:text-white dark:placeholder-gray-500 dark:focus:ring-indigo-500"
                                             placeholder="Your Name"
                                         />
-                                        <FaUser className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-gray-500" />
+                                        <FaUser className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-gray-500" />
                                         </div>
 
                                         {/* Email Input */}
                                         <div className="relative">
                                         <input
-                                            type="email" id="email" name="email" required
-                                            className="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-1 transition-shadow duration-300 bg-slate-100/60 border-slate-300 text-black placeholder-slate-400 focus:ring-violet-500 dark:bg-slate-800/60 dark:border-slate-700 dark:text-white dark:placeholder-gray-500 dark:focus:ring-indigo-500"
+                                            type="email" id="email" name="email" required maxLength={MAX_EMAIL_LENGTH}
+                                            className="w-full border rounded-lg pl-4 pr-12 py-3 focus:outline-none focus:ring-1 transition-shadow duration-300 bg-slate-100/60 border-slate-300 text-black placeholder-slate-400 focus:ring-violet-500 dark:bg-slate-800/60 dark:border-slate-700 dark:text-white dark:placeholder-gray-500 dark:focus:ring-indigo-500"
                                             placeholder="Your Email"
                                         />
-                                        <FaEnvelope className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-gray-500" />
+                                        <FaEnvelope className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-gray-500" />
                                         </div>
 
                                         {/* Message Textarea */}
                                         <div>
                                             <textarea
                                                 id="message" name="message" rows={5} required
+                                                maxLength={MAX_CONTACT_MESSAGE_LENGTH}
+                                                onChange={(e) => setMessageLength(e.target.value.length)}
                                                 className="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-1 transition-shadow duration-300 bg-slate-100/60 border-slate-300 text-black placeholder-slate-400 focus:ring-violet-500 dark:bg-slate-800/60 dark:border-slate-700 dark:text-white dark:placeholder-gray-500 dark:focus:ring-indigo-500"
                                                 placeholder="Your Message"
                                             ></textarea>
+                                            <p className="mt-1 text-right text-xs text-slate-400">
+                                                {messageLength.toLocaleString("en-US")}/{MAX_CONTACT_MESSAGE_LENGTH.toLocaleString("en-US")}
+                                            </p>
                                         </div>
 
                                         {/* Submit Button */}
@@ -148,7 +157,6 @@ export default function ContactPage() {
                         </div>
                     </div>
                 </div>
-            </>
         )}
     </>
   );

@@ -1,9 +1,20 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import OpenAI from "openai";
-import formidable from "formidable";
+import formidable, { errors as formidableErrors } from "formidable";
 import fs from "fs";
 import pdf from "pdf-parse";
 import { getEffectiveTier, requireUser } from "@/lib/requireUser";
+import {
+    InputLimitError,
+    MAX_CHAT_FIELDS_SIZE,
+    MAX_CHAT_FILE_BYTES,
+    MAX_CHAT_FILES,
+    MAX_CHAT_TOTAL_FILE_BYTES,
+    assertChatAttachments,
+    CHAT_FILE_TOO_LARGE_MESSAGE,
+    CHAT_FILES_TOTAL_TOO_LARGE_MESSAGE,
+    TOO_MANY_CHAT_FILES_MESSAGE,
+} from "@/lib/inputLimits";
 import {
     consumeCredits,
     extractChatTextParts,
@@ -45,16 +56,48 @@ const deepseekClient = new OpenAI({
 
 const parseForm = (req: NextApiRequest): Promise<{ fields: formidable.Fields; files: formidable.Files }> => {
     return new Promise((resolve, reject) => {
-        const form = formidable({ multiples: true });
+        const form = formidable({
+            multiples: true,
+            maxFiles: MAX_CHAT_FILES,
+            maxFileSize: MAX_CHAT_FILE_BYTES,
+            maxTotalFileSize: MAX_CHAT_TOTAL_FILE_BYTES,
+            maxFieldsSize: MAX_CHAT_FIELDS_SIZE,
+        });
         form.parse(req, (err, fields, files) => {
             if (err) {
-                reject(err);
+                reject(toChatUploadError(err));
             } else {
                 resolve({ fields, files });
             }
         });
     });
 };
+
+const FILE_TOO_LARGE_CODES = [
+    formidableErrors.biggerThanMaxFileSize,
+    (formidableErrors as unknown as Record<string, number>).biggerThanTotalMaxFileSize,
+    formidableErrors.maxFieldsSizeExceeded,
+];
+
+function toChatUploadError(err: any) {
+    const code = err?.code;
+    if (code === formidableErrors.biggerThanMaxFileSize) {
+        return new InputLimitError(CHAT_FILE_TOO_LARGE_MESSAGE, 413);
+    }
+    if (
+        code ===
+        (formidableErrors as unknown as Record<string, number>).biggerThanTotalMaxFileSize
+    ) {
+        return new InputLimitError(CHAT_FILES_TOTAL_TOO_LARGE_MESSAGE, 413);
+    }
+    if (code === (formidableErrors as unknown as Record<string, number>).maxFilesExceeded) {
+        return new InputLimitError(TOO_MANY_CHAT_FILES_MESSAGE, 413);
+    }
+    if (FILE_TOO_LARGE_CODES.includes(code)) {
+        return new InputLimitError(CHAT_FILES_TOTAL_TOO_LARGE_MESSAGE, 413);
+    }
+    return err;
+}
 
 export default async function handler(
     req: NextApiRequest,
@@ -116,6 +159,16 @@ export default async function handler(
         // Check if there are uploaded files
         const uploadedFiles = files.files as formidable.File[] | formidable.File | undefined;
         const fileArray = Array.isArray(uploadedFiles) ? uploadedFiles : uploadedFiles ? [uploadedFiles] : [];
+        if (fileArray.length > 0) {
+            assertChatAttachments(
+                fileArray.map((file) => ({
+                    name: file.originalFilename ?? undefined,
+                    originalFilename: file.originalFilename,
+                    mimetype: file.mimetype,
+                    size: file.size,
+                })),
+            );
+        }
 
         let messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[];
 
@@ -191,6 +244,10 @@ export default async function handler(
     catch (error: any) {
         if (error instanceof InsufficientCreditsError || error instanceof ContextTooLongError) {
             return res.status(error.status).json(error.toResponseBody());
+        }
+
+        if (error instanceof InputLimitError) {
+            return res.status(error.status).json({ error: error.message });
         }
 
         await refundCreditsQuietly(reservation);

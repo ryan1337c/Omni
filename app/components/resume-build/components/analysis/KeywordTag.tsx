@@ -5,9 +5,11 @@ import { MAX_DEPTH_LEVEL } from '@/lib/resume/keywordMatch';
 
 import { REQUIRED_GUIDE, type ChipEmphasis, type DepthBand } from './depthBands';
 
+export type KeywordTagLook = 'depth' | 'match';
+
 type KeywordTagProps = {
   label: ReactNode;
-  band: DepthBand;
+  band?: DepthBand;
   /** Screen-reader text after the label, e.g. "Familiarity, 2 of 3". */
   srLabel?: string;
   /** A Required Keyword: announced to screen readers. */
@@ -15,6 +17,10 @@ type KeywordTagProps = {
   /** An Implied Skill: keeps its band look and adds a "not named" marker. */
   implied?: boolean;
   emphasis?: ChipEmphasis;
+  /** `match` is the keyword-fallback look: indigo + check vs dashed missing. */
+  look?: KeywordTagLook;
+  /** Used when `look` is `match`. */
+  matched?: boolean;
 };
 
 /** Absent is dashed; fill strengthens with depth. */
@@ -31,15 +37,39 @@ const EMPHASIS_CLASS: Record<ChipEmphasis, string> = {
   dim: 'opacity-40',
 };
 
-/** One keyword chip. The check is reserved for the top band; lower bands are outline or fill only. */
-export default function KeywordTag({ label, band, srLabel, required = false, implied = false, emphasis }: KeywordTagProps) {
+const MATCH_CLASS = {
+  yes: 'border-indigo-200 bg-indigo-50 text-indigo-700 dark:border-btnDark/35 dark:bg-btnDark/15 dark:text-indigo-300',
+  no: 'border-dashed border-slate-300 text-slate-700 dark:border-slate-600 dark:text-slate-300',
+} as const;
+
+const MATCH_EMPHASIS_CLASS: Record<ChipEmphasis, string> = {
+  ring: 'ring-2 ring-btnDark ring-offset-2 ring-offset-white dark:ring-indigo-300 dark:ring-offset-slate-800',
+  dim: 'opacity-40',
+};
+
+/** One keyword chip. The check is reserved for the top band, or for a fallback match. */
+export default function KeywordTag({
+  label,
+  band = 0,
+  srLabel,
+  required = false,
+  implied = false,
+  emphasis,
+  look = 'depth',
+  matched = false,
+}: KeywordTagProps) {
+  const isMatchLook = look === 'match';
+  const colorClass = isMatchLook ? (matched ? MATCH_CLASS.yes : MATCH_CLASS.no) : BAND_CLASS[band];
+  const emphasisClass = emphasis ? (isMatchLook ? MATCH_EMPHASIS_CLASS[emphasis] : EMPHASIS_CLASS[emphasis]) : '';
+  const showCheck = isMatchLook ? matched : band === MAX_DEPTH_LEVEL;
+
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition ${BAND_CLASS[band]} ${emphasis ? EMPHASIS_CLASS[emphasis] : ''}`}
+      className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition ${colorClass} ${emphasisClass}`}
     >
-      {band === MAX_DEPTH_LEVEL && <FiCheck className="h-3 w-3 flex-shrink-0" aria-hidden />}
+      {showCheck && <FiCheck className="h-3 w-3 flex-shrink-0" aria-hidden />}
       {label}
-      {implied && <FiAlertCircle className="h-3 w-3 flex-shrink-0 opacity-80" aria-hidden />}
+      {!isMatchLook && implied && <FiAlertCircle className="h-3 w-3 flex-shrink-0 opacity-80" aria-hidden />}
       {srLabel && <span className="sr-only">({srLabel})</span>}
       {required && <span className="sr-only">({REQUIRED_GUIDE.title})</span>}
     </span>

@@ -1,4 +1,5 @@
 import { MAX_CONTEXT_CHARS } from "@/lib/credits/contextMeter";
+import { MAX_FOCUS_LENGTH, lengthError } from "@/lib/inputLimits";
 import { extractDocumentText, type QuizDocument } from "@/lib/quiz/extractDocumentText";
 
 import { DeckGenerationError } from "./errors";
@@ -62,10 +63,21 @@ async function prepareSource(source: GenerationSourceInput): Promise<PreparedSou
       return {
         kind: "notes",
         notesText: withinContextLimit(notesText),
-        focus: source.focus?.trim() ?? "",
+        focus: cappedFocus(source.focus),
       };
     }
   }
+}
+
+function cappedFocus(value: string | undefined): string {
+  const focus = value?.trim() ?? "";
+  if (focus.length > MAX_FOCUS_LENGTH) {
+    throw new DeckGenerationError(
+      "invalid_input",
+      lengthError("Focus or style", MAX_FOCUS_LENGTH),
+    );
+  }
+  return focus;
 }
 
 function withinContextLimit(text: string): string {

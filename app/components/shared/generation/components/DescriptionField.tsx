@@ -1,10 +1,14 @@
 "use client";
 
+import { MAX_DESCRIPTION_LENGTH } from "@/lib/inputLimits";
+
 import { INPUT_BASE_CLASSES } from "../constants";
+import FieldError from "./FieldError";
 
 type DescriptionFieldProps = {
   placeholder: string;
   value: string;
+  error?: string;
   isProcessing: boolean;
   onChange: (value: string) => void;
 };
@@ -12,6 +16,7 @@ type DescriptionFieldProps = {
 export default function DescriptionField({
   placeholder,
   value,
+  error,
   isProcessing,
   onChange,
 }: DescriptionFieldProps) {
@@ -29,8 +34,13 @@ export default function DescriptionField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         rows={2}
+        maxLength={MAX_DESCRIPTION_LENGTH}
         className={`${INPUT_BASE_CLASSES} outline-none border-slate-200 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500 focus:border-slate-400 dark:focus:border-btnDark focus:ring-1 focus:ring-slate-400 dark:focus:ring-btnDark resize-none`}
       />
+      <p className="mt-1 text-right text-xs text-slate-400">
+        {value.length}/{MAX_DESCRIPTION_LENGTH}
+      </p>
+      {error && <FieldError message={error} />}
     </div>
   );
 }

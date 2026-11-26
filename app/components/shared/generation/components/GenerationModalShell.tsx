@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { Loader2, X } from "lucide-react";
 
 import ServerErrorToast from "./ServerErrorToast";
@@ -30,8 +30,40 @@ export default function GenerationModalShell({
   overlay,
   children,
 }: GenerationModalShellProps) {
+  const backdropPointerDown = useRef(false);
+
+  const handleBackdropMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
+    backdropPointerDown.current = event.target === event.currentTarget;
+  };
+
+  const handleBackdropClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    const downOnBackdrop = backdropPointerDown.current;
+    backdropPointerDown.current = false;
+    if (isProcessing) return;
+    if (downOnBackdrop && event.target === event.currentTarget) {
+      onClose();
+    }
+  };
+
+  useEffect(() => {
+    if (isProcessing) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      onClose();
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isProcessing, onClose]);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in-sm">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in-sm"
+      onMouseDown={handleBackdropMouseDown}
+      onClick={handleBackdropClick}
+    >
       {serverError && (
         <ServerErrorToast
           message={serverError}
@@ -57,6 +89,7 @@ export default function GenerationModalShell({
             {title}
           </h2>
           <button
+            type="button"
             disabled={isProcessing}
             onClick={onClose}
             className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"

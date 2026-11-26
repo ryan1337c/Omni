@@ -70,6 +70,7 @@ export default function QuizGenerationModal(props: QuizGenerationModalProps) {
       <DescriptionField
         placeholder="Briefly describe what this quiz is about..."
         value={quiz.description}
+        error={quiz.formErrors.description}
         isProcessing={props.isProcessing}
         onChange={quiz.setDescription}
       />

@@ -1,11 +1,11 @@
-type SwitchTone = 'sky' | 'amber';
+type SwitchTone = 'sky' | 'amber' | 'indigo';
 
 type SwitchProps = {
   checked: boolean;
   onChange: (checked: boolean) => void;
   /** Accessible name; omit when a wrapping `<label>` names the switch. */
   label?: string;
-  /** Track color when on. Default sky; amber matches the Required callout. */
+  /** Track color when on. Default sky; amber matches the Required callout; indigo is the keyword fallback. */
   tone?: SwitchTone;
 };
 
@@ -17,6 +17,10 @@ const TONE_CLASS: Record<SwitchTone, { on: string; hover: string }> = {
   amber: {
     on: 'bg-yellow-500 dark:bg-yellow-400',
     hover: 'hover:ring-yellow-500 hover:ring-offset-yellow-50 dark:hover:ring-offset-yellow-950',
+  },
+  indigo: {
+    on: 'bg-btnDark dark:bg-btnDark',
+    hover: 'hover:ring-btnDark dark:hover:ring-offset-slate-800',
   },
 };
 

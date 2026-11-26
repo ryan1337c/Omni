@@ -2,6 +2,8 @@
 import { X } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 
+import { MAX_TITLE_LENGTH } from "@/lib/inputLimits";
+
 // Define the props the modal will accept
 interface RenameModalProps {
   isOpen: boolean;
@@ -9,6 +11,7 @@ interface RenameModalProps {
   onSubmit: (newTitle: string) => void;
   currentTitle: string;
   setInputValue: (value: string) => void;
+  error?: string;
 }
 
 export default function RenameModal({ 
@@ -16,7 +19,8 @@ export default function RenameModal({
   onClose, 
   onSubmit, 
   currentTitle, 
-  setInputValue 
+  setInputValue,
+  error,
 }: RenameModalProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -71,10 +75,19 @@ export default function RenameModal({
             value={currentTitle}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+            maxLength={MAX_TITLE_LENGTH}
             className="w-full px-3 py-2 border dark:border-gray-700 border-gray-300 rounded-lg focus:ring-1 focus:ring-violet-300 focus:border-violet-500 [color-scheme:light]
             dark:text-gray-200 dark:bg-slate-800 dark:focus:ring-btnDark dark:focus:border-btnDark"
             placeholder="Enter a new title"
           />
+          <p className="mt-1 text-right text-xs text-slate-400">
+            {currentTitle.length}/{MAX_TITLE_LENGTH}
+          </p>
+          {error && (
+            <p role="alert" className="mt-2 text-sm text-red-600 dark:text-red-400">
+              {error}
+            </p>
+          )}
         </div>
 
         {/* Action Buttons */}

@@ -3,6 +3,8 @@
 import type { FormEvent } from "react";
 import { X } from "lucide-react";
 
+import { MAX_DISPLAY_NAME_LENGTH } from "@/lib/inputLimits";
+
 import DialogOverlay from "./DialogOverlay";
 
 type EditNameDialogProps = {
@@ -53,11 +55,15 @@ export default function EditNameDialog({
           id="account-name"
           type="text"
           required
+          maxLength={MAX_DISPLAY_NAME_LENGTH}
           value={nameDraft}
           onChange={(event) => onNameDraftChange(event.target.value)}
           disabled={isSavingName}
           className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
         />
+        <p className="mt-1 text-right text-xs text-slate-400">
+          {nameDraft.length}/{MAX_DISPLAY_NAME_LENGTH}
+        </p>
 
         {nameError && (
           <p role="alert" className="mt-3 text-sm text-red-600 dark:text-red-400">

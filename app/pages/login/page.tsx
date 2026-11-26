@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { FaRobot, FaEye, FaEyeSlash } from "react-icons/fa";
 import { IoIosArrowRoundBack } from "react-icons/io";
 import { AuthServices } from '@/lib/authServices';
+import { MAX_EMAIL_LENGTH, MAX_PASSWORD_LENGTH } from '@/lib/inputLimits';
 import googleButtonLight from './assets/google_signin_buttons/web/1x/btn_google_signin_light_normal_web.png';
 import googleButtonDark from './assets/google_signin_buttons/web/1x/btn_google_signin_dark_normal_web.png';
 
@@ -105,6 +106,7 @@ const Login = () => {
                     type="email" 
                     autoComplete='off' 
                     required 
+                    maxLength={MAX_EMAIL_LENGTH}
                     onChange={(e) => setEmail(e.target.value)}
                     className={`block w-full rounded-md border-0 py-2 px-3 shadow-sm ring-1 ring-inset sm:text-sm focus:ring-1 focus:ring-inset bg-white text-black ring-slate-300 focus:ring-violet-300 dark:bg-slate-800 dark:text-white dark:ring-slate-600 dark:focus:ring-btnDark appearance-none 
                       ${isProcessing ? 'opacity-50 pointer-events-none' : '' }`}
@@ -133,6 +135,7 @@ const Login = () => {
                     name='password'
                     onChange={e => setPassword(e.target.value)}
                     required
+                    maxLength={MAX_PASSWORD_LENGTH}
                     autoComplete='off'
                     className={`block w-full rounded-md border-0 py-2 px-3 shadow-sm ring-1 ring-inset sm:text-sm pr-10 focus:ring-1 focus:ring-inset bg-white text-black ring-slate-300 focus:ring-violet-300 dark:bg-slate-800 dark:text-white dark:ring-slate-600 dark:focus:ring-btnDark appearance-none
                       ${isProcessing ? 'opacity-70 pointer-events-none' : ''}`}

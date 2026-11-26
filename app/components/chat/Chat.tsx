@@ -1,9 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import SpeechRecognitionModal from "@/app/components/SpeechRecognitionModal";
+import TemporaryErrorToast from "@/app/components/shared/TemporaryErrorToast";
 import { useAuth } from "@/app/context/AuthContext";
+import {
+  MAX_IMAGE_PROMPT_LENGTH,
+  lengthError,
+} from "@/lib/inputLimits";
 
 import { ChatComposer } from "./components/ChatComposer";
 import { EmptyChatState } from "./components/EmptyChatState";
@@ -44,6 +49,18 @@ export default function Chat({
 
   const [selectedModel, setSelectedModel] = useState("gpt-4o");
   const [selectedTool, setSelectedTool] = useState("reasoning");
+  const [panelError, setPanelError] = useState<{
+    message: string;
+    id: number;
+  } | null>(null);
+
+  const showPanelError = useCallback((message: string) => {
+    setPanelError({ message, id: Date.now() });
+  }, []);
+
+  const dismissPanelError = useCallback(() => {
+    setPanelError(null);
+  }, []);
 
   const {
     files,
@@ -54,7 +71,7 @@ export default function Chat({
     handleFileChange,
     handleFileDelete,
     handlePaste,
-  } = useFileAttachments();
+  } = useFileAttachments(showPanelError);
 
   const {
     isDictateModalOpen,
@@ -95,14 +112,28 @@ export default function Chat({
     applyContextTooLongError,
     scrollToBottom,
     textareaRef,
+    onPanelError: showPanelError,
   });
 
   useEffect(() => {
     handleInput();
   }, [chatMode]);
 
+  const warnIfImagePromptTooLong = (tool: string, prompt: string) => {
+    if (tool === "image" && prompt.length > MAX_IMAGE_PROMPT_LENGTH) {
+      showPanelError(lengthError("Image prompt", MAX_IMAGE_PROMPT_LENGTH));
+    }
+  };
+
+  const handleToolSelect = (toolId: string) => {
+    setSelectedTool(toolId);
+    warnIfImagePromptTooLong(toolId, userInput);
+  };
+
   const handleDictateTranscript = (text: string) => {
-    setUserInput((prev) => (prev ? `${prev} ${text}` : text));
+    const next = userInput ? `${userInput} ${text}` : text;
+    setUserInput(next);
+    warnIfImagePromptTooLong(selectedTool, next);
     setIsDictateModalOpen(false);
 
     if (textareaRef.current) {
@@ -133,7 +164,7 @@ export default function Chat({
       isTextareaFocused={isTextareaFocused}
       setIsTextareaFocused={setIsTextareaFocused}
       selectedTool={selectedTool}
-      onToolSelect={setSelectedTool}
+      onToolSelect={handleToolSelect}
       isDictationEnabled={isDictationEnabled}
       onDictateOpen={() => setIsDictateModalOpen(true)}
       tier={tier}
@@ -144,7 +175,14 @@ export default function Chat({
   );
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 dark:text-white dark:bg-chatDark">
+    <div className="relative flex-1 flex flex-col min-h-0 dark:text-white dark:bg-chatDark">
+      {panelError && (
+        <TemporaryErrorToast
+          key={panelError.id}
+          message={panelError.message}
+          onDismiss={dismissPanelError}
+        />
+      )}
       {chatHistory.length === 0 && chatMode === "new chat" ? (
         <EmptyChatState>{composer}</EmptyChatState>
       ) : (

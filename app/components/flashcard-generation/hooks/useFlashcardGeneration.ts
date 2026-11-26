@@ -7,6 +7,14 @@ import { useAuth } from "@/app/context/AuthContext";
 import { useGenerationForm } from "@/app/hooks/useGenerationForm";
 import { PublicServices } from "@/lib/publicServices";
 import { MAX_TITLE_LENGTH } from "@/app/components/flashcards-view/constants";
+import {
+  MAX_CARD_SIDE_LENGTH,
+  MAX_DESCRIPTION_LENGTH,
+  MAX_MANUAL_CARDS,
+  itemCountError,
+  lengthError,
+} from "@/lib/inputLimits";
+
 
 import { generateDeckRequest } from "../api";
 import {
@@ -71,6 +79,11 @@ export function useFlashcardGeneration({
       hasError = true;
     }
 
+    if ((form.description ?? "").length > MAX_DESCRIPTION_LENGTH) {
+      newErrors.description = lengthError("Description", MAX_DESCRIPTION_LENGTH);
+      hasError = true;
+    }
+
     if (form.mode === "ai") {
       const sourceError = validateGenerationSource(generationSource);
       if (sourceError) {
@@ -78,13 +91,31 @@ export function useFlashcardGeneration({
         hasError = true;
       }
     } else {
-      if (cards.cards.length > 0) {
+      if (cards.cards.length > MAX_MANUAL_CARDS) {
+        newErrors.manual = itemCountError("A deck", MAX_MANUAL_CARDS);
+        hasError = true;
+      } else if (cards.cards.length > 0) {
         const invalidCards = cards.cards.some(
           (c) => !c.front.trim() || !c.back.trim(),
         );
         if (invalidCards) {
           newErrors.manual = "Please fill out both Front and Back for all cards.";
           hasError = true;
+        } else {
+          const overlong = cards.cards.find(
+            (c) =>
+              c.front.length > MAX_CARD_SIDE_LENGTH ||
+              c.back.length > MAX_CARD_SIDE_LENGTH,
+          );
+          if (overlong) {
+            newErrors.manual = lengthError(
+              overlong.front.length > MAX_CARD_SIDE_LENGTH
+                ? "Card front"
+                : "Card back",
+              MAX_CARD_SIDE_LENGTH,
+            );
+            hasError = true;
+          }
         }
       }
     }
@@ -114,7 +145,9 @@ export function useFlashcardGeneration({
         handleClose();
       } catch (error: any) {
         console.error(error);
-        form.setServerError("An unexpected error occurred. Please try again.");
+        form.setServerError(
+          error.message || "An unexpected error occurred. Please try again.",
+        );
       } finally {
         setIsProcessing(false);
         return;

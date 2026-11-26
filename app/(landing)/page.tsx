@@ -1,5 +1,4 @@
 "use client"
-import { useAuth } from './context/AuthContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
 import { useEffect, useState, useRef, useCallback } from 'react';
@@ -7,11 +6,10 @@ import { Beam } from '@/components/magicui/beam';
 import { useInView } from 'react-intersection-observer';
 import { MarqueeDemo } from '@/components/magicui/review-cards';
 import { FaStar, FaGithub, FaPlay, FaStarHalfAlt } from 'react-icons/fa';
-import Header from './components/Header';
-import Hero from './components/landing/Hero';
-import UniversityStrip from './components/landing/UniversityStrip';
-import Bento from './components/landing/Bento';
-import FAQ from './components/landing/FAQ';
+import Hero from '../components/landing/Hero';
+import UniversityStrip from '../components/landing/UniversityStrip';
+import Bento from '../components/landing/Bento';
+import FAQ from '../components/landing/FAQ';
 
 
 export default function Home() {
@@ -105,7 +103,6 @@ export default function Home() {
   return (
     <>
       <div className={`flex flex-col min-h-screen dark:text-white dark:bg-landingPage text-black bg-landingPageLight overflow-hidden`}>
-        <Header />
         {/* Hero + strip fill the first screen so the bento title starts just below the fold */}
         <div className="flex min-h-svh flex-col">
           <Hero onWatchDemo={scrollToDemo} />

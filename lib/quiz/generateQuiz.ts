@@ -1,4 +1,5 @@
 import { MAX_CONTEXT_CHARS } from "@/lib/credits/contextMeter";
+import { MAX_FOCUS_LENGTH, lengthError } from "@/lib/inputLimits";
 import { MAX_SAMPLE_TEST_QUESTIONS, QuizGenerationError } from "./errors";
 import { extractDocumentText, type QuizDocument } from "./extractDocumentText";
 import { extractSampleTest } from "./extractSampleTest";
@@ -93,7 +94,7 @@ async function prepareSource(source: GenerationSourceInput): Promise<PreparedSou
       return {
         kind: "notes",
         notesText: withinContextLimit(notesText),
-        focus: source.focus?.trim() ?? "",
+        focus: cappedFocus(source.focus),
       };
     }
     case "sampleTest": {
@@ -101,6 +102,17 @@ async function prepareSource(source: GenerationSourceInput): Promise<PreparedSou
       return { kind: "sampleTest", testText: withinContextLimit(text), figures };
     }
   }
+}
+
+function cappedFocus(value: string | undefined): string {
+  const focus = value?.trim() ?? "";
+  if (focus.length > MAX_FOCUS_LENGTH) {
+    throw new QuizGenerationError(
+      "invalid_input",
+      lengthError("Focus or style", MAX_FOCUS_LENGTH),
+    );
+  }
+  return focus;
 }
 
 function withinContextLimit(text: string): string {

@@ -20,6 +20,12 @@ import {
   getBorderClasses,
 } from "@/app/components/shared/generation";
 import {
+  MAX_CHOICE_LENGTH,
+  MAX_EXPLANATION_LENGTH,
+  MAX_QUESTION_TEXT_LENGTH,
+  QUESTION_LIMIT,
+} from "@/lib/inputLimits";
+import {
   FIGURE_ACCEPT,
   MAX_FIGURES_PER_QUESTION,
   figureNumberLabel,
@@ -169,8 +175,12 @@ function ExplanationField({
         value={explanation}
         onChange={(e) => onChange(e.target.value)}
         rows={2}
+        maxLength={MAX_EXPLANATION_LENGTH}
         className={`${INPUT_BASE_CLASSES} text-sm bg-white dark:bg-slate-800 outline-none resize-none ${getBorderClasses(false)}`}
       />
+      <p className="mt-1 text-right text-xs text-slate-400">
+        {explanation.length}/{MAX_EXPLANATION_LENGTH}
+      </p>
     </div>
   );
 }
@@ -198,7 +208,7 @@ export default function ManualQuestionsEditor({
     <div className="space-y-6 animate-fade-in-sm">
       <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-700">
         <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300">
-          Questions ({questions.length})
+          Questions ({questions.length}/{QUESTION_LIMIT})
         </h3>
         <button
           onClick={onClearAll}
@@ -227,14 +237,20 @@ export default function ManualQuestionsEditor({
                 {qIndex + 1}
               </span>
               <div className="flex-grow space-y-3">
-                <input
-                  type="text"
-                  disabled={isProcessing}
-                  placeholder="Type your question here..."
-                  value={q.question_text}
-                  onChange={(e) => onUpdateQuestionText(q.id, e.target.value)}
-                  className={`${INPUT_BASE_CLASSES} placeholder-slate-400 bg-white dark:bg-slate-800 outline-none ${getBorderClasses(!!manualError && !q.question_text.trim())}`}
-                />
+                <div>
+                  <input
+                    type="text"
+                    disabled={isProcessing}
+                    placeholder="Type your question here..."
+                    value={q.question_text}
+                    onChange={(e) => onUpdateQuestionText(q.id, e.target.value)}
+                    maxLength={MAX_QUESTION_TEXT_LENGTH}
+                    className={`${INPUT_BASE_CLASSES} placeholder-slate-400 bg-white dark:bg-slate-800 outline-none ${getBorderClasses(!!manualError && !q.question_text.trim())}`}
+                  />
+                  <p className="mt-1 text-right text-xs text-slate-400">
+                    {q.question_text.length}/{MAX_QUESTION_TEXT_LENGTH}
+                  </p>
+                </div>
 
                 <FigureField
                   figures={q.figures}
@@ -306,16 +322,22 @@ export default function ManualQuestionsEditor({
                         )}
                       </button>
 
-                      <input
-                        type="text"
-                        disabled={isProcessing}
-                        placeholder={`Option ${optIndex + 1}`}
-                        value={opt}
-                        onChange={(e) =>
-                          onUpdateOptionText(q.id, optIndex, e.target.value)
-                        }
-                        className={`placeholder-slate-400 flex-grow px-3 py-2 rounded-lg text-sm text-black dark:text-slate-100 border bg-white dark:bg-slate-800 disabled:opacity-50 outline-none ${getBorderClasses(!!manualError && !opt.trim())}`}
-                      />
+                      <div className="flex-grow min-w-0">
+                        <input
+                          type="text"
+                          disabled={isProcessing}
+                          placeholder={`Option ${optIndex + 1}`}
+                          value={opt}
+                          onChange={(e) =>
+                            onUpdateOptionText(q.id, optIndex, e.target.value)
+                          }
+                          maxLength={MAX_CHOICE_LENGTH}
+                          className={`placeholder-slate-400 w-full px-3 py-2 rounded-lg text-sm text-black dark:text-slate-100 border bg-white dark:bg-slate-800 disabled:opacity-50 outline-none ${getBorderClasses(!!manualError && !opt.trim())}`}
+                        />
+                        <p className="mt-1 text-right text-xs text-slate-400">
+                          {opt.length}/{MAX_CHOICE_LENGTH}
+                        </p>
+                      </div>
                       {q.choices.length > 2 && (
                         <button
                           onClick={() => onRemoveOption(q.id, optIndex)}
@@ -352,7 +374,7 @@ export default function ManualQuestionsEditor({
 
       <button
         onClick={onAddQuestion}
-        disabled={isProcessing}
+        disabled={isProcessing || questions.length >= QUESTION_LIMIT}
         className="w-full py-3 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl flex items-center justify-center gap-2 text-slate-500 dark:text-slate-400 font-medium hover:border-violet-300 dark:hover:border-btnDark hover:text-violet-600 dark:hover:text-indigo-200 hover:bg-slate-50 dark:hover:bg-btnDark/10 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <Plus size={18} />

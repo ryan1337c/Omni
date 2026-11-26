@@ -72,6 +72,7 @@ export default function HomePage() {
           onSubmit={home.handleRenameSubmit}
           currentTitle={home.renameInputValue}
           setInputValue={home.setRenameInputValue}
+          error={home.renameError}
         />
         <SettingsModal
           isOpen={home.isSettingsOpen}

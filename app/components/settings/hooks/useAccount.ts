@@ -4,6 +4,8 @@ import { useEffect, useState, type FormEvent } from "react";
 
 import { authServices } from "../api";
 import type { AccountDialog, SettingsSection } from "../types";
+import { MAX_DISPLAY_NAME_LENGTH, lengthError } from "@/lib/inputLimits";
+
 import { getErrorMessage } from "../utils";
 
 type UseAccountOptions = {
@@ -62,6 +64,10 @@ export function useAccount({ isOpen, activeSection }: UseAccountOptions) {
     event.preventDefault();
     const trimmedName = nameDraft.trim();
     if (!trimmedName) return;
+    if (trimmedName.length > MAX_DISPLAY_NAME_LENGTH) {
+      setNameError(lengthError("Name", MAX_DISPLAY_NAME_LENGTH));
+      return;
+    }
 
     setIsSavingName(true);
     setNameError("");

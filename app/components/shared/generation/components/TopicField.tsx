@@ -15,6 +15,8 @@ type TopicFieldProps = {
   required?: boolean;
   /** Lets a paste run past `TOPIC_LIMIT` so the form can report it instead of cutting it off. */
   allowOverLimit?: boolean;
+  /** Character cap shown in the counter. Defaults to `TOPIC_LIMIT`. */
+  limit?: number;
   isProcessing: boolean;
   onChange: (value: string) => void;
 };
@@ -27,6 +29,7 @@ export default function TopicField({
   error,
   required = true,
   allowOverLimit = false,
+  limit = TOPIC_LIMIT,
   isProcessing,
   onChange,
 }: TopicFieldProps) {
@@ -42,9 +45,9 @@ export default function TopicField({
         )}
       </label>
       <span
-        className={`text-xs font-medium ${value.length >= TOPIC_LIMIT ? "text-red-500" : "text-slate-400 dark:text-slate-500"}`}
+        className={`text-xs font-medium ${value.length >= limit ? "text-red-500" : "text-slate-400 dark:text-slate-500"}`}
       >
-        {value.length}/{TOPIC_LIMIT}
+        {value.length}/{limit}
       </span>
       <textarea
         disabled={isProcessing}
@@ -52,7 +55,7 @@ export default function TopicField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         rows={rows}
-        maxLength={allowOverLimit ? undefined : TOPIC_LIMIT}
+        maxLength={allowOverLimit ? undefined : limit}
         className={`${INPUT_BASE_CLASSES} outline-none ${getBorderClasses(!!error)}`}
       />
       {error && <FieldError message={error} />}

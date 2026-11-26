@@ -25,6 +25,12 @@ import {
     type QuizDocument,
 } from "@/lib/quiz";
 import { MAX_TITLE_LENGTH } from "@/app/components/flashcards-view/constants";
+import {
+    InputLimitError,
+    MAX_QUESTION_COUNT,
+    MIN_QUESTION_COUNT,
+    assertIntegerInRange,
+} from "@/lib/inputLimits";
 
 /** A generated question whose Figures are already in storage. */
 type QuestionWithStoredFigures = Omit<GeneratedQuestion, "figures"> & { figure_paths: string[] };
@@ -179,7 +185,12 @@ export default async function handler(
             .json({ error: `Quiz title must be 1–${MAX_TITLE_LENGTH} characters.` });
         }
         const source = fields.source?.[0];
-        const questionCount = Number(fields.questionCount?.[0]);
+        const questionCount = assertIntegerInRange(
+            fields.questionCount?.[0],
+            MIN_QUESTION_COUNT,
+            MAX_QUESTION_COUNT,
+            "Question count",
+        );
 
         console.log(`Generating Quiz -> Title: ${title} | Source: ${source} | Count: ${questionCount}`);
 
@@ -201,6 +212,10 @@ export default async function handler(
     } catch (error: any) {
         if (error instanceof InsufficientCreditsError || error instanceof ContextTooLongError) {
             return res.status(error.status).json(error.toResponseBody());
+        }
+
+        if (error instanceof InputLimitError) {
+            return res.status(error.status).json({ error: error.message });
         }
 
         if (error instanceof QuizGenerationError) {

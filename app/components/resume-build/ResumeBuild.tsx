@@ -1,11 +1,9 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { FiX, FiLoader, FiAlertCircle } from 'react-icons/fi';
+import { useState } from 'react';
+import { FiLoader } from 'react-icons/fi';
 import { useAuth } from '@/app/context/AuthContext';
 import {
-  BILLING_SETTINGS_HREF,
   formatInsufficientCreditsMessage,
   getInsufficientCreditsInfo,
   shouldOfferCreditUpgrade,
@@ -15,11 +13,12 @@ import type { TailoredResumeResult } from '@/lib/resume/schema';
 import { generateResumeRequest } from './api';
 import ResumeResults from './components/ResumeResults';
 import ResumeUploadForm from './components/ResumeUploadForm';
-import { ERROR_TOAST_DURATION_MS, RESULTS_TRANSITION_DELAY_MS } from './constants';
+import TemporaryErrorToast from "@/app/components/shared/TemporaryErrorToast";
+
+import { RESULTS_TRANSITION_DELAY_MS } from './constants';
 import type { ResumeBuildProps, ResumeBuildState, ResumeRequestInput } from './types';
 
 const ResumeBuild = ({ isProcessing, setIsProcessing }: ResumeBuildProps) => {
-  const router = useRouter();
   const { tier } = useAuth();
   const [state, setState] = useState<ResumeBuildState>({ step: "upload" });
   const [isTailoring, setIsTailoring] = useState(false);
@@ -78,13 +77,6 @@ const ResumeBuild = ({ isProcessing, setIsProcessing }: ResumeBuildProps) => {
     }
   };
 
-  // Auto-dismiss the error popup after a few seconds
-  useEffect(() => {
-    if (!errorMessage || isCreditError) return;
-    const timer = setTimeout(() => setErrorMessage(null), ERROR_TOAST_DURATION_MS);
-    return () => clearTimeout(timer);
-  }, [errorMessage, isCreditError]);
-
   const handleStartOver = () => {
     dismissError();
     setState({ step: "upload" });
@@ -114,37 +106,12 @@ const ResumeBuild = ({ isProcessing, setIsProcessing }: ResumeBuildProps) => {
 
         {/* Error Popup — unmounts instantly on dismiss; slide-down plays on mount */}
         {errorMessage && (
-          <div
-            className="
-              absolute top-[-72px] md:top-0 left-1/2 z-50
-              flex items-center gap-3 px-6 py-3
-              rounded-b-xl w-[calc(100%-2rem)] max-w-lg
-              bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm
-              border-b border-red-200 dark:border-red-500/30
-              animate-slide-down
-            "
-          >
-            <FiAlertCircle className="w-5 h-5 flex-shrink-0 text-red-500 dark:text-red-400" />
-            <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
-              {errorMessage}
-            </p>
-            {showUpgradeCta && (
-              <button
-                type="button"
-                onClick={() => router.push(BILLING_SETTINGS_HREF)}
-                className="flex-shrink-0 rounded-full bg-violet-600 px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-violet-700 dark:bg-purple-500 dark:hover:bg-purple-600"
-              >
-                Upgrade
-              </button>
-            )}
-            <button
-              onClick={dismissError}
-              className="p-1 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
-              aria-label="Dismiss error"
-            >
-              <FiX className="w-4 h-4" />
-            </button>
-          </div>
+          <TemporaryErrorToast
+            message={errorMessage}
+            onDismiss={dismissError}
+            showUpgradeCta={showUpgradeCta}
+            autoDismiss={!isCreditError}
+          />
         )}
 
 

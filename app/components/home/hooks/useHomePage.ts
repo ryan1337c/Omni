@@ -7,6 +7,7 @@ import { useAuth } from "@/app/context/AuthContext";
 import { useCheckout } from "@/app/components/settings/hooks/useCheckout";
 import type { SettingsSection } from "@/app/components/settings";
 import { AuthServices } from "@/lib/authServices";
+import { MAX_TITLE_LENGTH, lengthError } from "@/lib/inputLimits";
 import { PublicServices } from "@/lib/publicServices";
 
 import type { PremiumFeature, RecentChat } from "../types";
@@ -33,6 +34,7 @@ export function useHomePage() {
 
   const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
   const [renameInputValue, setRenameInputValue] = useState("");
+  const [renameError, setRenameError] = useState("");
   const [chatToRename, setChatToRename] = useState<RecentChat | null>(null);
   const [paywalledFeature, setPaywalledFeature] =
     useState<PremiumFeature | null>(null);
@@ -77,6 +79,7 @@ export function useHomePage() {
     if (targetChat) {
       setChatToRename(targetChat);
       setRenameInputValue(targetChat.chat_title || "Untitled");
+      setRenameError("");
       setIsRenameModalOpen(true);
     }
   }, [activeChat]);
@@ -105,6 +108,10 @@ export function useHomePage() {
 
   const handleRenameSubmit = async (newTitle: string) => {
     if (!chatToRename) return;
+    if (newTitle.length > MAX_TITLE_LENGTH) {
+      setRenameError(lengthError("Chat title", MAX_TITLE_LENGTH));
+      return;
+    }
     try {
       const session = await authServices.getSession();
       const { id } = session.user;
@@ -122,10 +129,16 @@ export function useHomePage() {
             : chat,
         ),
       );
+      setRenameError("");
+      setIsRenameModalOpen(false);
     } catch (error) {
       console.error(error);
+      setRenameError(
+        error instanceof Error && error.message
+          ? error.message
+          : "Unable to rename chat.",
+      );
     }
-    setIsRenameModalOpen(false);
   };
 
   const handleDelete = useCallback(async (id: string) => {
@@ -199,6 +212,7 @@ export function useHomePage() {
     setIsRenameModalOpen,
     renameInputValue,
     setRenameInputValue,
+    renameError,
     paywalledFeature,
     isFreeTier,
     currentChatTitle,

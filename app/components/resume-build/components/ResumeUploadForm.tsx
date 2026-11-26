@@ -3,6 +3,13 @@
 import { useState, ChangeEvent, DragEvent } from 'react';
 import { FiUploadCloud, FiFileText, FiX } from 'react-icons/fi';
 
+import {
+  MAX_JOB_DESCRIPTION_LENGTH,
+  MAX_JOB_TITLE_LENGTH,
+  MAX_RESUME_FILE_BYTES,
+  RESUME_TOO_LARGE_MESSAGE,
+} from "@/lib/inputLimits";
+
 import type { ResumeRequestInput } from '../types';
 
 type ResumeUploadFormProps = {
@@ -18,11 +25,15 @@ export default function ResumeUploadForm({ isProcessing, onSubmit, onError }: Re
   const [isDragging, setIsDragging] = useState(false);
 
   const acceptFile = (file: File) => {
-    if (file.type === "application/pdf") {
-      setUploadedFile(file);
-    } else {
+    if (file.type !== "application/pdf") {
       onError("Please upload a valid PDF file.");
+      return;
     }
+    if (file.size > MAX_RESUME_FILE_BYTES) {
+      onError(RESUME_TOO_LARGE_MESSAGE);
+      return;
+    }
+    setUploadedFile(file);
   };
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -94,8 +105,16 @@ export default function ResumeUploadForm({ isProcessing, onSubmit, onError }: Re
           <button onClick={handleRemoveFile} className="p-1.5 rounded-full text-gray-400 hover:bg-red-100 hover:text-red-500 dark:hover:bg-red-900/50 dark:hover:text-red-400 transition-colors" aria-label="Remove file"><FiX className="w-5 h-5" /></button>
       </div>
       <form className="space-y-4" onSubmit={handleSubmit}>
-        <div><label htmlFor="jobTitle" className="block text-sm font-medium text-slate-700 dark:text-gray-200 mb-1">Job Title</label><input type="text" autoComplete="off" id="jobTitle" value={jobTitle} required onChange={(e) => setJobTitle(e.target.value)} disabled={isProcessing} className="block w-full px-3 py-2 bg-white dark:bg-slate-700/50 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-violet-300 dark:focus:ring-btnDark/95 sm:text-sm" placeholder="e.g., Senior Software Engineer"/></div>
-        <div><label htmlFor="jobDescription" className="block text-sm font-medium text-slate-700 dark:text-gray-200 mb-1">Job Description</label><textarea id="jobDescription" rows={6} value={jobDescription} required onChange={(e) => setJobDescription(e.target.value)} disabled={isProcessing} className="block w-full px-3 py-2 bg-white dark:bg-slate-700/50 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-violet-300 dark:focus:ring-btnDark/95 sm:text-sm" placeholder="Paste the full job description here..."/></div>
+        <div>
+          <label htmlFor="jobTitle" className="block text-sm font-medium text-slate-700 dark:text-gray-200 mb-1">Job Title</label>
+          <input type="text" autoComplete="off" id="jobTitle" value={jobTitle} required maxLength={MAX_JOB_TITLE_LENGTH} onChange={(e) => setJobTitle(e.target.value)} disabled={isProcessing} className="block w-full px-3 py-2 bg-white dark:bg-slate-700/50 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-violet-300 dark:focus:ring-btnDark/95 sm:text-sm" placeholder="e.g., Senior Software Engineer"/>
+          <p className="mt-1 text-right text-xs text-slate-400">{jobTitle.length}/{MAX_JOB_TITLE_LENGTH}</p>
+        </div>
+        <div>
+          <label htmlFor="jobDescription" className="block text-sm font-medium text-slate-700 dark:text-gray-200 mb-1">Job Description</label>
+          <textarea id="jobDescription" rows={6} value={jobDescription} required maxLength={MAX_JOB_DESCRIPTION_LENGTH} onChange={(e) => setJobDescription(e.target.value)} disabled={isProcessing} className="block w-full px-3 py-2 bg-white dark:bg-slate-700/50 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-violet-300 dark:focus:ring-btnDark/95 sm:text-sm" placeholder="Paste the full job description here..."/>
+          <p className="mt-1 text-right text-xs text-slate-400">{jobDescription.length.toLocaleString("en-US")}/{MAX_JOB_DESCRIPTION_LENGTH.toLocaleString("en-US")}</p>
+        </div>
         <button type="submit" disabled={isProcessing} className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-violet-600 hover:bg-violet-700 dark:bg-btnDark dark:hover:brightness-[.9] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-600 dark:focus:ring-purple-500 transition-colors">{isProcessing ? "Processing..." : "Generate"}</button>
       </form>
     </div>

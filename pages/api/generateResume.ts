@@ -1,8 +1,16 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import formidable from "formidable";
+import formidable, { errors as formidableErrors } from "formidable";
 import fs from "fs/promises";
 import pdf from "pdf-parse";
 import { requireEntitlement, requireUser } from "@/lib/requireUser";
+import {
+    InputLimitError,
+    MAX_JOB_DESCRIPTION_LENGTH,
+    MAX_JOB_TITLE_LENGTH,
+    MAX_RESUME_FILE_BYTES,
+    RESUME_TOO_LARGE_MESSAGE,
+    assertLength,
+} from "@/lib/inputLimits";
 import {
     consumeCredits,
     refundCreditsQuietly,
@@ -37,16 +45,39 @@ export const config = {
 
 const parseForm = (req: NextApiRequest): Promise<{ fields: formidable.Fields; files: formidable.Files }> => {
     return new Promise((resolve, reject) => {
-        const form = formidable({ multiples: true });
+        const form = formidable({
+            multiples: true,
+            maxFiles: 1,
+            maxFileSize: MAX_RESUME_FILE_BYTES,
+            maxTotalFileSize: MAX_RESUME_FILE_BYTES,
+            maxFieldsSize: 1024 * 1024,
+        });
         form.parse(req, (err, fields, files) => {
             if (err) {
-                reject(err);
+                reject(toResumeUploadError(err));
             } else {
                 resolve({ fields, files });
             }
         });
     });
 };
+
+function toResumeUploadError(err: any) {
+    const code = err?.code;
+    if (
+        code === formidableErrors.biggerThanMaxFileSize ||
+        code === (formidableErrors as unknown as Record<string, number>).biggerThanTotalMaxFileSize
+    ) {
+        return new InputLimitError(RESUME_TOO_LARGE_MESSAGE, 413);
+    }
+    if (code === formidableErrors.maxFieldsSizeExceeded) {
+        return new InputLimitError(
+            "Job title and description must be 15,000 characters or fewer.",
+            413,
+        );
+    }
+    return err;
+}
 
 export default async function handler(
     req: NextApiRequest,
@@ -79,6 +110,9 @@ export default async function handler(
             return res.status(400).json({ error: "Missing required fields: resume file, job description, or job title." });
         }
 
+        assertLength(jobTitle ?? "", MAX_JOB_TITLE_LENGTH, "Job title");
+        assertLength(jobDescription, MAX_JOB_DESCRIPTION_LENGTH, "Job description");
+
         const fileBuffer = await fs.readFile(resumeFile.filepath);
         const pdfData = await pdf(fileBuffer);
         const resumeText = pdfData.text;
@@ -104,6 +138,10 @@ export default async function handler(
     } catch (error: any) {
         if (error instanceof InsufficientCreditsError || error instanceof ContextTooLongError) {
             return res.status(error.status).json(error.toResponseBody());
+        }
+
+        if (error instanceof InputLimitError) {
+            return res.status(error.status).json({ error: error.message });
         }
 
         await refundCreditsQuietly(reservation);

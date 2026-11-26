@@ -2,9 +2,17 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { checkChatAttachment } from "@/lib/inputLimits";
+
 import type { FileWithPreview } from "../types";
 
-export function useFileAttachments() {
+function withPreview(file: File): FileWithPreview {
+  return Object.assign(file, {
+    preview: URL.createObjectURL(file),
+  });
+}
+
+export function useFileAttachments(onError?: (message: string) => void) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [files, setFiles] = useState<FileWithPreview[]>([]);
 
@@ -19,13 +27,35 @@ export function useFileAttachments() {
     fileInputRef.current?.click();
   };
 
+  const addFiles = (incoming: File[]) => {
+    let error: string | undefined;
+
+    setFiles((prevFiles) => {
+      const nextFiles = [...prevFiles];
+
+      for (const file of incoming) {
+        const reason = checkChatAttachment(file, nextFiles);
+        if (reason) {
+          if (!error) error = reason;
+          continue;
+        }
+        nextFiles.push(withPreview(file));
+      }
+
+      return nextFiles;
+    });
+
+    if (error) {
+      onError?.(error);
+    }
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      const file = e.target.files![0];
-      const fileWithUrl = Object.assign(file, {
-        preview: URL.createObjectURL(file),
-      });
-      setFiles((prevFiles) => [...prevFiles, fileWithUrl]);
+      addFiles(Array.from(e.target.files));
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
   };
 
@@ -43,20 +73,20 @@ export function useFileAttachments() {
 
   const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
     const items = e.clipboardData.items;
+    const pasted: File[] = [];
 
     for (let i = 0; i < items.length; i++) {
       if (items[i].type.indexOf("image") !== -1) {
         const file = items[i].getAsFile();
         if (file) {
-          e.preventDefault();
-
-          const fileWithUrl = Object.assign(file, {
-            preview: URL.createObjectURL(file),
-          });
-
-          setFiles((prevFiles) => [...prevFiles, fileWithUrl]);
+          pasted.push(file);
         }
       }
+    }
+
+    if (pasted.length > 0) {
+      e.preventDefault();
+      addFiles(pasted);
     }
   };
 

@@ -77,6 +77,7 @@ export default function FlashcardGenerationModal(
       <DescriptionField
         placeholder="What is this deck about?"
         value={deck.description}
+        error={deck.formErrors.description}
         isProcessing={props.isProcessing}
         onChange={deck.setDescription}
       />

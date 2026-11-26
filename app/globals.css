@@ -3,6 +3,21 @@
 @tailwind components;
 @tailwind utilities;
 
+
+/* Keep the landing header from shifting when a short page (Contact) has no
+   document scrollbar. Scoped to landing routes so the full-height app shell
+   is not given a reserved gutter. Background matches the landing page so the
+   reserved strip is not a different color in light or dark theme. */
+html.landing-scrollbar-gutter {
+  scrollbar-gutter: stable;
+  background-color: #eeece2;
+}
+
+html.dark.landing-scrollbar-gutter {
+  background-color: #1e293b;
+}
+
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;

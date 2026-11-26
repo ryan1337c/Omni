@@ -17,6 +17,7 @@ import {
 
 import QuizGenerationModal from '@/app/components/quiz-generation';
 import QuizActiveModal, { Question, Choice } from './QuizActiveModal'; 
+import { MAX_SEARCH_LENGTH } from '@/lib/inputLimits';
 import { PublicServices } from '@/lib/publicServices';
 import { AuthServices } from '@/lib/authServices';
 import { timeAgo } from '@/lib/utils';
@@ -262,6 +263,7 @@ export default function QuizView({ isProcessing, setIsProcessing }: QuizViewProp
             type="text"
             placeholder="Search quizzes by title..."
             value={searchTerm}
+            maxLength={MAX_SEARCH_LENGTH}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:ring-1 focus:ring-slate-400 dark:focus:ring-slate-500
                         focus:border-transparent dark:focus:border-transparent transition-all shadow-sm"

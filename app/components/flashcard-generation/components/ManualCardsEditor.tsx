@@ -6,6 +6,7 @@ import {
   INPUT_BASE_CLASSES,
   getBorderClasses,
 } from "@/app/components/shared/generation";
+import { CARD_LIMIT, MAX_CARD_SIDE_LENGTH } from "@/lib/inputLimits";
 
 import type { ManualCard } from "../types";
 
@@ -36,7 +37,7 @@ export default function ManualCardsEditor({
     <div className="space-y-6 animate-fade-in-sm">
       <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-700">
         <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300">
-          Cards ({cards.length})
+          Cards ({cards.length}/{CARD_LIMIT})
         </h3>
         <button
           onClick={onClearAll}
@@ -84,8 +85,12 @@ export default function ManualCardsEditor({
                   value={card.front}
                   onChange={(e) => onUpdateCard(card.id, "front", e.target.value)}
                   rows={2}
+                  maxLength={MAX_CARD_SIDE_LENGTH}
                   className={`${INPUT_BASE_CLASSES} bg-white dark:bg-slate-800 outline-none resize-none ${getBorderClasses(!!manualError && !card.front.trim())}`}
                 />
+                <p className="mt-1 text-right text-xs text-slate-400">
+                  {card.front.length}/{MAX_CARD_SIDE_LENGTH}
+                </p>
               </div>
 
               <div>
@@ -98,8 +103,12 @@ export default function ManualCardsEditor({
                   value={card.back}
                   onChange={(e) => onUpdateCard(card.id, "back", e.target.value)}
                   rows={2}
+                  maxLength={MAX_CARD_SIDE_LENGTH}
                   className={`${INPUT_BASE_CLASSES} bg-white dark:bg-slate-800 outline-none resize-none ${getBorderClasses(!!manualError && !card.back.trim())}`}
                 />
+                <p className="mt-1 text-right text-xs text-slate-400">
+                  {card.back.length}/{MAX_CARD_SIDE_LENGTH}
+                </p>
               </div>
             </div>
           </div>
@@ -108,7 +117,7 @@ export default function ManualCardsEditor({
 
       <button
         onClick={onAddCard}
-        disabled={isProcessing}
+        disabled={isProcessing || cards.length >= CARD_LIMIT}
         className="w-full py-3 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl flex items-center justify-center gap-2 text-slate-500 dark:text-slate-400 font-medium hover:border-violet-300 dark:hover:border-slate-500 hover:text-violet-600 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <Plus size={18} />

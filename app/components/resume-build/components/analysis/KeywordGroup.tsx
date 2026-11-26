@@ -14,6 +14,8 @@ type KeywordGroupProps = {
   scoredResume: ResumeContent;
   /** Ring Required chips and fade the rest. */
   highlightRequired: boolean;
+  /** Keyword-fallback look: indigo matched chips vs dashed missing, instead of Depth Level colors. */
+  matchStyle?: boolean;
 };
 
 /** "Expo or React Native", with the option that earns the Credit emphasized once it matches. */
@@ -27,7 +29,7 @@ function requirementLabel({ options, best }: RequirementResult) {
   ));
 }
 
-export default function KeywordGroup({ title, subtitle, requirements, scoredResume, highlightRequired }: KeywordGroupProps) {
+export default function KeywordGroup({ title, subtitle, requirements, scoredResume, highlightRequired, matchStyle = false }: KeywordGroupProps) {
   // `matched` is true for Explicit and Implied Skills and for Other Keywords that earn credit.
   const presentCount = requirements.filter(({ best }) => best.matched).length;
 
@@ -47,17 +49,36 @@ export default function KeywordGroup({ title, subtitle, requirements, scoredResu
       <div className="flex flex-wrap gap-2.5">
         {requiredFirst(requirements).map((requirement, index) => {
           const chip = keywordChip(requirement.best, scoredResume);
+          const matched = requirement.best.matched;
+          const displayChip = matchStyle
+            ? {
+                ...chip,
+                srLabel: matched ? 'Matched' : 'Missing',
+                hint: `${chip.required ? 'Required' : 'Preferred'} - ${matched ? 'Matched' : 'Missing'}`,
+                meaning: matched
+                  ? 'The exact wording appears on the resume.'
+                  : 'The exact wording was not found.',
+                implied: false,
+                tip: null,
+              }
+            : chip;
           return (
             <KeywordChipPopover
               key={`${requirement.best.keyword.term}-${index}`}
               label={requirementLabel(requirement)}
-              chip={chip}
+              chip={displayChip}
               emphasis={chipEmphasis(chip, highlightRequired)}
+              look={matchStyle ? 'match' : 'depth'}
+              matched={matched}
               alternatives={
                 requirement.options.length > 1
                   ? requirement.options.map((option) => ({
                       term: option.keyword.term,
-                      state: keywordChip(option, scoredResume).srLabel,
+                      state: matchStyle
+                        ? option.matched
+                          ? 'Matched'
+                          : 'Missing'
+                        : keywordChip(option, scoredResume).srLabel,
                     }))
                   : []
               }

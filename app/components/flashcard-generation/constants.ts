@@ -1,1 +1,1 @@
-export const CARD_LIMIT = 50;
+export { CARD_LIMIT } from "@/lib/inputLimits";

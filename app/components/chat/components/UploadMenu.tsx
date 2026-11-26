@@ -4,6 +4,8 @@ import { CiSquarePlus } from "react-icons/ci";
 import { GoPaperclip } from "react-icons/go";
 import { Check } from "lucide-react";
 
+import { CHAT_ATTACHMENT_ACCEPT } from "@/lib/inputLimits";
+
 import { UPLOAD_OPTION } from "../constants";
 
 type UploadMenuProps = {
@@ -42,6 +44,8 @@ export function UploadMenu({
         type="file"
         ref={fileInputRef as React.RefObject<HTMLInputElement>}
         onChange={onFileChange}
+        accept={CHAT_ATTACHMENT_ACCEPT}
+        multiple
         className="hidden"
       />
       {isOpen && (

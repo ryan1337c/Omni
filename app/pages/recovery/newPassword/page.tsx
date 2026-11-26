@@ -2,6 +2,7 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { AuthServices } from '@/lib/authServices';
+import { MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH, passwordRangeError } from '@/lib/inputLimits';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 export default function NewPassword () {
@@ -30,12 +31,18 @@ export default function NewPassword () {
             setError('Passwords do not match. Please try again');
             return;
         }
+        if (
+            newPassword.length < MIN_PASSWORD_LENGTH ||
+            newPassword.length > MAX_PASSWORD_LENGTH
+        ) {
+            setError(passwordRangeError());
+            return;
+        }
 
         const auth = new AuthServices();
         try{
             // Reset password
             await auth.updateUser(newPassword);
-            console.log("Password successfully changed: ", newPassword);
 
             navigate('../login')
         }
@@ -67,6 +74,7 @@ export default function NewPassword () {
                                 placeholder='New password' 
                                 type={showPassword ? 'text' : 'password'} 
                                 required 
+                                maxLength={MAX_PASSWORD_LENGTH}
                                 onChange={(e) => setNewPassword(e.target.value)}
                             />
                             {/* Show/Hide Password Toggle Button */}
@@ -91,6 +99,7 @@ export default function NewPassword () {
                                 // Make the type dynamic based on state
                                 type={showConfirmPassword ? 'text' : 'password'} 
                                 required 
+                                maxLength={MAX_PASSWORD_LENGTH}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
                             />
                              {/* Show/Hide Password Toggle Button */}

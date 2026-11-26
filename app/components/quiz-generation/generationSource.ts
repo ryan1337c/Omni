@@ -1,4 +1,5 @@
 import { MAX_CONTEXT_CHARS } from "@/lib/credits/contextMeter";
+import { MAX_FOCUS_LENGTH, lengthError } from "@/lib/inputLimits";
 import { checkDocumentFile, UPLOAD_DOCUMENT_MESSAGE } from "@/lib/quiz/documentRules";
 import { TEXT_TOO_LONG_MESSAGE } from "@/lib/quiz/errors";
 import type { GenerationSourceKind } from "@/lib/quiz/generationSourceKinds";
@@ -68,7 +69,12 @@ export function validateGenerationSource(
     case "fromScratch":
       return validateFromScratchText(state.inputs.fromScratch.text);
     case "notes":
-      return validateDocument(state.inputs.notes.file);
+      return (
+        validateDocument(state.inputs.notes.file) ??
+        (state.inputs.notes.focus.length > MAX_FOCUS_LENGTH
+          ? lengthError("Focus or style", MAX_FOCUS_LENGTH)
+          : undefined)
+      );
     case "sampleTest":
       return validateDocument(state.inputs.sampleTest.file);
   }

@@ -20,6 +20,7 @@ type UseTextGenerationParams = {
   applyCreditError: (info: InsufficientCreditsBody) => void;
   applyContextTooLongError: (info: ContextTooLongBody) => void;
   setFiles: React.Dispatch<React.SetStateAction<FileWithPreview[]>>;
+  onPanelError: (message: string) => void;
 };
 
 export function useTextGeneration({
@@ -31,6 +32,7 @@ export function useTextGeneration({
   applyCreditError,
   applyContextTooLongError,
   setFiles,
+  onPanelError,
 }: UseTextGenerationParams) {
   const publicServices = new PublicServices();
 
@@ -66,7 +68,11 @@ export function useTextGeneration({
           applyContextTooLongError(contextInfo);
           return;
         }
-        throw new Error(data.error || "Something went wrong");
+        const message = data.error || "Something went wrong";
+        if (response.status === 400 || response.status === 413) {
+          onPanelError(message);
+        }
+        throw new Error(message);
       }
 
       const aiMessage = data.response;

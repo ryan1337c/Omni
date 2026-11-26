@@ -9,4 +9,4 @@ export const DURATION_OPTIONS = [
   { value: "7200", label: "2 Hours" },
 ];
 
-export const QUESTION_LIMIT = 50;
+export { QUESTION_LIMIT } from "@/lib/inputLimits";

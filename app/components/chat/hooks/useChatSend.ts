@@ -5,6 +5,7 @@ import { useCallback } from "react";
 import Messages from "@/util/assistantMessages";
 import { AuthServices } from "@/lib/authServices";
 import { PublicServices } from "@/lib/publicServices";
+import { MAX_IMAGE_PROMPT_LENGTH, lengthError } from "@/lib/inputLimits";
 import type { RecentChat } from "@/app/components/home";
 
 import type { ChatMessage, FileWithPreview } from "../types";
@@ -38,6 +39,7 @@ type UseChatSendParams = {
   applyContextTooLongError: (info: import("@/lib/credits/usageClient").ContextTooLongBody) => void;
   scrollToBottom: (behavior?: "smooth" | "auto") => void;
   textareaRef: React.RefObject<HTMLTextAreaElement | null>;
+  onPanelError: (message: string) => void;
 };
 
 export function useChatSend(params: UseChatSendParams) {
@@ -65,6 +67,7 @@ export function useChatSend(params: UseChatSendParams) {
     applyContextTooLongError,
     scrollToBottom,
     textareaRef,
+    onPanelError,
   } = params;
 
   const authServices = new AuthServices();
@@ -80,6 +83,7 @@ export function useChatSend(params: UseChatSendParams) {
     applyContextTooLongError,
     clearFiles,
     scrollToBottom,
+    onPanelError,
   });
 
   const { generateResponse } = useTextGeneration({
@@ -91,6 +95,7 @@ export function useChatSend(params: UseChatSendParams) {
     applyCreditError,
     applyContextTooLongError,
     setFiles,
+    onPanelError,
   });
 
   const isRequestSupported = (
@@ -101,6 +106,10 @@ export function useChatSend(params: UseChatSendParams) {
 
   const sendMessage = async () => {
     if (userInput || files.length > 0) {
+      if (selectedTool === "image" && userInput.length > MAX_IMAGE_PROMPT_LENGTH) {
+        onPanelError(lengthError("Image prompt", MAX_IMAGE_PROMPT_LENGTH));
+        return;
+      }
       try {
         const prompt = userInput;
         setCreditNotice(null);

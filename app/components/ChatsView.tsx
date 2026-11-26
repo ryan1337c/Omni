@@ -4,6 +4,8 @@ import { Search, Trash2} from 'lucide-react';
 import { useState } from 'react';
 import type { RecentChat } from "@/app/components/home"; 
 import { formatDistanceToNow } from 'date-fns'; 
+import { MAX_SEARCH_LENGTH } from "@/lib/inputLimits";
+
 
 // Define the props for the component
 interface ChatsViewProps {
@@ -61,6 +63,7 @@ export default function ChatsView({
                     type="text"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
+                    maxLength={MAX_SEARCH_LENGTH}
                     placeholder="Search your chats..."
                     className="
                         w-full pl-12 pr-4 py-3 rounded-xl transition-all 

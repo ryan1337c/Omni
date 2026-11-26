@@ -6,6 +6,7 @@ import { AiOutlineSend } from "react-icons/ai";
 
 import { BILLING_SETTINGS_HREF } from "@/lib/credits/usageClient";
 import type { UsageSnapshot } from "@/lib/credits/types";
+import { MAX_IMAGE_PROMPT_LENGTH } from "@/lib/inputLimits";
 
 import type { CreditNotice, FileWithPreview } from "../types";
 import { AttachmentList } from "./AttachmentList";
@@ -98,6 +99,7 @@ export function ChatComposer({
   };
 
   const anyDropdownOpen = isOpenModel || isOpenTools || isOpenUpload;
+  const isImageMode = selectedTool === "image";
 
   return (
     <div className="bg-white dark:bg-chatDark w-full max-w-4xl mx-auto px-2">
@@ -129,6 +131,7 @@ export function ChatComposer({
             onPaste={handlePaste}
             wrap="hard"
             disabled={isProcessing}
+            maxLength={isImageMode ? MAX_IMAGE_PROMPT_LENGTH : undefined}
             className="flex-1 mt-1 min-h-[20px] max-h-[150px] resize-none bg-transparent border-none outline-none overflow-y-auto pt-1 text-base break-words whitespace-normal text-black dark:text-textDark placeholder:text-gray-500 dark:placeholder:text-gray-400"
             value={userInput}
             onInput={(e: React.FormEvent<HTMLTextAreaElement>) => {
@@ -154,6 +157,12 @@ export function ChatComposer({
             />
           </button>
         </div>
+        {isImageMode && (
+          <p className="mt-1 pr-1 text-right text-xs text-slate-400">
+            {userInput.length.toLocaleString("en-US")}/
+            {MAX_IMAGE_PROMPT_LENGTH.toLocaleString("en-US")}
+          </p>
+        )}
 
         <div className="flex flex-wrap items-center justify-between gap-y-1 -ml-1">
           <div className="flex items-stretch gap-1">

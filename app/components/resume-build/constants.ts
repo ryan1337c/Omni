@@ -3,7 +3,7 @@ import type { MatchLabel } from "@/lib/resume/keywordMatch";
 
 import type { ResultsTabId } from "./types";
 
-export const ERROR_TOAST_DURATION_MS = 5000;
+export { ERROR_TOAST_DURATION_MS } from "@/app/components/shared/TemporaryErrorToast";
 
 // Lets the processing toast finish sliding out before the results view mounts.
 export const RESULTS_TRANSITION_DELAY_MS = 300;

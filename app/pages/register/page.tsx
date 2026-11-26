@@ -4,6 +4,16 @@ import Link from 'next/link';
 import { FaRobot, FaEye, FaEyeSlash } from "react-icons/fa";
 import { IoIosArrowRoundBack } from "react-icons/io";
 import { AuthServices } from '@/lib/authServices';
+import {
+  MAX_EMAIL_LENGTH,
+  MAX_FIRST_NAME_LENGTH,
+  MAX_LAST_NAME_LENGTH,
+  MAX_PASSWORD_LENGTH,
+  MIN_PASSWORD_LENGTH,
+  lengthError,
+  passwordRangeError,
+} from '@/lib/inputLimits';
+
 
 const Register = () => {
   const [firstName, setFirstName] = useState('');
@@ -27,6 +37,26 @@ const Register = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isProcessing) return; // Prevent double submission
+
+    if (firstName.length > MAX_FIRST_NAME_LENGTH) {
+      setRegisterError(lengthError("First name", MAX_FIRST_NAME_LENGTH));
+      return;
+    }
+    if (lastName.length > MAX_LAST_NAME_LENGTH) {
+      setRegisterError(lengthError("Last name", MAX_LAST_NAME_LENGTH));
+      return;
+    }
+    if (email.length > MAX_EMAIL_LENGTH) {
+      setRegisterError(lengthError("Email", MAX_EMAIL_LENGTH));
+      return;
+    }
+    if (
+      password.length < MIN_PASSWORD_LENGTH ||
+      password.length > MAX_PASSWORD_LENGTH
+    ) {
+      setRegisterError(passwordRangeError());
+      return;
+    }
 
     setRegisterError('');
     setIsProcessing(true);
@@ -95,10 +125,14 @@ const Register = () => {
                     disabled={isProcessing}
                     type="text" 
                     required 
+                    maxLength={MAX_FIRST_NAME_LENGTH}
                     onChange={(e) => setFirstName(e.target.value)}
                     className={`block w-full rounded-md border-0 py-2 px-3 shadow-sm ring-1 ring-inset focus:outline-none focus:ring-1 sm:text-sm bg-white text-black ring-slate-300 focus:ring-violet-300 dark:bg-slate-800 dark:text-white dark:ring-slate-600 dark:focus:ring-btnDark appearance-none
                       ${isProcessing ? 'opacity-50 pointer-events-none' : ''}`}
                   />
+                  <p className="mt-1 text-right text-xs text-slate-400">
+                    {firstName.length}/{MAX_FIRST_NAME_LENGTH}
+                  </p>
                 </div>
               </div>
 
@@ -113,10 +147,14 @@ const Register = () => {
                     disabled={isProcessing}
                     type="text" 
                     required 
+                    maxLength={MAX_LAST_NAME_LENGTH}
                     onChange={(e) => setLastName(e.target.value)}
                     className={`block w-full rounded-md border-0 py-2 px-3 shadow-sm ring-1 ring-inset focus:outline-none focus:ring-1 sm:text-sm bg-white text-black ring-slate-300 focus:ring-violet-300 dark:bg-slate-800 dark:text-white dark:ring-slate-600 dark:focus:ring-btnDark appearance-none
                       ${isProcessing ? 'opacity-50 pointer-events-none' : ''}`}
                   />
+                  <p className="mt-1 text-right text-xs text-slate-400">
+                    {lastName.length}/{MAX_LAST_NAME_LENGTH}
+                  </p>
                 </div>
               </div>
 
@@ -131,6 +169,7 @@ const Register = () => {
                     disabled={isProcessing}
                     type="email" 
                     required 
+                    maxLength={MAX_EMAIL_LENGTH}
                     onChange={(e) => setEmail(e.target.value)}
                     className={`block w-full rounded-md border-0 py-2 px-3 shadow-sm ring-1 ring-inset focus:outline-none focus:ring-1 sm:text-sm bg-white text-black ring-slate-300 focus:ring-violet-300 dark:bg-slate-800 dark:text-white dark:ring-slate-600 dark:focus:ring-btnDark appearance-none
                       ${isProcessing ? 'opacity-50 pointer-events-none' : ''}`}
@@ -148,6 +187,7 @@ const Register = () => {
                     type={showPassword ? 'text' : 'password'}
                     onChange={e => setPassword(e.target.value)}
                     required
+                    maxLength={MAX_PASSWORD_LENGTH}
                     className={`block w-full rounded-md border-0 py-2 px-3 pr-10 shadow-sm ring-1 ring-inset focus:outline-none focus:ring-1 sm:text-sm bg-white text-black ring-slate-300 focus:ring-violet-300 dark:bg-slate-800 dark:text-white dark:ring-slate-600 dark:focus:ring-btnDark appearance-none
                       ${isProcessing ? 'opacity-50 pointer-events-none' : ''}`}
                   />

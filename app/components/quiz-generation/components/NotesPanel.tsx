@@ -1,6 +1,7 @@
 "use client";
 
 import { TopicField } from "@/app/components/shared/generation";
+import { MAX_FOCUS_LENGTH } from "@/lib/inputLimits";
 
 import DocumentDropzone from "./DocumentDropzone";
 
@@ -36,6 +37,7 @@ export default function NotesPanel({
         rows={2}
         value={focus}
         required={false}
+        limit={MAX_FOCUS_LENGTH}
         isProcessing={isProcessing}
         onChange={onFocusChange}
       />

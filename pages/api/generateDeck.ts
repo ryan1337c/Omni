@@ -4,6 +4,12 @@ import fs from "fs/promises";
 import { requireEntitlement, requireUser } from "@/lib/requireUser";
 import { MAX_TITLE_LENGTH } from "@/app/components/flashcards-view/constants";
 import {
+    InputLimitError,
+    MAX_CARD_COUNT,
+    MIN_CARD_COUNT,
+    assertIntegerInRange,
+} from "@/lib/inputLimits";
+import {
     consumeCredits,
     refundCreditsQuietly,
     ContextTooLongError,
@@ -141,7 +147,12 @@ export default async function handler(
             .json({ error: `Deck title must be 1–${MAX_TITLE_LENGTH} characters.` });
         }
         const source = fields.source?.[0];
-        const cardCount = Number(fields.cardCount?.[0]);
+        const cardCount = assertIntegerInRange(
+            fields.cardCount?.[0],
+            MIN_CARD_COUNT,
+            MAX_CARD_COUNT,
+            "Card count",
+        );
 
         const prepared = await prepareDeck({
             title,
@@ -159,6 +170,10 @@ export default async function handler(
     } catch (error: any) {
         if (error instanceof InsufficientCreditsError || error instanceof ContextTooLongError) {
             return res.status(error.status).json(error.toResponseBody());
+        }
+
+        if (error instanceof InputLimitError) {
+            return res.status(error.status).json({ error: error.message });
         }
 
         const generationError = reportedGenerationError(error);

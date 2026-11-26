@@ -24,6 +24,7 @@ type UseImageGenerationParams = {
   applyContextTooLongError: (info: ContextTooLongBody) => void;
   clearFiles: () => void;
   scrollToBottom: (behavior?: "smooth" | "auto") => void;
+  onPanelError: (message: string) => void;
 };
 
 export function useImageGeneration({
@@ -36,6 +37,7 @@ export function useImageGeneration({
   applyContextTooLongError,
   clearFiles,
   scrollToBottom,
+  onPanelError,
 }: UseImageGenerationParams) {
   const [image, setImage] = useState("");
   const [imageTrigger, setImageTrigger] = useState(false);
@@ -85,10 +87,20 @@ export function useImageGeneration({
           setIsProcessing(false);
           return;
         }
-        setIsValid(false);
-        throw new Error(
-          data.error || "Something went wrong when generating image on server side",
+        const message =
+          data.error ||
+          "Something went wrong when generating image on server side";
+        if (response.status === 400 || response.status === 413) {
+          onPanelError(message);
+        }
+        setChatHistory((prevHistory) =>
+          replaceLastMessage(prevHistory, {
+            content: message,
+            loading: false,
+          }),
         );
+        setIsProcessing(false);
+        return;
       }
 
       const imageUrls = await publicServices.uploadImages([data.url]);
@@ -121,12 +133,19 @@ export function useImageGeneration({
       if (tier === "free") {
         void refreshUsage();
       }
+      setImageTrigger((prev) => !prev);
     } catch (error: any) {
       console.error("Fetch failed: ", error.message || error);
-      setImage("fail");
+      setChatHistory((prevHistory) =>
+        replaceLastMessage(prevHistory, {
+          content:
+            error.message ||
+            "Something went wrong when generating image on server side",
+          loading: false,
+        }),
+      );
+      setIsProcessing(false);
     }
-
-    setImageTrigger((prev) => !prev);
   };
 
   useEffect(() => {
