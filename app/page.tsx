@@ -87,6 +87,21 @@ export default function Home() {
     demoSectionRef.current?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
   };
 
+  // Arrive from another page via /#features or /#demo, scroll once, then drop the hash
+  // so a later header click is not a no-op against the same URL.
+  useEffect(() => {
+    const id = window.location.hash.slice(1);
+    if (id !== 'features' && id !== 'demo') return;
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    requestAnimationFrame(() => {
+      document.getElementById(id)?.scrollIntoView({
+        behavior: reduceMotion ? 'auto' : 'smooth',
+        block: 'start',
+      });
+    });
+    window.history.replaceState(window.history.state, '', '/');
+  }, []);
+
   return (
     <>
       <div className={`flex flex-col min-h-screen dark:text-white dark:bg-landingPage text-black bg-landingPageLight overflow-hidden`}>
@@ -101,7 +116,7 @@ export default function Home() {
           {/* --- Hero Video Section --- */}
           <section id="demo" ref={setDemoSectionRef} className="scroll-mt-24 w-full flex flex-col items-center py-16 px-4">
             <div className={`flex flex-col items-center text-center ${heroVideoSectionSeen ? 'transition-none' : 'transition-opacity duration-1000 ease-in'} ${demoRevealed ? 'opacity-100' : 'opacity-0'}`}>
-              <h2 className="mb-4 text-4xl font-bold tracking-tight text-[#0f172a] sm:text-5xl dark:text-white">
+              <h2 className="mb-10 text-4xl font-bold tracking-tight text-[#0f172a] sm:text-5xl dark:text-white">
                 See Omni{' '}
                 {/* Play-button chip set into the title (same palette as the hero orb); also starts the video.
                     On hover the play icon follows the cursor left/right, staying inside the pill. */}
@@ -115,7 +130,7 @@ export default function Home() {
                   }}
                   onPointerLeave={(e) => e.currentTarget.style.setProperty('--px', '0')}
                   aria-label="Play the demo video"
-                  className="group relative mx-1 inline-flex h-[0.9em] w-[1.6em] translate-y-[-0.06em] items-center justify-center rounded-full bg-gradient-to-br from-[#fccdbe] via-[#ff9bc3] to-[#beacfe] align-middle shadow-[0_6px_18px_-4px_rgba(255,155,195,0.7)] ring-1 ring-black/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-indigo-500 dark:from-indigo-400 dark:via-violet-500 dark:to-fuchsia-500 dark:shadow-[0_6px_18px_-4px_rgba(139,92,246,0.7)] dark:ring-white/10"
+                  className="group relative mx-1 inline-flex h-[0.9em] w-[1.6em] translate-y-[-0.06em] items-center justify-center rounded-full bg-[#4F46E5] align-middle shadow-[0_6px_18px_-4px_rgba(79,70,229,0.55)] ring-1 ring-black/5 hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-indigo-500 dark:bg-[#6366F1] dark:shadow-[0_6px_18px_-4px_rgba(99,102,241,0.7)] dark:ring-white/10 dark:focus-visible:outline-indigo-400"
                 >
                   <FaPlay
                     aria-hidden="true"
@@ -123,9 +138,6 @@ export default function Home() {
                   />                </button>{' '}
                 in action              </h2>
             </div>
-            <p className={`text-lg text-center max-w-2xl mb-8 dark:text-gray-400 text-gray-600 ${heroVideoSectionSeen ? 'transition-none' : 'transition-opacity duration-1000 ease-in delay-200'} ${demoRevealed ? 'opacity-100' : 'opacity-0'}`}>
-              A glimpse into the future of productivity and creative workflows.
-            </p>
             <div className={`w-full max-w-5xl rounded-2xl overflow-hidden ${heroVideoSectionSeen ? 'transition-none' : 'transition-all duration-1000 ease-in-out'} ${demoRevealed ? 'opacity-100 transform-none' : 'opacity-0 translate-y-10'}
                 dark:shadow-[0_0_35px_5px_rgba(99,102,241,0.2)] shadow-[0_0_35px_5px_rgba(139,92,246,0.2)]
             `}>
@@ -156,7 +168,7 @@ export default function Home() {
         
         {/* --- Unified AI Core Section  --- */}
         <div ref={coreRef} className="w-full flex flex-col items-center pt-10 pb-16 px-4">
-          <h2 className={`mb-10 pb-1 text-center text-4xl font-semibold tracking-tight sm:text-5xl bg-gradient-to-r from-[#4f46e5] via-[#9333ea] to-[#db2777] bg-clip-text text-transparent dark:from-[#a5b4fc] dark:via-[#d8b4fe] dark:to-[#f9a8d4] transition-opacity duration-1000 ease-in ${coreInView ? 'opacity-100' : 'opacity-0'}`}>
+          <h2 className={`mb-10 pb-1 text-center text-4xl font-semibold tracking-tight sm:text-5xl bg-gradient-to-r from-[#4338ca] via-[#4F46E5] to-[#6366F1] bg-clip-text text-transparent dark:from-[#a5b4fc] dark:via-[#818cf8] dark:to-[#6366F1] transition-opacity duration-1000 ease-in ${coreInView ? 'opacity-100' : 'opacity-0'}`}>
             One interface.{' '}<span className="font-serif font-normal italic pr-1">Many minds.</span>
           </h2>
           <div className={`

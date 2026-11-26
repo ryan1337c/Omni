@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { FaUserCircle } from 'react-icons/fa';
 import { useTheme } from 'next-themes';
 import { useAuth } from '../context/AuthContext';
@@ -43,6 +44,7 @@ const ThemeIconButton = () => {
 
 const Header = () => {
   const { isLoggedIn, fullName, tier } = useAuth();
+  const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -76,6 +78,24 @@ const Header = () => {
 
   const closeMenu = () => setIsMenuOpen(false);
 
+  // On the landing page, scroll to the section every click and keep the URL clean.
+  // From other pages, let the /#features or /#demo Link navigate; the landing page
+  // consumes the hash once and strips it so a later click still works.
+  const handleNavClick = (event: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    closeMenu();
+    const id = href.startsWith('/#') ? href.slice(2) : '';
+    if ((id !== 'features' && id !== 'demo') || pathname !== '/') return;
+    event.preventDefault();
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    document.getElementById(id)?.scrollIntoView({
+      behavior: reduceMotion ? 'auto' : 'smooth',
+      block: 'start',
+    });
+    if (window.location.hash || window.location.search) {
+      window.history.replaceState(window.history.state, '', '/');
+    }
+  };
+
   const openSettings = () => {
     setIsMenuOpen(false);
     setIsSettingsOpen(true);
@@ -108,6 +128,7 @@ const Header = () => {
             <Link
               key={link.href}
               href={link.href}
+              onClick={(event) => handleNavClick(event, link.href)}
               className="whitespace-nowrap transition-colors duration-300 hover:text-violet-600 dark:hover:text-white"
             >
               {link.label}
@@ -196,7 +217,7 @@ const Header = () => {
               `}
             >
               {NAV_LINKS.map((link) => (
-                <Link key={link.href} href={link.href} onClick={closeMenu} className={mobileItem}>
+                <Link key={link.href} href={link.href} onClick={(event) => handleNavClick(event, link.href)} className={mobileItem}>
                   {link.label}
                 </Link>
               ))}

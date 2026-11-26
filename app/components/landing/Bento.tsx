@@ -25,9 +25,6 @@ const Bento = () => (
           possible
         </PencilUnderline>
       </h2>
-      <p className="mt-5 text-base leading-relaxed text-slate-600 sm:text-lg dark:text-slate-300">
-        Chat with any model, study smarter, tailor your resume and build things, without switching apps.
-      </p>
     </header>
     <TiltGrid className="bento bento-grid mx-auto grid max-w-[1280px] grid-cols-1 md:grid-cols-2 lg:grid-cols-12">
       <ChatTile />

@@ -96,8 +96,8 @@ const GeneratedBayesChart = () => (
   >
     <defs>
       <linearGradient id="bento-bayes-post" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stopColor="#6366f1" stopOpacity="0.38" />
-        <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0.04" />
+        <stop offset="0%" stopColor="#4F46E5" stopOpacity="0.38" />
+        <stop offset="100%" stopColor="#6366F1" stopOpacity="0.04" />
       </linearGradient>
       <linearGradient id="bento-bayes-prior" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%" stopColor="#0ea5e9" stopOpacity="0.22" />
@@ -489,7 +489,7 @@ const ChatTile = () => {
                   <MessageSlot key={`${view.loopKey}-${msg.id}`} immediate={reducedMotion}>
                     {msg.role === 'user' ? (
                       <div className="flex justify-end">
-                        <div className="bento-chat-pop max-w-[82%] rounded-[18px] rounded-br-[5px] bg-gradient-to-br from-[#6366f1] to-[#8b5cf6] px-3 py-1.5 text-[11.5px] font-medium leading-snug text-white shadow-[0_6px_16px_rgba(99,102,241,0.26)] ring-1 ring-inset ring-white/20 sm:max-w-[76%] sm:text-xs lg:rounded-[20px] lg:rounded-br-[6px] lg:px-3.5 lg:py-2 lg:text-[13px] dark:from-indigo-500 dark:to-violet-600 dark:shadow-[0_6px_18px_rgba(15,23,42,0.45)]">
+                        <div className="bento-chat-pop max-w-[82%] rounded-[18px] rounded-br-[5px] bg-gradient-to-br from-[#6366f1] to-[#8b5cf6] px-3 py-1.5 text-[11.5px] font-medium leading-snug text-white shadow-[0_6px_16px_rgba(99,102,241,0.26)] ring-1 ring-inset ring-white/20 sm:max-w-[76%] sm:text-xs lg:rounded-[20px] lg:rounded-br-[6px] lg:px-3.5 lg:py-2 lg:text-[13px] dark:from-[#6366F1] dark:to-[#4F46E5] dark:shadow-[0_6px_18px_rgba(15,23,42,0.45)]">
                           {msg.text}
                         </div>
                       </div>
@@ -528,7 +528,7 @@ const ChatTile = () => {
                         >
                           <div className="relative aspect-[3/2] w-[144px] overflow-hidden rounded-[12px] border border-slate-200/70 bg-slate-50/90 sm:w-[162px] lg:w-[174px] lg:rounded-[14px] dark:border-white/10 dark:bg-slate-900/70">
                             <div
-                              className={`absolute inset-0 flex flex-col items-center justify-center gap-1 bg-gradient-to-br from-indigo-50 via-violet-50 to-pink-50 transition-opacity duration-300 dark:from-indigo-950/60 dark:via-slate-800 dark:to-violet-950/60 ${
+                              className={`absolute inset-0 flex flex-col items-center justify-center gap-1 bg-gradient-to-br from-indigo-50 via-violet-50 to-pink-50 transition-opacity duration-300 dark:from-indigo-950/60 dark:via-slate-800 dark:to-indigo-900/50 ${
                                 msg.status === 'done' ? 'opacity-0' : 'opacity-100'
                               }`}
                             >

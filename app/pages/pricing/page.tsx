@@ -84,7 +84,7 @@ export default function PricingPage() {
             <div className="flex-grow flex flex-col items-center justify-center p-6 pt-28 pb-16">
               {/* --- Page Header (Theme-Aware) --- */}
               <div className="text-center mb-16">
-                <h1 className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-pink-500 dark:from-indigo-400 dark:to-white mb-4">
+                <h1 className="text-5xl font-bold text-[#0f172a] dark:text-white mb-4">
                   Find the Perfect Plan
                 </h1>
                 <p className="text-lg max-w-2xl mx-auto text-slate-600 dark:text-gray-400">

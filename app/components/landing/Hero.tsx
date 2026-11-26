@@ -21,7 +21,7 @@ const ORBIT_RADIUS = 190;
 
 const HeroOrb = () => (
   <div className="relative w-[540px] h-[470px] grid place-items-center" aria-hidden>
-    <div className="absolute w-[430px] h-[430px] rounded-full blur-3xl bg-gradient-to-br from-[#ffb59e]/70 via-[#ff9bc3]/50 to-[#c6b4ff]/70 dark:from-fuchsia-500/20 dark:via-indigo-500/25 dark:to-violet-500/30" />
+    <div className="absolute w-[430px] h-[430px] rounded-full blur-3xl bg-gradient-to-br from-[#ffb59e]/70 via-[#ff9bc3]/50 to-[#c6b4ff]/70 dark:from-indigo-500/30 dark:via-indigo-500/25 dark:to-indigo-600/20" />
     <div className="absolute w-[380px] h-[380px] rounded-full border border-dashed border-violet-400/50 dark:border-white/20" />
     <div className="absolute w-[250px] h-[250px] rounded-full border border-violet-300/50 dark:border-white/10" />
 
@@ -55,7 +55,7 @@ const HeroOrb = () => (
     </div>
 
     {/* Center logo */}
-    <div className="hero-orb-core relative w-[170px] h-[170px] rounded-full grid place-items-center bg-gradient-to-br from-[#fccdbe] via-[#ff9bc3] to-[#beacfe] shadow-[0_0_80px_20px_rgba(255,155,195,.55)] dark:from-indigo-400 dark:via-violet-500 dark:to-fuchsia-500 dark:shadow-[0_0_80px_20px_rgba(99,102,241,.5)]">
+    <div className="hero-orb-core relative w-[170px] h-[170px] rounded-full grid place-items-center bg-gradient-to-br from-[#fccdbe] via-[#ff9bc3] to-[#beacfe] shadow-[0_0_80px_20px_rgba(255,155,195,.55)] dark:from-[#a5b4fc] dark:via-[#6366F1] dark:to-[#4338ca] dark:shadow-[0_0_80px_20px_rgba(99,102,241,.5)]">
       <div className="absolute inset-3 rounded-full bg-white/40 dark:bg-white/10 backdrop-blur" />
       <img src={icon.src} alt="" className="relative w-24 h-24 rounded-3xl shadow-xl" />
     </div>
@@ -76,11 +76,11 @@ const Hero = ({ onWatchDemo }: { onWatchDemo?: () => void }) => {
           >
             Omni
           </h1>
-          <p className="mt-4 sm:mt-5 text-xl sm:text-2xl font-light text-[#475569] dark:text-slate-400">
+          <p className="mt-4 sm:mt-5 text-xl sm:text-2xl text-[#475569] dark:text-slate-400">
             Fast. Smart. <span className="text-[#6366f1] dark:text-[#818cf8]">Limitless.</span>
           </p>
-          <p className="mt-5 sm:mt-6 text-[0.95rem] sm:text-base font-light leading-relaxed max-w-lg text-slate-600 dark:text-slate-300">
-            Turn your notes, PDFs and lectures into flashcards, quizzes and answers — then tailor your resume to any job description and get an ATS-style keyword match score.
+          <p className="mt-5 sm:mt-6 text-[0.95rem] sm:text-base leading-relaxed max-w-lg text-slate-600 dark:text-slate-300">
+            Chat with any model, study smarter, tailor your resume and build things, without switching apps.
           </p>
 
           <div className="mt-8 sm:mt-10 mb-2 flex flex-wrap items-center justify-center lg:justify-start gap-4 sm:gap-6">
