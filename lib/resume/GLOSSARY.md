@@ -21,7 +21,7 @@ The sequence in which Sections appear. It starts from a fixed default, and the u
 One item within a Section, such as a single job, school, project, skill category, or Honor.
 
 **Bullet**:
-One line of accomplishment or detail listed under an Entry.
+One accomplishment or detail listed under an Entry.
 _Avoid_: Point, item
 
 **Professional Summary**:
